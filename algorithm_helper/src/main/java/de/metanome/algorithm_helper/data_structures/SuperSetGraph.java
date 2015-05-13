@@ -113,11 +113,7 @@ public class SuperSetGraph {
 
     SuperSetGraph graph1 = (SuperSetGraph) o;
 
-    if (numberOfColumns != graph1.numberOfColumns) {
-      return false;
-    }
-    return graph.equals(graph1.graph);
-
+    return numberOfColumns == graph1.numberOfColumns && graph.equals(graph1.graph);
   }
 
   @Override
