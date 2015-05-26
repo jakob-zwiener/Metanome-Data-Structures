@@ -18,6 +18,8 @@ package de.metanome.algorithm_helper.data_structures;
 
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
 
 import org.junit.After;
 import org.junit.Before;
@@ -84,6 +86,35 @@ public class PositionListIndexTest {
   }
 
   /**
+   * Test method for {{@link PositionListIndex#addOrExtendList(LongBigList, long, long)}}
+   *
+   * When adding a value beyond the size of the list, the list should be extended and padded with the SINGLETON_VALUE constant.
+   */
+  @Test
+  public void testAddOrExtendList() {
+    // Setup
+    LongBigList list = new LongBigArrayBigList();
+    PositionListIndex pli = fixture.getFirstPLI();
+    long index1 = 23;
+    long index2 = 11;
+    // Expected values
+    long expectedValue = 42;
+
+    // Execute functionality
+    pli.addOrExtendList(list, expectedValue, index1);
+    pli.addOrExtendList(list, expectedValue, index2);
+
+    // Check result
+    assertEquals(expectedValue, (long) list.get(index1));
+    for (long i = 0; i < index2; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    }
+    for (long i = index2 + 1; i < index1; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    }
+  }
+
+  /**
    * Test method for {@link PositionListIndex#hashCode()}
    */
   @Test
@@ -133,6 +164,20 @@ public class PositionListIndexTest {
     Long2LongOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
 
     assertEquals(expectedHashMap, firstPLI.asHashMap());
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#asList()}
+   */
+  @Test
+  public void testAsList() {
+    // Setup
+    PositionListIndex firstPLI = fixture.getFirstPLI();
+
+    //expected Values
+    LongBigList expectedList = fixture.getFirstPLIAsList();
+
+    assertEquals(expectedList, firstPLI.asList());
   }
 
   /**

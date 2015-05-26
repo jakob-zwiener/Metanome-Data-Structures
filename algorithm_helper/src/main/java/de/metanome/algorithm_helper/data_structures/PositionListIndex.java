@@ -18,6 +18,8 @@ package de.metanome.algorithm_helper.data_structures;
 
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -38,6 +40,7 @@ import java.util.Map;
  */
 public class PositionListIndex {
 
+  public static final long SINGLETON_VALUE = 0;
   protected List<LongArrayList> clusters;
   protected long rawKeyError = -1;
 
@@ -157,9 +160,9 @@ public class PositionListIndex {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    Long2LongOpenHashMap hashedPLI = this.asHashMap();
+    LongBigList materializedPLI = this.asList();
     Map<LongPair, LongArrayList> map = new HashMap<>();
-    buildMap(otherPLI, hashedPLI, map);
+    buildMap(otherPLI, materializedPLI, map);
 
     List<LongArrayList> clusters = new ArrayList<>();
     for (LongArrayList cluster : map.values()) {
@@ -171,13 +174,13 @@ public class PositionListIndex {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, Long2LongOpenHashMap hashedPLI,
+  protected void buildMap(PositionListIndex otherPLI, LongBigList materlializedPLI,
                           Map<LongPair, LongArrayList> map) {
     long uniqueValueCount = 0;
     for (LongArrayList sameValues : otherPLI.clusters) {
       for (long rowCount : sameValues) {
-        if (hashedPLI.containsKey(rowCount)) {
-          LongPair pair = new LongPair(uniqueValueCount, hashedPLI.get(rowCount));
+        if (materlializedPLI.get(rowCount) != SINGLETON_VALUE) {
+          LongPair pair = new LongPair(uniqueValueCount, materlializedPLI.get(rowCount));
           updateMap(map, rowCount, pair);
         }
       }
@@ -214,6 +217,34 @@ public class PositionListIndex {
       uniqueValueCount++;
     }
     return hashedPLI;
+  }
+
+  /**
+   * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
+   * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
+   *
+   * @return the pli as list
+   */
+  public LongBigList asList() {
+    // TODO(zwiener): Initialize with approximate size.
+    LongBigList listPli = new LongBigArrayBigList();
+    long uniqueValueCount = SINGLETON_VALUE + 1;
+    for (LongArrayList sameValues : clusters) {
+      for (long rowIndex : sameValues) {
+        addOrExtendList(listPli, uniqueValueCount, rowIndex);
+      }
+      uniqueValueCount++;
+    }
+
+    return listPli;
+  }
+
+  protected void addOrExtendList(LongBigList list, long value, long index) {
+    if (list.size64() <= index) {
+      list.size(index + 1);
+    }
+
+    list.set(index, value);
   }
 
   /**
