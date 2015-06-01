@@ -21,7 +21,6 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
 import it.unimi.dsi.fastutil.longs.LongBigList;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -44,10 +43,6 @@ public class PositionListIndexTest {
   @Before
   public void setUp() throws Exception {
     fixture = new PositionListIndexFixture();
-  }
-
-  @After
-  public void tearDown() throws Exception {
   }
 
   /**
@@ -83,6 +78,27 @@ public class PositionListIndexTest {
 
     // Check result
     assertEquals(expectedPLI, actualIntersectedPLI);
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#intersect(PositionListIndex)}
+   *
+   * The intersection with a unique PLI should be unique.
+   *
+   * This is a regression test for the materialization and check of unique PLIs. There used to be an
+   * array out of bounds access in buildMap.
+   */
+  @Test
+  public void testIntersectUnique() {
+    // Setup
+    PositionListIndex uniquePLI = new PositionListIndex();
+    PositionListIndex secondPLI = fixture.getSecondPLI();
+
+    // Execute functionality
+    PositionListIndex actualIntersectedPLI = uniquePLI.intersect(secondPLI);
+
+    // Check result
+    assertTrue(actualIntersectedPLI.isUnique());
   }
 
   /**

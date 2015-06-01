@@ -174,13 +174,14 @@ public class PositionListIndex {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, LongBigList materlializedPLI,
+  protected void buildMap(PositionListIndex otherPLI, LongBigList materializedPLI,
                           Map<LongPair, LongArrayList> map) {
     long uniqueValueCount = 0;
     for (LongArrayList sameValues : otherPLI.clusters) {
       for (long rowCount : sameValues) {
-        if (materlializedPLI.get(rowCount) != SINGLETON_VALUE) {
-          LongPair pair = new LongPair(uniqueValueCount, materlializedPLI.get(rowCount));
+        if ((materializedPLI.size64() > rowCount) &&
+            (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
+          LongPair pair = new LongPair(uniqueValueCount, materializedPLI.get(rowCount));
           updateMap(map, rowCount, pair);
         }
       }
