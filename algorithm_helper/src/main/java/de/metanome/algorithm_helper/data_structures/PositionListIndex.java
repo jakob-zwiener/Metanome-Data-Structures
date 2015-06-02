@@ -63,7 +63,9 @@ public class PositionListIndex {
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  public PositionListIndex intersect(PositionListIndex otherPLI) {
+  public PositionListIndex intersect(PositionListIndex otherPLI, ColumnCombinationBitset left,
+                                     ColumnCombinationBitset right) {
+    System.out.println(left + " " + right);
     //TODO Optimize Smaller PLI as Hashmap?
     return calculateIntersection(otherPLI);
   }
