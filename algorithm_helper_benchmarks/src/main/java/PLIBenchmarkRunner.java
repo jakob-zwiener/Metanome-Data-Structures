@@ -82,11 +82,14 @@ public class PLIBenchmarkRunner {
       numberOfIntersects++;
     }
 
-    long afterParsing = System.nanoTime();
+    long afterPLIIntersect = System.nanoTime();
+
+    long actualSecondsOfBenchmark = (afterPLIIntersect - startPLIIntersects) / 1000000000;
 
     System.out
-        .printf("%f intersections/s over %ds.\n", numberOfIntersects / (double) secondsOfBenchmark,
-                secondsOfBenchmark);
+        .printf("%f intersections/s over %ds.\n",
+                numberOfIntersects / (double) actualSecondsOfBenchmark,
+                actualSecondsOfBenchmark);
 
 
   }
