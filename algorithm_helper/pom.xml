@@ -19,24 +19,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>algorithm_helper</artifactId>
+    <artifactId>metanome_data_structures</artifactId>
     <packaging>jar</packaging>
 
     <name>algorithm_helper</name>
 
     <parent>
         <groupId>de.metanome</groupId>
-        <artifactId>metanome_data_structures</artifactId>
+        <artifactId>metanome_data_structures_root</artifactId>
         <version>0.0.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <repositories>
+    <!--<repositories>
         <repository>
             <id>snapshots-repo</id>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
-    </repositories>
+    </repositories>-->
 
     <build>
         <plugins>
