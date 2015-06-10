@@ -9,3 +9,6 @@ before_install:
   - ./build_dependencies.sh
 
 script: "mvn -q clean verify"
+
+after_success:
+  - mvn -q coveralls:cobertura
