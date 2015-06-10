@@ -75,6 +75,11 @@ public class LongPair implements Comparable<LongPair> {
   }
 
   @Override
+  public String toString() {
+    return "LongPair{" + first + ", " + second + '}';
+  }
+
+  @Override
   public int compareTo(LongPair other) {
     if (other == null) {
       return 1;

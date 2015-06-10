@@ -51,6 +51,27 @@ public class LongPairTest {
   }
 
   /**
+   * Test method for {@link LongPair#toString()}.
+   */
+  @Test
+  public void testToString() {
+    // Setup
+    LongPair longPair = new LongPair(1, 2);
+    LongPair otherLongPair = new LongPair(2, 2);
+    // Expected values
+    String expectedLongPairRepresentation = "LongPair{1, 2}";
+    String expectedOtherLongPairRepresentation = "LongPair{2, 2}";
+
+    // Execute functionality
+    String actualLongPairRepresentation = longPair.toString();
+    String actualOtherLongPairRepresentation = otherLongPair.toString();
+
+    // Check result
+    assertEquals(expectedLongPairRepresentation, actualLongPairRepresentation);
+    assertEquals(expectedOtherLongPairRepresentation, actualOtherLongPairRepresentation);
+  }
+
+  /**
    * Test method for {@link de.metanome.algorithm_helper.data_structures.LongPair#compareTo(LongPair)}
    */
   @Test
