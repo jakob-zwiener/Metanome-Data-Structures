@@ -27,10 +27,13 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -161,7 +164,7 @@ public class PositionListIndex {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     LongBigList materializedPLI = this.asList();
-    Map<LongPair, LongArrayList> map = new HashMap<>();
+    ConcurrentMap<LongPair, LongArrayList> map = new ConcurrentHashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<LongArrayList> clusters = new ArrayList<>();
@@ -174,22 +177,53 @@ public class PositionListIndex {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, LongBigList materializedPLI,
-                          Map<LongPair, LongArrayList> map) {
+  protected void buildMap(PositionListIndex otherPLI, final LongBigList materializedPLI,
+                          final ConcurrentMap<LongPair, LongArrayList> map) {
     long uniqueValueCount = 0;
-    for (LongArrayList sameValues : otherPLI.clusters) {
+
+    ExecutorService exec = Executors.newFixedThreadPool(4);
+    try {
+      for (final LongArrayList sameValues : otherPLI.clusters) {
+        final long finalUniqueValueCount = uniqueValueCount;
+        exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (long rowCount : sameValues) {
+              // TODO(zwiener): Get is called twice.
+              if ((materializedPLI.size64() > rowCount) &&
+                  (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
+                LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
+                updateMap(map, rowCount, pair);
+              }
+            }
+          }
+        });
+        uniqueValueCount++;
+      }
+    } finally {
+      exec.shutdown();
+      try {
+        exec.awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        // FIXME(zwiener): DO something useful with the exception.
+        e.printStackTrace();
+      }
+    }
+
+    /*for (LongArrayList sameValues : otherPLI.clusters) {
       for (long rowCount : sameValues) {
         if ((materializedPLI.size64() > rowCount) &&
             (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
           LongPair pair = new LongPair(uniqueValueCount, materializedPLI.get(rowCount));
           updateMap(map, rowCount, pair);
         }
-      }
+
       uniqueValueCount++;
-    }
+    }*/
   }
 
-  protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount, LongPair pair) {
+  protected void updateMap(ConcurrentMap<LongPair, LongArrayList> map, long rowCount,
+                           LongPair pair) {
     if (map.containsKey(pair)) {
       LongArrayList currentList = map.get(pair);
       currentList.add(rowCount);
@@ -228,7 +262,7 @@ public class PositionListIndex {
    */
   public LongBigList asList() {
     // TODO(zwiener): Initialize with approximate size.
-    LongBigList listPli = new LongBigArrayBigList();
+    LongBigList listPli = new LongBigArrayBigList(600000);
     long uniqueValueCount = SINGLETON_VALUE + 1;
     for (LongArrayList sameValues : clusters) {
       for (long rowIndex : sameValues) {
