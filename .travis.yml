@@ -5,4 +5,7 @@ jdk:
   - openjdk7
   - oraclejdk8
 
+before_install:
+  - ./build_dependencies.sh
+
 script: "mvn -q clean verify"
