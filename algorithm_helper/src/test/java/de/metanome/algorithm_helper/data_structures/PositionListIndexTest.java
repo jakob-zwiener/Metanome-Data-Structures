@@ -267,4 +267,23 @@ public class PositionListIndexTest {
       assertEquals(pli.getClusters().get(i), copy.getClusters().get(i));
     }
   }
+
+  /**
+   * Test method for {@link PositionListIndex#toString}
+   */
+  @Test
+  public void testToString() {
+    // Setup
+    PositionListIndex firstPli = fixture.getFirstPLI();
+    PositionListIndex secondPli = fixture.getSecondPLI();
+
+    // Execute functionality
+    String actualFirstPliRepresentation = firstPli.toString();
+    String actualSecondPliRepresentation = secondPli.toString();
+
+    // Check result
+    assertEquals(fixture.getExpectedFirstPliToString(), actualFirstPliRepresentation);
+    assertEquals(fixture.getExpectedSecondPliToString(), actualSecondPliRepresentation);
+  }
+
 }
