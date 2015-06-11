@@ -205,7 +205,7 @@ public class PositionListIndex {
       try {
         exec.awaitTermination(1, TimeUnit.SECONDS);
       } catch (InterruptedException e) {
-        // FIXME(zwiener): DO something useful with the exception.
+        // FIXME(zwiener): Do something useful with the exception.
         e.printStackTrace();
       }
     }
