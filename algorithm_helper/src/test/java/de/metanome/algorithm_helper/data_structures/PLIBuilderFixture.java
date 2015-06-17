@@ -79,6 +79,8 @@ public class PLIBuilderFixture {
       }
     });
 
+    when(input.numberOfColumns()).thenReturn(4);
+
     return input;
   }
 
@@ -92,8 +94,8 @@ public class PLIBuilderFixture {
 
     for (int col = 0; col < table.get(0).size(); col++) {
       TreeSet<String> sortedcolumn = new TreeSet<>();
-      for (int row = 0; row < table.size(); row++) {
-        String value = table.get(row).get(col);
+      for (ArrayList<String> row : table) {
+        String value = row.get(col);
         if (value != null) {
           sortedcolumn.add(value);
         }
