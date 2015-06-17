@@ -49,7 +49,7 @@ public class PLIBuilderTest {
    * de.metanome.algorithm_helper.data_structures.PositionListIndex}es are build correctly.
    */
   @Test
-  public void testCalculatePLINullEqualsNull() throws InputIterationException {
+  public void testCalculatePLINullEqualsNull() throws PLIBuildingException {
     // Setup
     // Expected values
     List<PositionListIndex> expectedPLIList = fixture.getExpectedPLIList(true);
@@ -70,7 +70,7 @@ public class PLIBuilderTest {
    */
   @Test
   public void testCalculatePLINullNotEqualsNull()
-      throws InputIterationException, InputGenerationException {
+      throws PLIBuildingException, InputGenerationException, InputIterationException {
     // Setup
     this.builder = new PLIBuilder(fixture.getInputGenerator().generateNewCopy(), false);
     // Expected values
@@ -110,7 +110,7 @@ public class PLIBuilderTest {
    * <p/> The total number of tuples should be calculated if the PLIs are calculated
    */
   @Test
-  public void testGetNumberOfTuples() throws InputIterationException {
+  public void testGetNumberOfTuples() throws PLIBuildingException, InputIterationException {
     //Setup
     long expectedNumberOfColumns = fixture.getExpectedNumberOfTuples();
 
