@@ -18,8 +18,8 @@ package de.metanome.algorithm_helper.data_structures;
 
 import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-import de.metanome.backend.input.file.InvalidMaskException;
-import de.metanome.backend.input.file.MaskingRelationalInput;
+import de.metanome.backend.input.InvalidMaskException;
+import de.metanome.backend.input.MaskingRelationalInput;
 
 import java.util.ArrayList;
 import java.util.List;
