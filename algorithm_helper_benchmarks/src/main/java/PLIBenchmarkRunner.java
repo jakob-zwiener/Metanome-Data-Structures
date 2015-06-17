@@ -16,9 +16,9 @@
 
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.algorithm_integration.input.InputIterationException;
 import de.metanome.backend.input.file.DefaultFileInputGenerator;
 
 import java.io.BufferedReader;
@@ -35,7 +35,7 @@ import java.util.Map;
 public class PLIBenchmarkRunner {
 
   public static void main(String[] args)
-      throws IOException, InputGenerationException, InputIterationException {
+      throws IOException, PLIBuildingException, InputGenerationException {
 
     long beforePLIBuild = System.nanoTime();
 
