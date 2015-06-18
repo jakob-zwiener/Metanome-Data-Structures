@@ -26,7 +26,7 @@ import java.util.List;
 
 public class PositionListIndexFixture {
 
-  PositionListIndex getFirstPLI() {
+  public PositionListIndex getFirstPLI() {
     List<LongArrayList> clusters = new ArrayList<>();
 
     long[] cluster1 = {2, 4, 8};
@@ -35,6 +35,10 @@ public class PositionListIndexFixture {
     clusters.add(new LongArrayList(cluster2));
 
     return new PositionListIndex(clusters);
+  }
+
+  public String getExpectedFirstPliToString() {
+    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], rawKeyError=4}";
   }
 
   public long getExpectedFirstPLIRawKeyError() {
@@ -108,6 +112,10 @@ public class PositionListIndexFixture {
     clusters.add(new LongArrayList(cluster2));
 
     return new PositionListIndex(clusters);
+  }
+
+  public String getExpectedSecondPliToString() {
+    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], rawKeyError=5}";
   }
 
   public long getExpectedSecondPLIRawKeyError() {

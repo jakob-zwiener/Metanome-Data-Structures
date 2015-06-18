@@ -19,10 +19,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>metanome_data_structures</artifactId>
+    <artifactId>algorithm_helper_benchmarks</artifactId>
     <packaging>jar</packaging>
 
-    <name>algorithm_helper</name>
+    <name>algorithm_helper_benchmarks</name>
 
     <parent>
         <groupId>de.metanome</groupId>
@@ -75,33 +75,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>it.unimi.dsi</groupId>
-            <artifactId>fastutil</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
+            <groupId>de.metanome</groupId>
+            <artifactId>metanome_data_structures</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>de.metanome</groupId>
-            <artifactId>test_helper</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.metanome</groupId>
-            <artifactId>algorithm_integration</artifactId>
+            <artifactId>backend</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

@@ -20,7 +20,6 @@ import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.InputIterationException;
 
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,10 +42,6 @@ public class PLIBuilderTest {
   public void setUp() throws Exception {
     fixture = new PLIBuilderFixture();
     builder = new PLIBuilder(fixture.getInputGenerator().generateNewCopy());
-  }
-
-  @After
-  public void tearDown() throws Exception {
   }
 
   /**
@@ -130,6 +125,5 @@ public class PLIBuilderTest {
 
     //Check result
     assertEquals(expectedNumberOfColumns, builder.getNumberOfTuples());
-
   }
 }

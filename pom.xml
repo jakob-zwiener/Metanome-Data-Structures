@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>de.metanome</groupId>
-    <artifactId>metanome_data_structures</artifactId>
+    <artifactId>metanome_data_structures_root</artifactId>
     <packaging>pom</packaging>
     <name>metanome_data_structures</name>
     <version>0.0.2-SNAPSHOT</version>
@@ -50,6 +50,7 @@
 
     <modules>
         <module>algorithm_helper</module>
+        <module>algorithm_helper_benchmarks</module>
         <module>test_helper</module>
     </modules>
 
@@ -87,6 +88,21 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>cobertura-maven-plugin</artifactId>
+                    <version>2.6</version>
+                    <configuration>
+                        <check/>
+                        <formats>
+                            <format>xml</format>
+                        </formats>
+                        <aggregate>true</aggregate>
+                        <instrumentation>
+                            <exclude>de/metanome/test_helper/**/*.class</exclude>
+                        </instrumentation>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>

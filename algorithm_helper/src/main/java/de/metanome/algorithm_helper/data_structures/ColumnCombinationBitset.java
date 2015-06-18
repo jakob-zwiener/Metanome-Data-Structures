@@ -41,6 +41,7 @@ import java.util.Set;
  */
 public class ColumnCombinationBitset implements Comparable<ColumnCombinationBitset> {
 
+  public static final String CLASS_IDENTIFIER = "ColumnCombinationBitset ";
   protected OpenBitSet bitset;
   protected long size = 0;
 
@@ -64,6 +65,30 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    */
   public ColumnCombinationBitset(ColumnCombinationBitset columnCombination) {
     setColumns(columnCombination.bitset.clone());
+  }
+
+  /**
+   * Converts a string representation (generated through the {@link ColumnCombinationBitset#toString()}
+   * method into a {@link ColumnCombinationBitset}).
+   *
+   * @param representation the string representation
+   * @return the parsed ColumnCombinationBitset
+   */
+  public static ColumnCombinationBitset fromString(String representation) {
+    ColumnCombinationBitset columnCombination = new ColumnCombinationBitset();
+
+    int column_start = representation.indexOf(CLASS_IDENTIFIER);
+    column_start += CLASS_IDENTIFIER.length();
+
+    int j = 0;
+    for (int i = column_start; i < representation.length(); i++) {
+      if (representation.charAt(i) == '1') {
+        columnCombination.addColumn(j);
+      }
+      j++;
+    }
+
+    return columnCombination;
   }
 
   /**
@@ -146,7 +171,7 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   public String toString() {
     StringBuilder stringBuilder = new StringBuilder();
 
-    stringBuilder.append("ColumnCombinationBitset ");
+    stringBuilder.append(CLASS_IDENTIFIER);
 
     int lastSetBitIndex = bitset.prevSetBit(bitset.length());
 

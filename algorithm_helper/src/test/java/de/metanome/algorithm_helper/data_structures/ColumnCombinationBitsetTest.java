@@ -239,6 +239,27 @@ public class ColumnCombinationBitsetTest {
   }
 
   /**
+   * Test method for {@link ColumnCombinationBitset#fromString(String)}
+   */
+  @Test
+  public void testFromString() {
+    // Setup
+    String representation = "ColumnCombinationBitset 0000101101111";
+    // Expected values
+    ColumnCombinationBitset
+        expectedColumnCombinationBitset =
+        new ColumnCombinationBitset(4, 6, 7, 9, 10, 11, 12);
+
+    // Execute functionality
+    ColumnCombinationBitset
+        actualColumnCombination =
+        ColumnCombinationBitset.fromString(representation);
+
+    // Check result
+    assertEquals(expectedColumnCombinationBitset, actualColumnCombination);
+  }
+
+  /**
    * Test method for {@link ColumnCombinationBitset#toString()}
    *
    * String representation should contain the bits from the bitset.

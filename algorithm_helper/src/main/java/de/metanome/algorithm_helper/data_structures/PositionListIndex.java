@@ -296,4 +296,12 @@ public class PositionListIndex {
     return sumClusterSize - clusters.size();
   }
 
+  @Override
+  public String toString() {
+    return "PositionListIndex{" +
+           "clusters=" + clusters +
+           ", rawKeyError=" + getRawKeyError() +
+           '}';
+  }
+
 }

@@ -1,0 +1,14 @@
+language: java
+
+jdk:
+  - oraclejdk7
+  - openjdk7
+  - oraclejdk8
+
+before_install:
+  - ./build_dependencies.sh
+
+script: "mvn -q clean verify"
+
+after_success:
+  - mvn -q coveralls:cobertura
