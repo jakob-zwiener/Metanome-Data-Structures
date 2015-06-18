@@ -65,9 +65,10 @@ public class PositionListIndex {
    */
   public PositionListIndex intersect(PositionListIndex otherPLI, ColumnCombinationBitset left,
                                      ColumnCombinationBitset right) {
-    System.out.println(left + " " + right);
+    System.out.println(left + "," + right);
     //TODO Optimize Smaller PLI as Hashmap?
     return calculateIntersection(otherPLI);
+
   }
 
   public List<LongArrayList> getClusters() {
