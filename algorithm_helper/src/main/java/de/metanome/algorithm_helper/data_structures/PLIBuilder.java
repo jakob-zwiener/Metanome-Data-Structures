@@ -33,7 +33,7 @@ import java.util.TreeSet;
  * de.metanome.algorithm_integration.input.RelationalInput}. A list of all columns' sorted distinct
  * values can be constructed as a byproduct.
  */
-public class PLIBuilder {
+public class PLIBuilder implements GenericPLIBuilder {
 
   protected long numberOfTuples = -1;
   protected List<HashMap<String, LongArrayList>> columns = null;
@@ -51,13 +51,17 @@ public class PLIBuilder {
   }
 
   /**
-   * Builds a {@link PositionListIndex} for every column in the input.
-   *
-   * @return list of plis for all columns
-   * @throws InputIterationException if the input cannot be iterated
+   * {@inheritDoc}
    */
-  public List<PositionListIndex> getPLIList() throws InputIterationException {
-    List<List<LongArrayList>> rawPLIs = getRawPLIs();
+  @Override
+  public List<PositionListIndex> getPLIList() throws PLIBuildingException {
+    List<List<LongArrayList>> rawPLIs;
+    try {
+      rawPLIs = getRawPLIs();
+    } catch (InputIterationException e) {
+      throw new PLIBuildingException(
+          "The pli could not be built, because there was an error iterating over the input.", e);
+    }
     List<PositionListIndex> result = new ArrayList<>();
     for (List<LongArrayList> rawPLI : rawPLIs) {
       result.add(new PositionListIndex(rawPLI));
