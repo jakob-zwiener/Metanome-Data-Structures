@@ -15,7 +15,8 @@
  */
 
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
-import de.metanome.algorithm_helper.data_structures.PLIBuilder;
+import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.input.InputGenerationException;
@@ -39,9 +40,9 @@ public class PLIBenchmarkRunner {
 
     long beforePLIBuild = System.nanoTime();
 
-    PLIBuilder
+    GenericPLIBuilder
         pliBuilder =
-        new PLIBuilder(new DefaultFileInputGenerator(new File("uniprot.csv")).generateNewCopy());
+        new PLIBuilderSequential(new DefaultFileInputGenerator(new File("ncvoter10k.csv")));
 
     List<PositionListIndex> plis = pliBuilder.getPLIList();
 
@@ -54,7 +55,7 @@ public class PLIBenchmarkRunner {
       pliStore.put(new ColumnCombinationBitset(i), plis.get(i));
     }
 
-    BufferedReader input = new BufferedReader(new FileReader("uniprot_incomplete.csv"));
+    BufferedReader input = new BufferedReader(new FileReader("ncvoter10k_incomplete.csv"));
 
     long numberOfIntersects = 0;
     long secondsOfBenchmark = 30;

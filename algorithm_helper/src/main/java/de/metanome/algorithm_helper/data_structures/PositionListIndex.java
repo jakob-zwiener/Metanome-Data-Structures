@@ -27,8 +27,10 @@ import it.unimi.dsi.fastutil.longs.LongSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -177,14 +179,58 @@ public class PositionListIndex {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, final LongBigList materializedPLI,
+  protected void buildMap(final PositionListIndex otherPLI, final LongBigList materializedPLI,
                           final ConcurrentMap<LongPair, LongArrayList> map) {
     long uniqueValueCount = 0;
 
-    ExecutorService exec = Executors.newFixedThreadPool(4);
+    int threadPoolSize = 4;
+    ExecutorService exec = Executors.newFixedThreadPool(threadPoolSize);
     try {
+      /*long sliceSize = otherPLI.size() / threadPoolSize;
+
+      for (int i = 0; i < threadPoolSize; i++) {
+        final long sliceLeftBound = i * sliceSize;
+        final long sliceRightBound;
+        if (i == threadPoolSize - 1) {
+          sliceRightBound = otherPLI.size();
+        } else {
+          sliceRightBound = (i + 1) * sliceSize;
+        }
+
+        final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
+
+        exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (long i = sliceLeftBound; i < sliceRightBound; i++) {
+              // FIXME(zwiener): Remove cast.
+              // System.out.println(otherPLI.clusters.get((int) i).size());
+              for (long rowCount : otherPLI.clusters.get((int) i)) {
+                // TODO(zwiener): Get is called twice.
+                if ((materializedPLI.size64() > rowCount) &&
+                    (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
+                  LongPair pair = new LongPair(i, materializedPLI.get(rowCount));
+                  updateMap(internalMap, rowCount, pair);
+                }
+              }
+            }
+          }
+        });
+
+      }
+    } finally {
+      exec.shutdown();
+      try {
+        exec.awaitTermination(1, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        // FIXME(zwiener): Do something useful with the exception.
+        e.printStackTrace();
+      }
+    }*/
+
       for (final LongArrayList sameValues : otherPLI.clusters) {
         final long finalUniqueValueCount = uniqueValueCount;
+        final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
         exec.submit(new Runnable() {
           @Override
           public void run() {
@@ -193,7 +239,7 @@ public class PositionListIndex {
               if ((materializedPLI.size64() > rowCount) &&
                   (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
                 LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
-                updateMap(map, rowCount, pair);
+                updateMap(internalMap, rowCount, pair);
               }
             }
           }
@@ -222,7 +268,7 @@ public class PositionListIndex {
     }*/
   }
 
-  protected void updateMap(ConcurrentMap<LongPair, LongArrayList> map, long rowCount,
+  protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount,
                            LongPair pair) {
     if (map.containsKey(pair)) {
       LongArrayList currentList = map.get(pair);
