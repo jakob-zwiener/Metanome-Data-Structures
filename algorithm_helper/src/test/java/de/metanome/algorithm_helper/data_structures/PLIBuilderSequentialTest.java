@@ -24,28 +24,27 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.TreeSet;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 
 /**
- * Tests for {@link de.metanome.algorithm_helper.data_structures.PLIBuilder}
+ * Tests for {@link PLIBuilderSequential}
+ *
+ * @author Jakob Zwiener
  */
-public class PLIBuilderTest {
+public class PLIBuilderSequentialTest {
 
   protected PLIBuilderFixture fixture;
-  protected PLIBuilder builder;
+  protected PLIBuilderSequential builder;
 
   @Before
   public void setUp() throws Exception {
     fixture = new PLIBuilderFixture();
-    builder = new PLIBuilder(fixture.getInputGenerator().generateNewCopy());
+    builder = new PLIBuilderSequential(fixture.getInputGenerator());
   }
 
   /**
-   * Test method for {@link PLIBuilder#getPLIList()} <p/> Tests that {@link
+   * Test method for {@link PLIBuilderSequential#getPLIList()} <p/> Tests that {@link
    * de.metanome.algorithm_helper.data_structures.PositionListIndex}es are build correctly.
    */
   @Test
@@ -65,14 +64,14 @@ public class PLIBuilderTest {
   }
 
   /**
-   * Test method for {@link PLIBuilder#getPLIList()} <p/> Tests that {@link
+   * Test method for {@link PLIBuilderSequential#getPLIList()} <p/> Tests that {@link
    * de.metanome.algorithm_helper.data_structures.PositionListIndex}es are build correctly.
    */
   @Test
   public void testCalculatePLINullNotEqualsNull()
       throws PLIBuildingException, InputGenerationException, InputIterationException {
     // Setup
-    this.builder = new PLIBuilder(fixture.getInputGenerator().generateNewCopy(), false);
+    this.builder = new PLIBuilderSequential(fixture.getInputGenerator(), false);
     // Expected values
     List<PositionListIndex> expectedPLIList = fixture.getExpectedPLIList(false);
     PositionListIndex[]
@@ -84,46 +83,5 @@ public class PLIBuilderTest {
 
     // Check result
     assertThat(actualPLIList, IsIterableContainingInAnyOrder.containsInAnyOrder(expectedPLIArray));
-  }
-
-  /**
-   * Test method for {@link PLIBuilder#getDistinctSortedColumns()} <p/> Creates the distinct sorted
-   * columns from the raw plis.
-   */
-  @Test
-  public void testGetDistinctSortedColumns() throws InputIterationException {
-    // Setup
-    // Expected values
-    List<TreeSet<String>>
-        expectedDistinctSortedColumns =
-        fixture.getExpectedDistinctSortedColumns();
-
-    // Execute functionality
-    List<TreeSet<String>> actualDistinctSortedColumns = builder.getDistinctSortedColumns();
-
-    // Check result
-    assertEquals(expectedDistinctSortedColumns, actualDistinctSortedColumns);
-  }
-
-  /**
-   * Test methode for {@link de.metanome.algorithm_helper.data_structures.PLIBuilder#getNumberOfTuples}
-   * <p/> The total number of tuples should be calculated if the PLIs are calculated
-   */
-  @Test
-  public void testGetNumberOfTuples() throws PLIBuildingException, InputIterationException {
-    //Setup
-    long expectedNumberOfColumns = fixture.getExpectedNumberOfTuples();
-
-    //Execute functionality
-    try {
-      builder.getNumberOfTuples();
-      fail();
-    } catch (InputIterationException e) {
-      //Intentionally left blank
-    }
-    builder.getPLIList();
-
-    //Check result
-    assertEquals(expectedNumberOfColumns, builder.getNumberOfTuples());
   }
 }
