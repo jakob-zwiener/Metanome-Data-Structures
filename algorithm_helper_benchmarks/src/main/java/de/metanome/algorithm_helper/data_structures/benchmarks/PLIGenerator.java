@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+package de.metanome.algorithm_helper.data_structures.benchmarks;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -24,6 +22,9 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Generates synthetic plis with given cluster size and number of clusters.

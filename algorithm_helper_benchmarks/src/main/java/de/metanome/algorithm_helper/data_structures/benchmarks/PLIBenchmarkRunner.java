@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
-import de.metanome.algorithm_helper.data_structures.PLIBuilder;
-import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.backend.input.file.DefaultFileInputGenerator;
-
-import java.io.BufferedReader;
+package de.metanome.algorithm_helper.data_structures.benchmarks;import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
+import de.metanome.algorithm_helper.data_structures.PLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+import de.metanome.backend.input.file.DefaultFileInputGenerator;
 
 /**
  * @author Jakob Zwiener
