@@ -16,14 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,6 +30,14 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -191,48 +191,6 @@ public class PositionListIndex implements Serializable {
     List<Future<?>> tasks = new LinkedList<>();
 
     try {
-      /*long sliceSize = otherPLI.size() / threadPoolSize;
-
-      for (int i = 0; i < threadPoolSize; i++) {
-        final long sliceLeftBound = i * sliceSize;
-        final long sliceRightBound;
-        if (i == threadPoolSize - 1) {
-          sliceRightBound = otherPLI.size();
-        } else {
-          sliceRightBound = (i + 1) * sliceSize;
-        }
-
-        final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
-
-        exec.submit(new Runnable() {
-          @Override
-          public void run() {
-            for (long i = sliceLeftBound; i < sliceRightBound; i++) {
-              // FIXME(zwiener): Remove cast.
-              // System.out.println(otherPLI.clusters.get((int) i).size());
-              for (long rowCount : otherPLI.clusters.get((int) i)) {
-                // TODO(zwiener): Get is called twice.
-                if ((materializedPLI.size64() > rowCount) &&
-                    (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-                  LongPair pair = new LongPair(i, materializedPLI.get(rowCount));
-                  updateMap(internalMap, rowCount, pair);
-                }
-              }
-            }
-          }
-        });
-
-      }
-    } finally {
-      exec.shutdown();
-      try {
-        exec.awaitTermination(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        // FIXME(zwiener): Do something useful with the exception.
-        e.printStackTrace();
-      }
-    }*/
-
       System.out.println(otherPLI.clusters.size());
       for (final LongArrayList sameValues : otherPLI.clusters) {
         final long finalUniqueValueCount = uniqueValueCount;
@@ -248,16 +206,10 @@ public class PositionListIndex implements Serializable {
                   (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
                 LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
 
-                if (internalMap.containsKey(pair)) {
-                  LongArrayList currentList = internalMap.get(pair);
-                  currentList.add(rowCount);
-                } else {
-                  LongArrayList newList = new LongArrayList();
-                  newList.add(rowCount);
-                  internalMap.put(pair, newList);
-                }
+                updateMap(internalMap, rowCount, pair);
               }
             }
+            map.putAll(internalMap);
             System.out.println((System.nanoTime() - start) / 1000000000d);
           }
         }));
