@@ -24,6 +24,11 @@ import it.unimi.dsi.fastutil.longs.LongBigList;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -284,6 +289,33 @@ public class PositionListIndexTest {
     // Check result
     assertEquals(fixture.getExpectedFirstPliToString(), actualFirstPliRepresentation);
     assertEquals(fixture.getExpectedSecondPliToString(), actualSecondPliRepresentation);
+  }
+
+  /**
+   * Tests whether the plis can be serialized and deserialized correctly.
+   */
+  @Test
+  public void testSerialization() throws IOException, ClassNotFoundException {
+    // Setup
+    // Expected values
+    PositionListIndex expectedFirstPli = fixture.getFirstPLI();
+    PositionListIndex expectedSecondPli = fixture.getSecondPLI();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(out);
+
+    // Execute functionality
+    oos.writeObject(expectedFirstPli);
+    oos.writeObject(expectedSecondPli);
+    byte[] written = out.toByteArray();
+    ByteArrayInputStream in = new ByteArrayInputStream(written);
+    ObjectInputStream ois = new ObjectInputStream(in);
+    PositionListIndex actualFirstPli = (PositionListIndex) ois.readObject();
+    PositionListIndex actualSecondPli = (PositionListIndex) ois.readObject();
+
+    // Check result
+    assertEquals(expectedFirstPli, actualFirstPli);
+    assertEquals(expectedSecondPli, actualSecondPli);
   }
 
 }
