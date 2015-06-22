@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -38,9 +39,10 @@ import java.util.Map;
  * position list index ((0, 1), (2, 4), (3, 5)). Clusters of size 1 are discarded. A position list
  * index should be created using the {@link PLIBuilder}.
  */
-public class PositionListIndex {
+public class PositionListIndex implements Serializable {
 
-  public static final long SINGLETON_VALUE = 0;
+  public static final transient long SINGLETON_VALUE = 0;
+  private static final long serialVersionUID = 2303419645910810239l;
   protected List<LongArrayList> clusters;
   protected long rawKeyError = -1;
 
