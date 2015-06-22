@@ -61,7 +61,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex, ColumnCombinationBitset, ColumnCombinationBitset)}
    *
    * Two {@link PositionListIndex} should be correctly intersected.
    */
@@ -74,14 +74,16 @@ public class PositionListIndexTest {
     PositionListIndex expectedPLI = fixture.getExpectedIntersectedPLI();
 
     // Execute functionality
-    PositionListIndex actualIntersectedPLI = firstPLI.intersect(secondPLI);
+    PositionListIndex
+        actualIntersectedPLI =
+        firstPLI.intersect(secondPLI, new ColumnCombinationBitset(), new ColumnCombinationBitset());
 
     // Check result
     assertEquals(expectedPLI, actualIntersectedPLI);
   }
 
   /**
-   * Test method for {@link PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link PositionListIndex#intersect(PositionListIndex, ColumnCombinationBitset, ColumnCombinationBitset)}
    *
    * The intersection with a unique PLI should be unique.
    *
@@ -95,7 +97,10 @@ public class PositionListIndexTest {
     PositionListIndex secondPLI = fixture.getSecondPLI();
 
     // Execute functionality
-    PositionListIndex actualIntersectedPLI = uniquePLI.intersect(secondPLI);
+    PositionListIndex
+        actualIntersectedPLI =
+        uniquePLI
+            .intersect(secondPLI, new ColumnCombinationBitset(), new ColumnCombinationBitset());
 
     // Check result
     assertTrue(actualIntersectedPLI.isUnique());
@@ -244,7 +249,8 @@ public class PositionListIndexTest {
     assertEquals(fixture.getExpectedFirstPLIRawKeyError(), firstPli.getRawKeyError());
     assertEquals(fixture.getExpectedSecondPLIRawKeyError(), secondPli.getRawKeyError());
     assertEquals(fixture.getExpectedIntersectedPLIRawKeyError(),
-                 firstPli.intersect(secondPli).getRawKeyError());
+                 firstPli.intersect(secondPli, new ColumnCombinationBitset(),
+                                    new ColumnCombinationBitset()).getRawKeyError());
   }
 
   /**

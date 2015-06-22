@@ -78,7 +78,9 @@ public class PLIBenchmarkRunner {
       ColumnCombinationBitset right = ColumnCombinationBitset.fromString(
           columnCombinationRepresentations[1]);
 
-      pliStore.put(left.union(right), pliStore.get(left).intersect(pliStore.get(right)));
+      pliStore.put(left.union(right), pliStore.get(left)
+          .intersect(pliStore.get(right), new ColumnCombinationBitset(),
+                     new ColumnCombinationBitset()));
       numberOfIntersects++;
     }
 
