@@ -34,9 +34,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -48,6 +49,8 @@ public class PositionListIndex implements Serializable {
 
   public static final transient long SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2303419645910810239l;
+  // TODO(zwiener): Make thread pool size accessible from the outside.
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   protected List<LongArrayList> clusters;
   protected long rawKeyError = -1;
 
@@ -185,8 +188,8 @@ public class PositionListIndex implements Serializable {
                           final ConcurrentMap<LongPair, LongArrayList> map) {
     long uniqueValueCount = 0;
 
-    int threadPoolSize = 4;
-    ExecutorService exec = Executors.newFixedThreadPool(threadPoolSize);
+    List<Future<?>> tasks = new LinkedList<>();
+
     try {
       /*long sliceSize = otherPLI.size() / threadPoolSize;
 
@@ -230,31 +233,43 @@ public class PositionListIndex implements Serializable {
       }
     }*/
 
+      System.out.println(otherPLI.clusters.size());
       for (final LongArrayList sameValues : otherPLI.clusters) {
         final long finalUniqueValueCount = uniqueValueCount;
-        final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
-        exec.submit(new Runnable() {
+        tasks.add(exec.submit(new Runnable() {
           @Override
           public void run() {
+            final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
+            long start = System.nanoTime();
+            System.out.println(sameValues.size());
             for (long rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
               if ((materializedPLI.size64() > rowCount) &&
                   (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
                 LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
-                updateMap(internalMap, rowCount, pair);
+
+                if (internalMap.containsKey(pair)) {
+                  LongArrayList currentList = internalMap.get(pair);
+                  currentList.add(rowCount);
+                } else {
+                  LongArrayList newList = new LongArrayList();
+                  newList.add(rowCount);
+                  internalMap.put(pair, newList);
+                }
               }
             }
+            System.out.println((System.nanoTime() - start) / 1000000000d);
           }
-        });
+        }));
         uniqueValueCount++;
       }
     } finally {
-      exec.shutdown();
-      try {
-        exec.awaitTermination(1, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        // FIXME(zwiener): Do something useful with the exception.
-        e.printStackTrace();
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        } catch (InterruptedException | ExecutionException e) {
+          e.printStackTrace();
+        }
       }
     }
 
@@ -310,7 +325,7 @@ public class PositionListIndex implements Serializable {
    */
   public LongBigList asList() {
     // TODO(zwiener): Initialize with approximate size.
-    LongBigList listPli = new LongBigArrayBigList(600000);
+    LongBigList listPli = new LongBigArrayBigList(100000000);
     long uniqueValueCount = SINGLETON_VALUE + 1;
     for (LongArrayList sameValues : clusters) {
       for (long rowIndex : sameValues) {
