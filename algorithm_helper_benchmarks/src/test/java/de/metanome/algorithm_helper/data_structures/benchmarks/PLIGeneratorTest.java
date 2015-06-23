@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Tests for {@link PLIGenerator}

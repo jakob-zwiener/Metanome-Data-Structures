@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+package de.metanome.algorithm_helper.data_structures.benchmarks;
+
+import java.io.BufferedReader;
+
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
 import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
