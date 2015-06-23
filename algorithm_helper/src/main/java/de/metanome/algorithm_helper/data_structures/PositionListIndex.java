@@ -191,7 +191,7 @@ public class PositionListIndex implements Serializable {
     List<Future<?>> tasks = new LinkedList<>();
 
     try {
-      System.out.println(otherPLI.clusters.size());
+      // System.out.println(otherPLI.clusters.size());
       for (final LongArrayList sameValues : otherPLI.clusters) {
         final long finalUniqueValueCount = uniqueValueCount;
         tasks.add(exec.submit(new Runnable() {
@@ -199,7 +199,7 @@ public class PositionListIndex implements Serializable {
           public void run() {
             final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
             long start = System.nanoTime();
-            System.out.println(sameValues.size());
+            // System.out.println(sameValues.size());
             for (long rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
               if ((materializedPLI.size64() > rowCount) &&
@@ -210,7 +210,7 @@ public class PositionListIndex implements Serializable {
               }
             }
             map.putAll(internalMap);
-            System.out.println((System.nanoTime() - start) / 1000000000d);
+            // System.out.println((System.nanoTime() - start) / 1000000000d);
           }
         }));
         uniqueValueCount++;
@@ -220,21 +220,11 @@ public class PositionListIndex implements Serializable {
         try {
           task.get();
         } catch (InterruptedException | ExecutionException e) {
+          // FIXME(zwiener): Rethrow exception.
           e.printStackTrace();
         }
       }
     }
-
-    /*for (LongArrayList sameValues : otherPLI.clusters) {
-      for (long rowCount : sameValues) {
-        if ((materializedPLI.size64() > rowCount) &&
-            (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-          LongPair pair = new LongPair(uniqueValueCount, materializedPLI.get(rowCount));
-          updateMap(map, rowCount, pair);
-        }
-
-      uniqueValueCount++;
-    }*/
   }
 
   protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount,
