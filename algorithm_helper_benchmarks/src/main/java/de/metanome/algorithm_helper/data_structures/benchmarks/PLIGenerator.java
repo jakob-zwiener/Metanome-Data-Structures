@@ -28,7 +28,6 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Generates synthetic plis with given cluster size and number of clusters.
- *
  * @author Jakob Zwiener
  */
 public class PLIGenerator {

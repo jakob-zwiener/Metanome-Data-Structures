@@ -69,7 +69,6 @@ public class PositionListIndex implements Serializable {
    * Intersects the given PositionListIndex with this PositionListIndex returning a new
    * PositionListIndex. For the intersection the smaller PositionListIndex is converted into a
    * HashMap.
-   *
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
@@ -84,7 +83,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Creates a complete (deep) copy of the {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}.
-   *
    * @return cloned PositionListIndex
    */
   @Override
@@ -134,7 +132,8 @@ public class PositionListIndex implements Serializable {
       if (other.clusters != null) {
         return false;
       }
-    } else {
+    }
+    else {
       List<LongOpenHashSet> setCluster = convertClustersToSets(clusters);
       List<LongOpenHashSet> otherSetCluster = convertClustersToSets(other.clusters);
 
@@ -165,7 +164,6 @@ public class PositionListIndex implements Serializable {
   /**
    * Intersects the two given {@link PositionListIndex} and returns the outcome as new
    * PositionListIndex.
-   *
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
@@ -185,7 +183,8 @@ public class PositionListIndex implements Serializable {
   }
 
   protected void buildMap(final PositionListIndex otherPLI, final LongBigList materializedPLI,
-                          final ConcurrentMap<LongPair, LongArrayList> map) {
+                          final ConcurrentMap<LongPair, LongArrayList> map)
+  {
     long uniqueValueCount = 0;
 
     List<Future<?>> tasks = new LinkedList<>();
@@ -203,7 +202,7 @@ public class PositionListIndex implements Serializable {
             for (long rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
               if ((materializedPLI.size64() > rowCount) &&
-                  (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
+                (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
                 LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
 
                 updateMap(internalMap, rowCount, pair);
@@ -215,11 +214,13 @@ public class PositionListIndex implements Serializable {
         }));
         uniqueValueCount++;
       }
-    } finally {
+    }
+    finally {
       for (Future<?> task : tasks) {
         try {
           task.get();
-        } catch (InterruptedException | ExecutionException e) {
+        }
+        catch (InterruptedException | ExecutionException e) {
           // FIXME(zwiener): Rethrow exception.
           e.printStackTrace();
         }
@@ -228,11 +229,13 @@ public class PositionListIndex implements Serializable {
   }
 
   protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount,
-                           LongPair pair) {
+                           LongPair pair)
+  {
     if (map.containsKey(pair)) {
       LongArrayList currentList = map.get(pair);
       currentList.add(rowCount);
-    } else {
+    }
+    else {
       LongArrayList newList = new LongArrayList();
       newList.add(rowCount);
       map.put(pair, newList);
@@ -244,7 +247,6 @@ public class PositionListIndex implements Serializable {
    * reconstruction. As the original values are unknown they are represented by a counter. The
    * position list index ((0, 1), (2, 4), (3, 5)) would be represented by {0=0, 1=0, 2=1, 3=2, 4=1,
    * 5=2}.
-   *
    * @return the pli as hash map
    */
   public Long2LongOpenHashMap asHashMap() {
@@ -262,7 +264,6 @@ public class PositionListIndex implements Serializable {
   /**
    * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
-   *
    * @return the pli as list
    */
   public LongBigList asList() {
@@ -289,7 +290,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Returns the number of non unary clusters.
-   *
    * @return the number of clusters in the {@link PositionListIndex}
    */
   public long size() {
@@ -312,7 +312,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Returns the number of columns to remove in order to make column unique. (raw key error)
-   *
    * @return raw key error
    */
   public long getRawKeyError() {
@@ -336,9 +335,9 @@ public class PositionListIndex implements Serializable {
   @Override
   public String toString() {
     return "PositionListIndex{" +
-           "clusters=" + clusters +
-           ", rawKeyError=" + getRawKeyError() +
-           '}';
+      "clusters=" + clusters +
+      ", rawKeyError=" + getRawKeyError() +
+      '}';
   }
 
 }

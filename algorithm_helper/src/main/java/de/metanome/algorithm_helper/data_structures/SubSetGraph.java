@@ -16,9 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -26,10 +23,12 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+
 /**
  * A graph that allows efficient lookup of all subsets in the graph for a given
  * ColumnCombinationBitset.
- *
  * @author Jens Ehrlich
  * @author Jakob Zwiener
  */
@@ -40,7 +39,6 @@ public class SubSetGraph {
 
   /**
    * Adds a column combination to the graph. Returns the graph after adding.
-   *
    * @param columnCombination a column combination to add
    * @return the graph
    */
@@ -56,9 +54,8 @@ public class SubSetGraph {
 
   /**
    * Adds all columnCombinations in the {@link java.util.Collection} to the graph.
-   *
    * @param columnCombinations a {@link java.util.Collection} of {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}s
-   *                           to add to the graph
+   * to add to the graph
    * @return the graph
    */
   public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations) {
@@ -71,7 +68,6 @@ public class SubSetGraph {
 
   /**
    * Looks for the subgraph or builds and adds a new one.
-   *
    * @param setColumnIndex the column index to perform the lookup on
    * @return the subgraph behind the column index
    */
@@ -88,12 +84,12 @@ public class SubSetGraph {
 
   /**
    * Returns all Subsets of the given ColumnCombination that are in the graph.
-   *
    * @param columnCombinationToQuery given superset to search for subsets
    * @return a list containing all found subsets
    */
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
-      ColumnCombinationBitset columnCombinationToQuery) {
+    ColumnCombinationBitset columnCombinationToQuery)
+  {
     ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
     if (this.isEmpty()) {
       return subsets;
@@ -119,13 +115,13 @@ public class SubSetGraph {
         int currentColumnIndex = columnCombinationToQuery.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
-            currentTask.subGraph.subGraphs.get(currentColumnIndex);
+          currentTask.subGraph.subGraphs.get(currentColumnIndex);
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
           // Add the current column index to the path
           ColumnCombinationBitset path =
-              new ColumnCombinationBitset(currentTask.path)
-                  .addColumn(currentColumnIndex);
+            new ColumnCombinationBitset(currentTask.path)
+              .addColumn(currentColumnIndex);
 
           openTasks.add(new SubSetFindTask(subGraph, i + 1, path));
         }
@@ -139,7 +135,6 @@ public class SubSetGraph {
    * The method returns when the first subset is found in the graph. This is possibly faster than
    * {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}, because a smaller part of the
    * graph must be traversed.
-   *
    * @return whether at least a single subset is contained in the graph
    */
   public boolean containsSubset(ColumnCombinationBitset superset) {
@@ -165,13 +160,13 @@ public class SubSetGraph {
         int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
-            currentTask.subGraph.subGraphs.get(currentColumnIndex);
+          currentTask.subGraph.subGraphs.get(currentColumnIndex);
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
           // Add the current column index to the path
           ColumnCombinationBitset path =
-              new ColumnCombinationBitset(currentTask.path)
-                  .addColumn(currentColumnIndex);
+            new ColumnCombinationBitset(currentTask.path)
+              .addColumn(currentColumnIndex);
 
           openTasks.add(new SubSetFindTask(subGraph, i + 1, path));
         }
@@ -184,7 +179,6 @@ public class SubSetGraph {
   /**
    * The method returns all minimal subsets contained in the graph using a breadth-first search
    * pattern. Non minimal subsets are not traversed.
-   *
    * @return a list containing all minimal subsets
    */
   public Set<ColumnCombinationBitset> getMinimalSubsets() {
@@ -204,21 +198,22 @@ public class SubSetGraph {
           graph.add(currentTask.path);
           result.add(currentTask.path);
         }
-      } else {
+      }
+      else {
         // Iterate over the remaining column indices
         for (int bitNumber : currentTask.subGraph.subGraphs.keySet()) {
           // Get the subgraph behind the current index
           SubSetGraph subGraph =
-              currentTask.subGraph.subGraphs.get(bitNumber);
+            currentTask.subGraph.subGraphs.get(bitNumber);
           // column index is not set on any set --> check next column index
           if (subGraph != null) {
             // Add the current column index to the path
             ColumnCombinationBitset path =
-                new ColumnCombinationBitset(currentTask.path)
-                    .addColumn(bitNumber);
+              new ColumnCombinationBitset(currentTask.path)
+                .addColumn(bitNumber);
 
             openTasks
-                .add(new SubSetFindTask(subGraph, bitNumber + 1, path));
+              .add(new SubSetFindTask(subGraph, bitNumber + 1, path));
           }
         }
       }
@@ -263,9 +258,10 @@ class SubSetFindTask implements Comparable<SubSetFindTask> {
   public ColumnCombinationBitset path;
 
   public SubSetFindTask(
-      SubSetGraph subGraph,
-      int numberOfCheckedColumns,
-      ColumnCombinationBitset path) {
+    SubSetGraph subGraph,
+    int numberOfCheckedColumns,
+    ColumnCombinationBitset path)
+  {
     this.subGraph = subGraph;
     this.numberOfCheckedColumns = numberOfCheckedColumns;
     this.path = path;

@@ -17,18 +17,6 @@
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
 import java.io.BufferedReader;
-
-import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
-import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
-import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
-import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import de.metanome.algorithm_integration.AlgorithmConfigurationException;
-import de.metanome.algorithm_integration.configuration.ConfigurationSettingFileInput;
-import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.backend.input.file.DefaultFileInputGenerator;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -41,14 +29,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
+import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.configuration.ConfigurationSettingFileInput;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+import de.metanome.backend.input.file.DefaultFileInputGenerator;
+
 /**
  * @author Jakob Zwiener
  */
 public class PLIBenchmarkRunner {
 
   public static void main(String[] args)
-      throws IOException, PLIBuildingException, InputGenerationException,
-             AlgorithmConfigurationException {
+    throws IOException, PLIBuildingException, InputGenerationException,
+    AlgorithmConfigurationException
+  {
 
     long beforePLIBuild = System.nanoTime();
 
@@ -62,15 +61,17 @@ public class PLIBenchmarkRunner {
         for (int i = 0; i < 100; i++) {
           plis.add((PositionListIndex) ois.readObject());
         }
-      } catch (ClassNotFoundException e) {
+      }
+      catch (ClassNotFoundException e) {
         e.printStackTrace();
       }
-    } else {
+    }
+    else {
       GenericPLIBuilder
-          pliBuilder =
-          new PLIBuilderSequential(new DefaultFileInputGenerator(
-              new ConfigurationSettingFileInput("ncvoter1m.csv").setSkipDifferingLines(true)
-                  .setHeader(false)));
+        pliBuilder =
+        new PLIBuilderSequential(new DefaultFileInputGenerator(
+          new ConfigurationSettingFileInput("ncvoter1m.csv").setSkipDifferingLines(true)
+            .setHeader(false)));
 
       plis = pliBuilder.getPLIList();
 
@@ -107,10 +108,10 @@ public class PLIBenchmarkRunner {
       String[] columnCombinationRepresentations = line.split(";");
 
       ColumnCombinationBitset
-          left =
-          ColumnCombinationBitset.fromString(columnCombinationRepresentations[0]);
+        left =
+        ColumnCombinationBitset.fromString(columnCombinationRepresentations[0]);
       ColumnCombinationBitset right = ColumnCombinationBitset.fromString(
-          columnCombinationRepresentations[1]);
+        columnCombinationRepresentations[1]);
 
       pliStore.put(left.union(right), pliStore.get(left).intersect(pliStore.get(right)));
       numberOfIntersects++;
@@ -121,9 +122,9 @@ public class PLIBenchmarkRunner {
     long actualSecondsOfBenchmark = (afterPLIIntersect - startPLIIntersects) / 1000000000;
 
     System.out
-        .printf("%f intersections/s over %ds.\n",
-                numberOfIntersects / (double) actualSecondsOfBenchmark,
-                actualSecondsOfBenchmark);
+      .printf("%f intersections/s over %ds.\n",
+        numberOfIntersects / (double) actualSecondsOfBenchmark,
+        actualSecondsOfBenchmark);
 
 
   }

@@ -16,14 +16,10 @@
 
 package de.metanome.test_helper;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Test helper for compareTo.
- *
  * @author Jakob Zwiener
  */
 public class CompareToTester<T extends Comparable> {
@@ -32,7 +28,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * Constructs a CompareToTester with the reference comparable.
-   *
    * @param reference the reference comparable
    */
   public CompareToTester(Comparable<T> reference) {
@@ -41,7 +36,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted to be smaller.
-   *
    * @param smaller smaller comparables
    */
   @SafeVarargs
@@ -54,7 +48,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted not to be smaller.
-   *
    * @param notSmaller not smaller comparables
    */
   @SafeVarargs
@@ -66,7 +59,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted to be equal.
-   *
    * @param equal equal comparables
    */
   @SafeVarargs
@@ -78,7 +70,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted not to be equal.
-   *
    * @param notEqual not equal comparables
    */
   @SafeVarargs
@@ -90,7 +81,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted to be greater.
-   *
    * @param greater greater comparables
    */
   @SafeVarargs
@@ -102,7 +92,6 @@ public class CompareToTester<T extends Comparable> {
 
   /**
    * The given comparables will be asserted not to be greater.
-   *
    * @param notGreater not greater comparables
    */
   @SafeVarargs

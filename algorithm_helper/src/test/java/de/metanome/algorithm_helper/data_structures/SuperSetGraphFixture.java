@@ -54,10 +54,10 @@ public class SuperSetGraphFixture {
   }
 
   public ColumnCombinationBitset[] getExpectedSupersetsFromQuery() {
-    return new ColumnCombinationBitset[]{
-        getExpectedIncludedColumnCombinations().get(1),
-        getExpectedIncludedColumnCombinations().get(3),
-        getExpectedIncludedColumnCombinations().get(4)
+    return new ColumnCombinationBitset[] {
+      getExpectedIncludedColumnCombinations().get(1),
+      getExpectedIncludedColumnCombinations().get(3),
+      getExpectedIncludedColumnCombinations().get(4)
     };
   }
 

@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package de.metanome.algorithm_helper.data_structures.benchmarks;import java.util.concurrent.Executors;
+package de.metanome.algorithm_helper.data_structures.benchmarks;
+
+import java.util.concurrent.Executors;
 
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 
@@ -34,7 +36,7 @@ public class PLISyntheticBenchmark {
         left.intersect(right);
         long afterIntersect = System.nanoTime();
         System.out.println(
-            String.format("intersected in %fs.", (afterIntersect - beforeIntersect) / 1000000000d));
+          String.format("intersected in %fs.", (afterIntersect - beforeIntersect) / 1000000000d));
       }
       PositionListIndex.exec.shutdown();
     }

@@ -16,19 +16,18 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
 import de.metanome.backend.input.InvalidMaskException;
 import de.metanome.backend.input.MaskingRelationalInput;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Constructs a list of {@link PositionListIndex}es from the given {@link
  * de.metanome.algorithm_integration.input.RelationalInputGenerator}. The plis are built
  * sequentially.
- *
  * @author Jakob Zwiener
  * @see GenericPLIBuilder
  * @see PLIBuilder
@@ -58,23 +57,26 @@ public class PLIBuilderSequential implements GenericPLIBuilder {
     int numberOfColumns;
     try {
       numberOfColumns = inputGenerator.generateNewCopy().numberOfColumns();
-    } catch (InputGenerationException e) {
+    }
+    catch (InputGenerationException e) {
       throw new PLIBuildingException(
-          "The pli could not be built, because there was an error generating the input.", e);
+        "The pli could not be built, because there was an error generating the input.", e);
     }
 
     for (int i = 0; i < numberOfColumns; i++) {
       MaskingRelationalInput
-          maskingInput;
+        maskingInput;
       try {
         maskingInput = new MaskingRelationalInput(inputGenerator.generateNewCopy(), i);
-      } catch (InvalidMaskException e) {
+      }
+      catch (InvalidMaskException e) {
         throw new PLIBuildingException(String.format(
-            "The pli could not be build, because the given mask was invalid. Column to mask was: %d.",
-            i), e);
-      } catch (InputGenerationException e) {
+          "The pli could not be build, because the given mask was invalid. Column to mask was: %d.",
+          i), e);
+      }
+      catch (InputGenerationException e) {
         throw new PLIBuildingException(
-            "The pli could not be built, because there was an error generating the input.", e);
+          "The pli could not be built, because there was an error generating the input.", e);
       }
       pliList.add(new PLIBuilder(maskingInput, nullEqualsNull).getPLIList().get(0));
     }
