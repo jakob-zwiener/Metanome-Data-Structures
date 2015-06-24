@@ -25,14 +25,13 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Tests for {@link PLIGenerator}
- *
  * @author Jakob Zwiener
  */
 public class PLIGeneratorTest {
 
   /**
    * Test for {@link PLIGenerator#generatePli(long, int)}
-   *
+   * <p>
    * Plis should be generated in the correct sizes.
    */
   @Test
@@ -44,8 +43,8 @@ public class PLIGeneratorTest {
 
     // Execute functionality
     PositionListIndex
-        actualPli =
-        PLIGenerator.generatePli(expectedClusterSize, expectedNumberOfClusters);
+      actualPli =
+      PLIGenerator.generatePli(expectedClusterSize, expectedNumberOfClusters);
 
     // Check result
     assertEquals(expectedNumberOfClusters, actualPli.getClusters().size());
@@ -56,7 +55,7 @@ public class PLIGeneratorTest {
 
   /**
    * Test for {@link PLIGenerator#generatePli(long, int)}
-   *
+   * <p>
    * Generated plis should be different from each other.
    */
   @Test

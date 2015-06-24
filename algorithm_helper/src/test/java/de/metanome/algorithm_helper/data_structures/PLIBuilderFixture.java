@@ -16,15 +16,7 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.algorithm_integration.input.InputIterationException;
-import de.metanome.algorithm_integration.input.RelationalInput;
-import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,8 +24,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import de.metanome.algorithm_integration.input.InputGenerationException;
+import de.metanome.algorithm_integration.input.InputIterationException;
+import de.metanome.algorithm_integration.input.RelationalInput;
+import de.metanome.algorithm_integration.input.RelationalInputGenerator;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 public class PLIBuilderFixture {
 
@@ -50,16 +48,17 @@ public class PLIBuilderFixture {
   }
 
   public RelationalInputGenerator getInputGenerator()
-      throws InputGenerationException, InputIterationException {
+    throws InputGenerationException, InputIterationException
+  {
     RelationalInputGenerator inputGenerator = mock(RelationalInputGenerator.class);
     this.input = this.getRelationalInput();
     when(inputGenerator.generateNewCopy())
-        .thenAnswer(new Answer<RelationalInput>() {
-          public RelationalInput answer(InvocationOnMock invocation) throws Throwable {
-            rowPosition = 0;
-            return input;
-          }
-        });
+      .thenAnswer(new Answer<RelationalInput>() {
+        public RelationalInput answer(InvocationOnMock invocation) throws Throwable {
+          rowPosition = 0;
+          return input;
+        }
+      });
     return inputGenerator;
   }
 

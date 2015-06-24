@@ -25,7 +25,6 @@ public interface GenericPLIBuilder {
 
   /**
    * Builds a {@link PositionListIndex} for every column in the input.
-   *
    * @return list of plis for all columns
    * @throws PLIBuildingException if the plis or one of the plis cannot be constructed
    */

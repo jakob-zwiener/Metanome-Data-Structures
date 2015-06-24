@@ -17,15 +17,14 @@
 package de.metanome.algorithm_helper.data_structures;
 
 
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 /**
  * Tests for {@link PLIBuildingException}
- *
  * @author Jakob Zwiener
  */
 public class PLIBuildingExceptionTest {
@@ -33,7 +32,7 @@ public class PLIBuildingExceptionTest {
 
   /**
    * Test for {@link PLIBuildingException#PLIBuildingException(String)}
-   *
+   * <p>
    * The exception should store the message.
    */
   @Test
@@ -46,7 +45,8 @@ public class PLIBuildingExceptionTest {
     String actualMessage;
     try {
       throw new PLIBuildingException(expectedMessage);
-    } catch (PLIBuildingException e) {
+    }
+    catch (PLIBuildingException e) {
       actualMessage = e.getMessage();
     }
 
@@ -56,7 +56,7 @@ public class PLIBuildingExceptionTest {
 
   /**
    * Test method for {@link PLIBuildingException#PLIBuildingException(String, Throwable)}
-   *
+   * <p>
    * The exception should store the message and the cause.
    */
   @Test
@@ -71,7 +71,8 @@ public class PLIBuildingExceptionTest {
     Throwable actualCause;
     try {
       throw new PLIBuildingException(expectedMessage, expectedCause);
-    } catch (PLIBuildingException e) {
+    }
+    catch (PLIBuildingException e) {
       actualMessage = e.getMessage();
       actualCause = e.getCause();
     }
