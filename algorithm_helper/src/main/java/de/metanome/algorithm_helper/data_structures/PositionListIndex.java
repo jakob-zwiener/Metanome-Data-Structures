@@ -16,14 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +24,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
+import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -61,7 +61,6 @@ public class PositionListIndex implements Serializable {
    * Intersects the given PositionListIndex with this PositionListIndex returning a new
    * PositionListIndex. For the intersection the smaller PositionListIndex is converted into a
    * HashMap.
-   *
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
@@ -76,7 +75,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Creates a complete (deep) copy of the {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}.
-   *
    * @return cloned PositionListIndex
    */
   @Override
@@ -126,7 +124,8 @@ public class PositionListIndex implements Serializable {
       if (other.clusters != null) {
         return false;
       }
-    } else {
+    }
+    else {
       List<LongOpenHashSet> setCluster = convertClustersToSets(clusters);
       List<LongOpenHashSet> otherSetCluster = convertClustersToSets(other.clusters);
 
@@ -157,7 +156,6 @@ public class PositionListIndex implements Serializable {
   /**
    * Intersects the two given {@link PositionListIndex} and returns the outcome as new
    * PositionListIndex.
-   *
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
@@ -177,12 +175,13 @@ public class PositionListIndex implements Serializable {
   }
 
   protected void buildMap(PositionListIndex otherPLI, LongBigList materializedPLI,
-                          Map<LongPair, LongArrayList> map) {
+                          Map<LongPair, LongArrayList> map)
+  {
     long uniqueValueCount = 0;
     for (LongArrayList sameValues : otherPLI.clusters) {
       for (long rowCount : sameValues) {
         if ((materializedPLI.size64() > rowCount) &&
-            (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
+          (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
           LongPair pair = new LongPair(uniqueValueCount, materializedPLI.get(rowCount));
           updateMap(map, rowCount, pair);
         }
@@ -195,7 +194,8 @@ public class PositionListIndex implements Serializable {
     if (map.containsKey(pair)) {
       LongArrayList currentList = map.get(pair);
       currentList.add(rowCount);
-    } else {
+    }
+    else {
       LongArrayList newList = new LongArrayList();
       newList.add(rowCount);
       map.put(pair, newList);
@@ -207,7 +207,6 @@ public class PositionListIndex implements Serializable {
    * reconstruction. As the original values are unknown they are represented by a counter. The
    * position list index ((0, 1), (2, 4), (3, 5)) would be represented by {0=0, 1=0, 2=1, 3=2, 4=1,
    * 5=2}.
-   *
    * @return the pli as hash map
    */
   public Long2LongOpenHashMap asHashMap() {
@@ -225,7 +224,6 @@ public class PositionListIndex implements Serializable {
   /**
    * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
-   *
    * @return the pli as list
    */
   public LongBigList asList() {
@@ -252,7 +250,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Returns the number of non unary clusters.
-   *
    * @return the number of clusters in the {@link PositionListIndex}
    */
   public long size() {
@@ -275,7 +272,6 @@ public class PositionListIndex implements Serializable {
 
   /**
    * Returns the number of columns to remove in order to make column unique. (raw key error)
-   *
    * @return raw key error
    */
   public long getRawKeyError() {
@@ -299,9 +295,9 @@ public class PositionListIndex implements Serializable {
   @Override
   public String toString() {
     return "PositionListIndex{" +
-           "clusters=" + clusters +
-           ", rawKeyError=" + getRawKeyError() +
-           '}';
+      "clusters=" + clusters +
+      ", rawKeyError=" + getRawKeyError() +
+      '}';
   }
 
 }

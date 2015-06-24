@@ -16,17 +16,16 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.input.InputIterationException;
-import de.metanome.algorithm_integration.input.RelationalInput;
-
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+
+import de.metanome.algorithm_integration.input.InputIterationException;
+import de.metanome.algorithm_integration.input.RelationalInput;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Constructs a list of {@link PositionListIndex}es from the given {@link
@@ -58,9 +57,10 @@ public class PLIBuilder implements GenericPLIBuilder {
     List<List<LongArrayList>> rawPLIs;
     try {
       rawPLIs = getRawPLIs();
-    } catch (InputIterationException e) {
+    }
+    catch (InputIterationException e) {
       throw new PLIBuildingException(
-          "The pli could not be built, because there was an error iterating over the input.", e);
+        "The pli could not be built, because there was an error iterating over the input.", e);
     }
     List<PositionListIndex> result = new ArrayList<>();
     for (List<LongArrayList> rawPLI : rawPLIs) {
@@ -71,7 +71,6 @@ public class PLIBuilder implements GenericPLIBuilder {
 
   /**
    * Calculates the raw PositionListIndices
-   *
    * @return list of associated clusters (PLI)
    * @throws InputIterationException if the input cannot be iterated
    */
@@ -86,13 +85,13 @@ public class PLIBuilder implements GenericPLIBuilder {
   /**
    * Returns the number of tuples in the input after calculating the plis. Can be used after
    * calculateUnpurgedPLI was called.
-   *
    * @return number of tuples in dataset
    */
   public long getNumberOfTuples() throws InputIterationException {
     if (this.numberOfTuples == -1) {
       throw new InputIterationException();
-    } else {
+    }
+    else {
       return this.numberOfTuples;
     }
   }
@@ -100,7 +99,6 @@ public class PLIBuilder implements GenericPLIBuilder {
   /**
    * Builds a {@link TreeSet} of the values of every column in the input. "null" values are filtered
    * as they are not required for spider.
-   *
    * @return all comlumns' sorted distinct values
    * @throws InputIterationException if the input cannot be iterated
    */
@@ -148,7 +146,8 @@ public class PLIBuilder implements GenericPLIBuilder {
 
     if (columns.get(columnCount).containsKey(attributeCell)) {
       columns.get(columnCount).get(attributeCell).add(rowCount);
-    } else {
+    }
+    else {
       LongArrayList newList = new LongArrayList();
       newList.add(rowCount);
       columns.get(columnCount).put(attributeCell, newList);

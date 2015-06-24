@@ -16,12 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.ColumnCombination;
-import de.metanome.algorithm_integration.ColumnIdentifier;
-
-import org.apache.lucene.util.ArrayUtil;
-import org.apache.lucene.util.OpenBitSet;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -30,10 +24,15 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
+import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.OpenBitSet;
+
+import de.metanome.algorithm_integration.ColumnCombination;
+import de.metanome.algorithm_integration.ColumnIdentifier;
+
 /**
  * A representation for column combinations (attribute sets) using {@link
  * org.apache.lucene.util.OpenBitSet}s.
- *
  * @author Jakob Zwiener
  * @author Jens Ehrlich
  * @author Lukas Schulze
@@ -60,7 +59,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Creates a copy of the current instance.
-   *
    * @param columnCombination that is cloned to the new instance
    */
   public ColumnCombinationBitset(ColumnCombinationBitset columnCombination) {
@@ -70,7 +68,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Converts a string representation (generated through the {@link ColumnCombinationBitset#toString()}
    * method into a {@link ColumnCombinationBitset}).
-   *
    * @param representation the string representation
    * @return the parsed ColumnCombinationBitset
    */
@@ -93,7 +90,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Sets the given {@link OpenBitSet}, the previous state is overwritten!
-   *
    * @param bitset set on the existing ColumnCombinationBitset
    * @return the instance
    */
@@ -106,7 +102,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Adds a column to the bit set.
-   *
    * @param columnIndex of column to add
    * @return the column combination
    */
@@ -122,7 +117,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Removes a column from the bit set.
-   *
    * @param columnIndex of column to remove
    * @return the column combination
    */
@@ -161,7 +155,8 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
       if (other.bitset != null) {
         return false;
       }
-    } else if (!bitset.equals(other.bitset)) {
+    }
+    else if (!bitset.equals(other.bitset)) {
       return false;
     }
     return size == other.size;
@@ -184,7 +179,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns true if the potentialSuperset contains all columns of this column combination.
-   *
    * @param potentialSuperset that this column could be a subset of
    * @return potentialSuperset is a super set
    */
@@ -196,7 +190,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * Returns true iff the potentialProperSuperSet contains all columns of this column combination
    * and the potentialProperSuperSet is not equal to this column combination (e.g. proper
    * superset).
-   *
    * @param potentialProperSuperSet that this column combination could be a proper subset of
    * @return potentialProperSuperSet is a real superset
    */
@@ -207,7 +200,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Returns true iff the potentialSubset contains no columns that are not in this column
    * combination.
-   *
    * @param potentialSubset that this column could be a superset of
    * @return potentialSubset is a sub set
    */
@@ -221,7 +213,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * Returns true iff the potentialProperSubset contains no columns that are not in this column
    * combination and the potentialProperSubset is not equal to this column combination (e.g. real
    * subset).
-   *
    * @param potentialProperSubset that this column could be a proper superset of
    * @return potentialProperSubset is a real subset
    */
@@ -233,7 +224,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * Returns all subset of the column combination (including the empty {@link
    * ColumnCombinationBitset}). The subsets include the original column combination (not proper
    * subsets).
-   *
    * @return subsets
    */
   public List<ColumnCombinationBitset> getAllSubsets() {
@@ -258,7 +248,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns all subset column combinations of size n.
-   *
    * @param n cardinality of subsets
    * @return all subsets of the column combinations with n columns
    */
@@ -269,19 +258,20 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Returns all subset column combinations of size n that are superset of the subset (first
    * parameter).
-   *
    * @param subSet that column combinations are superset of
-   * @param n      cardinality of subsets
+   * @param n cardinality of subsets
    * @return the n-subsets
    */
   public List<ColumnCombinationBitset> getNSubsetColumnCombinationsSupersetOf(
-      ColumnCombinationBitset subSet, int n) {
+    ColumnCombinationBitset subSet, int n)
+  {
     //If n is closer to the super (this column combination) set the top down strategy should be chosen
     //otherwise bottom up generation is used.
     // If n is closer to the super set go top down.
     if ((this.size() - n) < (n - subSet.size())) {
       return getNSubsetColumnCombinationsSupersetOfTopDown(subSet, n);
-    } else {
+    }
+    else {
       return getNSubsetColumnCombinationsSupersetOfBottomUp(subSet, n);
     }
 
@@ -289,11 +279,12 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * @param subSet that column combinations are superset of
-   * @param n      cardinality of subsets
+   * @param n cardinality of subsets
    * @return the n-subsets
    */
   protected List<ColumnCombinationBitset> getNSubsetColumnCombinationsSupersetOfBottomUp(
-      ColumnCombinationBitset subSet, int n) {
+    ColumnCombinationBitset subSet, int n)
+  {
 
     if ((n > this.size()) || (n < subSet.size())) {
       return new LinkedList<>();
@@ -317,11 +308,12 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * @param subSet that column combinations are superset of
-   * @param n      cardinality of subsets
+   * @param n cardinality of subsets
    * @return the n-subsets
    */
   protected List<ColumnCombinationBitset> getNSubsetColumnCombinationsSupersetOfTopDown(
-      ColumnCombinationBitset subSet, int n) {
+    ColumnCombinationBitset subSet, int n)
+  {
 
     if ((n > this.size()) || (n < subSet.size())) {
       return new LinkedList<>();
@@ -335,7 +327,7 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
       while (!currentLevel.isEmpty()) {
         ColumnCombinationBitset currentColumnCombination = currentLevel.remove(0);
         for (ColumnCombinationBitset currentSubset : currentColumnCombination
-            .getDirectSubsetsSupersetOf(subSet)) {
+          .getDirectSubsetsSupersetOf(subSet)) {
           if (currentSubset.containsSubset(subSet)) {
             nextLevel.add(currentSubset);
           }
@@ -350,7 +342,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns a list of all set column indices.
-   *
    * @return the list of indices with set bits
    */
   public List<Integer> getSetBits() {
@@ -362,7 +353,8 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
       if (setBitIndex == -1) {
         break;
-      } else {
+      }
+      else {
         setBits.add(setBitIndex);
       }
 
@@ -374,7 +366,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns all the cleared bits within the maximum of all the number of columns.
-   *
    * @param numberOfColumns the maximum number of columns
    * @return all the cleared bits in the number of columns
    */
@@ -393,12 +384,12 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns the difference between the two sets.
-   *
    * @param otherColumnCombination column combination to be subtracted
    * @return The difference {@link ColumnCombinationBitset}
    */
   public ColumnCombinationBitset minus(
-      ColumnCombinationBitset otherColumnCombination) {
+    ColumnCombinationBitset otherColumnCombination)
+  {
 
     OpenBitSet temporaryBitset = bitset.clone();
     temporaryBitset.andNot(otherColumnCombination.bitset);
@@ -408,7 +399,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns the subset column combinations of size one.
-   *
    * @return the contained 1 column combinations
    */
   public List<ColumnCombinationBitset> getContainedOneColumnCombinations() {
@@ -425,7 +415,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * Union should return a {@link ColumnCombinationBitset} with all the columns from both column
    * combinations and no other columns. The original {@link ColumnCombinationBitset}s should remain
    * unchanged.
-   *
    * @param other column combination to be unioned
    * @return the union of the two column combinations
    */
@@ -439,7 +428,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * Intersect should return a {@link ColumnCombinationBitset} with only the columns that are
    * contained in both combinations. The original {@link ColumnCombinationBitset}s should remain
    * unchanged.
-   *
    * @param other column combination to be intersected
    * @return the intersection of the two column combinations
    */
@@ -451,7 +439,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Generates the direct super sets. Supersets are bounded by the maximum number of columns.
-   *
    * @param numberOfColumns maximum number of columns
    * @return the direct super sets
    */
@@ -461,7 +448,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Generates the direct super sets. Supersets are bounded by the maximum superset.
-   *
    * @param maximalSuperset maximum superset column combination
    * @return the direct super sets
    */
@@ -482,7 +468,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Generates the direct subset column combinations.
-   *
    * @return the direct sub sets
    */
   public List<ColumnCombinationBitset> getDirectSubsets() {
@@ -491,7 +476,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Generates the direct subset column combinations that are superset of the given sub set.
-   *
    * @param subSet that all generated subsets are super set of
    * @return the direct sub sets super set of the sub set
    */
@@ -506,17 +490,18 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Generates the direct subset column combinations that are superset of the given sub set. If the
    * subSet is null all direct subsets are returned.
-   *
    * @param subSet that all generated subsets are super set of
    * @return the direct sub sets super set of the sub set
    */
   protected List<ColumnCombinationBitset> getDirectSubsetsSupersetOfFast(
-      ColumnCombinationBitset subSet) {
+    ColumnCombinationBitset subSet)
+  {
 
     ColumnCombinationBitset columnsToRemove;
     if (subSet == null) {
       columnsToRemove = this;
-    } else {
+    }
+    else {
       columnsToRemove = this.minus(subSet);
     }
 
@@ -534,7 +519,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Returns the number of columns in the combination.
-   *
    * @return the number of columns in the combination.
    */
   public int size() {
@@ -551,13 +535,13 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Returns the {@link ColumnCombination} with the correct name of the relation and the column
    * names.
-   *
    * @param relationName the relation name
-   * @param columnNames  the name of the columns
+   * @param columnNames the name of the columns
    * @return a {@link ColumnCombination}
    */
   public ColumnCombination createColumnCombination(String relationName,
-                                                   List<String> columnNames) {
+                                                   List<String> columnNames)
+  {
     ColumnIdentifier[] identifierList = new ColumnIdentifier[size()];
     int i = 0;
     for (Integer columnIndex : getSetBits()) {
@@ -571,7 +555,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
   /**
    * Resets all bits and sets all bits with indeces smaller than dimension. E.g. dimension 4
    * generate 111100000...
-   *
    * @param dimension maximum number of columns
    * @return the {@link ColumnCombinationBitset}
    */
@@ -608,7 +591,6 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
 
   /**
    * Calculates and returns the inverted bitset.
-   *
    * @param size of inverted 0 bits on the left side
    * @return the inverted {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}
    */
@@ -623,7 +605,8 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
     long sizeComparator = this.bitset.cardinality() - other.bitset.cardinality();
     if (sizeComparator != 0) {
       return (int) sizeComparator;
-    } else {
+    }
+    else {
       Iterator<Integer> iterator = this.getSetBits().iterator();
       Iterator<Integer> iterator2 = other.getSetBits().iterator();
       while (iterator.hasNext()) {

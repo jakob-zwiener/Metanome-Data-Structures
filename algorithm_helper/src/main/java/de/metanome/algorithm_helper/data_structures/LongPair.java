@@ -18,7 +18,6 @@ package de.metanome.algorithm_helper.data_structures;
 
 /**
  * A pair of long values.
- *
  * @author Jakob Zwiener
  */
 public class LongPair implements Comparable<LongPair> {

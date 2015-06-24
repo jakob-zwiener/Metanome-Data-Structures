@@ -16,20 +16,19 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.algorithm_integration.input.InputIterationException;
+import static org.junit.Assert.*;
+
+import java.util.List;
 
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-import static org.junit.Assert.assertThat;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+import de.metanome.algorithm_integration.input.InputIterationException;
 
 /**
  * Tests for {@link PLIBuilderSequential}
- *
  * @author Jakob Zwiener
  */
 public class PLIBuilderSequentialTest {
@@ -53,8 +52,8 @@ public class PLIBuilderSequentialTest {
     // Expected values
     List<PositionListIndex> expectedPLIList = fixture.getExpectedPLIList(true);
     PositionListIndex[]
-        expectedPLIArray =
-        expectedPLIList.toArray(new PositionListIndex[expectedPLIList.size()]);
+      expectedPLIArray =
+      expectedPLIList.toArray(new PositionListIndex[expectedPLIList.size()]);
 
     // Execute functionality
     List<PositionListIndex> actualPLIList = builder.getPLIList();
@@ -69,14 +68,15 @@ public class PLIBuilderSequentialTest {
    */
   @Test
   public void testCalculatePLINullNotEqualsNull()
-      throws PLIBuildingException, InputGenerationException, InputIterationException {
+    throws PLIBuildingException, InputGenerationException, InputIterationException
+  {
     // Setup
     this.builder = new PLIBuilderSequential(fixture.getInputGenerator(), false);
     // Expected values
     List<PositionListIndex> expectedPLIList = fixture.getExpectedPLIList(false);
     PositionListIndex[]
-        expectedPLIArray =
-        expectedPLIList.toArray(new PositionListIndex[expectedPLIList.size()]);
+      expectedPLIArray =
+      expectedPLIList.toArray(new PositionListIndex[expectedPLIList.size()]);
 
     // Execute functionality
     List<PositionListIndex> actualPLIList = builder.getPLIList();

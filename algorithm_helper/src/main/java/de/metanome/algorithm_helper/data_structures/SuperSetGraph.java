@@ -25,7 +25,6 @@ import java.util.Collection;
  * a wrapper for {@link SubSetGraph} by inverting all input and output {@link
  * de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}s to find supersets instead
  * of subsets.
- *
  * @author Jens Ehrlich
  */
 
@@ -41,9 +40,8 @@ public class SuperSetGraph {
   /**
    * Adds a {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset} to the
    * graph.
-   *
    * @param columnCombination the {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}
-   *                          to add
+   * to add
    * @return the graph
    */
   public SuperSetGraph add(ColumnCombinationBitset columnCombination) {
@@ -54,7 +52,6 @@ public class SuperSetGraph {
   /**
    * Adds  all {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset} to the
    * graph
-   *
    * @param columnCombinations to be added to the graph
    * @return the graph
    */
@@ -68,15 +65,14 @@ public class SuperSetGraph {
   /**
    * Returns all supersets of the given {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}
    * that are in the graph
-   *
    * @param subset given subset to search for supersets
    * @return a list containing all found supersets
    */
   public ArrayList<ColumnCombinationBitset> getExistingSupersets(ColumnCombinationBitset subset) {
     ArrayList<ColumnCombinationBitset> result = new ArrayList<>();
     ArrayList<ColumnCombinationBitset>
-        invertedColumns =
-        graph.getExistingSubsets(subset.invert(numberOfColumns));
+      invertedColumns =
+      graph.getExistingSubsets(subset.invert(numberOfColumns));
 
     for (ColumnCombinationBitset bitset : invertedColumns) {
       result.add(bitset.invert(numberOfColumns));
@@ -88,7 +84,6 @@ public class SuperSetGraph {
    * The method returns when the first superset is found in the graph. This is possibly faster than
    * {@link SuperSetGraph#getExistingSupersets(ColumnCombinationBitset)}, because a smaller part of
    * the graph must be traversed.
-   *
    * @return whether at least a single superset is contained in the graph
    */
   public boolean containsSuperset(ColumnCombinationBitset subset) {
