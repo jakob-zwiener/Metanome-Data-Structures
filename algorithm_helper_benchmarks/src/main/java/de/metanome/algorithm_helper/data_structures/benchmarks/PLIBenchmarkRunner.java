@@ -14,18 +14,29 @@
  * limitations under the License.
  */
 
+package de.metanome.algorithm_helper.data_structures.benchmarks;
+
+import java.io.BufferedReader;
+
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
 import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.configuration.ConfigurationSettingFileInput;
 import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.backend.input.file.DefaultFileInputGenerator;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,15 +47,37 @@ import java.util.Map;
 public class PLIBenchmarkRunner {
 
   public static void main(String[] args)
-      throws IOException, PLIBuildingException, InputGenerationException {
+      throws IOException, PLIBuildingException, InputGenerationException,
+             AlgorithmConfigurationException {
 
     long beforePLIBuild = System.nanoTime();
 
-    GenericPLIBuilder
-        pliBuilder =
-        new PLIBuilderSequential(new DefaultFileInputGenerator(new File("ncvoter10k.csv")));
+    List<PositionListIndex> plis;
+    String plisFileName = "ncvoter1m.plis";
+    if (new File(plisFileName).exists()) {
+      FileInputStream fin = new FileInputStream(plisFileName);
+      ObjectInputStream ois = new ObjectInputStream(fin);
+      plis = new ArrayList<>(100);
+      try {
+        for (int i = 0; i < 100; i++) {
+          plis.add((PositionListIndex) ois.readObject());
+        }
+      } catch (ClassNotFoundException e) {
+        e.printStackTrace();
+      }
+    } else {
+      GenericPLIBuilder
+          pliBuilder =
+          new PLIBuilderSequential(new DefaultFileInputGenerator(
+              new ConfigurationSettingFileInput("ncvoter1m.csv").setSkipDifferingLines(true)
+                  .setHeader(false)));
 
-    List<PositionListIndex> plis = pliBuilder.getPLIList();
+      plis = pliBuilder.getPLIList();
+
+      FileOutputStream fout = new FileOutputStream(plisFileName);
+      ObjectOutputStream oos = new ObjectOutputStream(fout);
+      oos.writeObject(plis);
+    }
 
     long afterPLIBuild = System.nanoTime();
 
