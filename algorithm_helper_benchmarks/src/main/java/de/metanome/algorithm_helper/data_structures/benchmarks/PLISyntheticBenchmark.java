@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+package de.metanome.algorithm_helper.data_structures.benchmarks;import java.util.concurrent.Executors;
 
-import java.util.concurrent.Executors;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 
 /**
  * @author Jakob Zwiener
