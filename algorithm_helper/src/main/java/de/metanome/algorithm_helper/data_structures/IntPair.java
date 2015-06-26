@@ -17,25 +17,23 @@
 package de.metanome.algorithm_helper.data_structures;
 
 /**
- * A pair of long values.
+ * A pair of int values.
  * @author Jakob Zwiener
  */
-public class LongPair implements Comparable<LongPair> {
+public class IntPair implements Comparable<IntPair> {
 
-  private long first;
-  private long second;
+  private int first;
+  private int second;
 
-  public LongPair(long first, long second) {
+  public IntPair(int first, int second) {
     this.first = first;
     this.second = second;
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (int) (first ^ (first >>> 32));
-    result = prime * result + (int) (second ^ (second >>> 32));
+    int result = first;
+    result = 31 * result + second;
     return result;
   }
 
@@ -50,45 +48,44 @@ public class LongPair implements Comparable<LongPair> {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    LongPair other = (LongPair) obj;
+    IntPair other = (IntPair) obj;
     if (first != other.first) {
       return false;
     }
     return second == other.second;
   }
 
-  public long getFirst() {
+  public int getFirst() {
     return this.first;
   }
 
-  public void setFirst(long first) {
+  public void setFirst(int first) {
     this.first = first;
   }
 
-  public long getSecond() {
+  public int getSecond() {
     return this.second;
   }
 
-  public void setSecond(long second) {
+  public void setSecond(int second) {
     this.second = second;
   }
 
   @Override
   public String toString() {
-    return "LongPair{" + first + ", " + second + '}';
+    return "IntPair{" + first + ", " + second + '}';
   }
 
   @Override
-  public int compareTo(LongPair other) {
+  public int compareTo(IntPair other) {
     if (other == null) {
       return 1;
     }
 
     if (other.first == this.first) {
-      return (int) (this.second - other.second);
+      return this.second - other.second;
     }
-    return (int) (this.first - other.first);
+    return this.first - other.first;
   }
-
 
 }
