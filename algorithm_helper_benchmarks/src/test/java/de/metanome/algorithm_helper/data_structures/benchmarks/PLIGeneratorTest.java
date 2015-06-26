@@ -16,12 +16,14 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import static org.junit.Assert.*;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import org.junit.Test;
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Tests for {@link PLIGenerator}
@@ -30,7 +32,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 public class PLIGeneratorTest {
 
   /**
-   * Test for {@link PLIGenerator#generatePli(long, int)}
+   * Test for {@link PLIGenerator#generatePli(int, int)}
    * <p>
    * Plis should be generated in the correct sizes.
    */
@@ -48,13 +50,13 @@ public class PLIGeneratorTest {
 
     // Check result
     assertEquals(expectedNumberOfClusters, actualPli.getClusters().size());
-    for (LongArrayList cluster : actualPli.getClusters()) {
+    for (IntArrayList cluster : actualPli.getClusters()) {
       assertEquals(expectedClusterSize, cluster.size());
     }
   }
 
   /**
-   * Test for {@link PLIGenerator#generatePli(long, int)}
+   * Test for {@link PLIGenerator#generatePli(int, int)}
    * <p>
    * Generated plis should be different from each other.
    */
