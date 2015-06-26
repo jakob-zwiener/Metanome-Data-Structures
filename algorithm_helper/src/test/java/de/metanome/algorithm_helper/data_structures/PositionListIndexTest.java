@@ -16,7 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import static org.junit.Assert.*;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,13 +31,11 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}
@@ -103,31 +106,31 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {{@link PositionListIndex#addOrExtendList(LongBigList, long, long)}}
+   * Test method for {{@link PositionListIndex#addOrExtendList(IntList, int, int)}}
    * <p>
    * When adding a value beyond the size of the list, the list should be extended and padded with the SINGLETON_VALUE constant.
    */
   @Test
   public void testAddOrExtendList() {
     // Setup
-    LongBigList list = new LongBigArrayBigList();
+    IntList list = new IntArrayList();
     PositionListIndex pli = fixture.getFirstPLI();
-    long index1 = 23;
-    long index2 = 11;
+    int index1 = 23;
+    int index2 = 11;
     // Expected values
-    long expectedValue = 42;
+    int expectedValue = 42;
 
     // Execute functionality
     pli.addOrExtendList(list, expectedValue, index1);
     pli.addOrExtendList(list, expectedValue, index2);
 
     // Check result
-    assertEquals(expectedValue, (long) list.get(index1));
-    for (long i = 0; i < index2; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    assertEquals(expectedValue, (int) list.get(index1));
+    for (int i = 0; i < index2; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
     }
-    for (long i = index2 + 1; i < index1; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    for (int i = index2 + 1; i < index1; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
     }
   }
 
@@ -178,7 +181,7 @@ public class PositionListIndexTest {
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
     //expected Values
-    Long2LongOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
+    Int2IntOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
 
     assertEquals(expectedHashMap, firstPLI.asHashMap());
   }
@@ -192,7 +195,7 @@ public class PositionListIndexTest {
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
     //expected Values
-    LongBigList expectedList = fixture.getFirstPLIAsList();
+    IntList expectedList = fixture.getFirstPLIAsList();
 
     assertEquals(expectedList, firstPLI.asList());
   }
@@ -218,7 +221,7 @@ public class PositionListIndexTest {
   @Test
   public void testIsEmptyUnique() {
     // Setup
-    List<LongArrayList> clusters = new LinkedList<>();
+    List<IntArrayList> clusters = new LinkedList<>();
     PositionListIndex emptyPli = new PositionListIndex(clusters);
     PositionListIndex nonEmptyPli = fixture.getFirstPLI();
 

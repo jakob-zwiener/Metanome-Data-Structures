@@ -16,15 +16,16 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 /**
  * Generates synthetic plis with given cluster size and number of clusters.
@@ -44,16 +45,16 @@ public class PLIGenerator {
     }
   }
 
-  public static PositionListIndex generatePli(long clusterSize, int numberOfClusters) {
-    List<LongArrayList> clusters = new LinkedList<>();
+  public static PositionListIndex generatePli(int clusterSize, int numberOfClusters) {
+    List<IntArrayList> clusters = new LinkedList<>();
 
-    long range = clusterSize * numberOfClusters;
+    int range = clusterSize * numberOfClusters;
 
     for (int i = 0; i < numberOfClusters; i++) {
-      LongArrayList cluster = new LongArrayList((int) clusterSize);
-      for (long j = 0; j < clusterSize; j++) {
+      IntArrayList cluster = new IntArrayList(clusterSize);
+      for (int j = 0; j < clusterSize; j++) {
 
-        cluster.add((long) (rand.nextDouble() * range));
+        cluster.add(rand.nextInt(range));
       }
       clusters.add(cluster);
     }
