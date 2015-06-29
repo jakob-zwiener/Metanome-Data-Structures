@@ -16,12 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +24,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -42,10 +42,12 @@ public class PositionListIndex implements Serializable {
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
   protected List<IntArrayList> clusters;
+  protected int numberOfRows;
   protected int rawKeyError = -1;
 
-  public PositionListIndex(List<IntArrayList> clusters) {
+  public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
+    this.numberOfRows = numberOfRows;
   }
 
   /**
@@ -53,6 +55,7 @@ public class PositionListIndex implements Serializable {
    */
   public PositionListIndex() {
     this.clusters = new ArrayList<>();
+    this.numberOfRows = 0;
   }
 
   /**
@@ -71,6 +74,10 @@ public class PositionListIndex implements Serializable {
     return clusters;
   }
 
+  public int getNumberOfRows() {
+    return numberOfRows;
+  }
+
   /**
    * Creates a complete (deep) copy of the {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}.
    * @return cloned PositionListIndex
@@ -82,7 +89,7 @@ public class PositionListIndex implements Serializable {
       newClusters.add(cluster.clone());
     }
 
-    PositionListIndex clone = new PositionListIndex(newClusters);
+    PositionListIndex clone = new PositionListIndex(newClusters, this.numberOfRows);
     clone.rawKeyError = this.rawKeyError;
     return clone;
   }
@@ -90,9 +97,8 @@ public class PositionListIndex implements Serializable {
   @Override
   public int hashCode() {
     final int prime = 31;
-    int result = 1;
 
-    List<IntOpenHashSet> setCluster = convertClustersToSets(clusters);
+    List<IntOpenHashSet> setCluster = convertClustersToSets(getClusters());
 
     Collections.sort(setCluster, new Comparator<IntSet>() {
 
@@ -101,8 +107,7 @@ public class PositionListIndex implements Serializable {
         return o1.hashCode() - o2.hashCode();
       }
     });
-    result = prime * result + (setCluster.hashCode());
-    return result;
+    return prime * setCluster.hashCode() + getNumberOfRows();
   }
 
   @Override
@@ -118,6 +123,9 @@ public class PositionListIndex implements Serializable {
       return false;
     }
     PositionListIndex other = (PositionListIndex) obj;
+    if (getNumberOfRows() != other.getNumberOfRows()) {
+      return false;
+    }
     if (clusters == null) {
       if (other.clusters != null) {
         return false;
@@ -158,7 +166,7 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    IntList materializedPLI = this.asList();
+    int[] materializedPLI = this.asList();
     Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
@@ -169,18 +177,18 @@ public class PositionListIndex implements Serializable {
       }
       clusters.add(cluster);
     }
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, IntList materializedPLI,
+  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
                           Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
     for (IntArrayList sameValues : otherPLI.clusters) {
       for (int rowCount : sameValues) {
-        if ((materializedPLI.size() > rowCount) &&
-          (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-          IntPair pair = new IntPair(uniqueValueCount, materializedPLI.get(rowCount));
+        if ((materializedPLI.length > rowCount) &&
+          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
           updateMap(map, rowCount, pair);
         }
       }
@@ -220,22 +228,24 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
+   * TODO(zwiener): Update docs.
+   *
    * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public IntList asList() {
-    // TODO(zwiener): Initialize with approximate size.
-    IntList listPli = new IntArrayList();
+  // TODO(zwiener): rename
+  public int[] asList() {
+    int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
     for (IntArrayList sameValues : clusters) {
       for (int rowIndex : sameValues) {
-        addOrExtendList(listPli, uniqueValueCount, rowIndex);
+        materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
     }
 
-    return listPli;
+    return materializedPli;
   }
 
   protected void addOrExtendList(IntList list, int value, int index) {
@@ -294,6 +304,7 @@ public class PositionListIndex implements Serializable {
   public String toString() {
     return "PositionListIndex{" +
       "clusters=" + clusters +
+      ", numberOfRows=" + getNumberOfRows() +
       ", rawKeyError=" + getRawKeyError() +
       '}';
   }

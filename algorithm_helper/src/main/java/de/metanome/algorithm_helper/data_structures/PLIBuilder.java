@@ -16,17 +16,16 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.input.InputIterationException;
-import de.metanome.algorithm_integration.input.RelationalInput;
-
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+
+import de.metanome.algorithm_integration.input.InputIterationException;
+import de.metanome.algorithm_integration.input.RelationalInput;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * Constructs a list of {@link PositionListIndex}es from the given {@link
@@ -65,7 +64,13 @@ public class PLIBuilder implements GenericPLIBuilder {
     }
     List<PositionListIndex> result = new ArrayList<>();
     for (List<IntArrayList> rawPLI : rawPLIs) {
-      result.add(new PositionListIndex(rawPLI));
+      try {
+        result.add(new PositionListIndex(rawPLI, getNumberOfTuples()));
+      }
+      catch (InputIterationException e) {
+        throw new PLIBuildingException(
+          "The pli could not be built, because there was an error iterating over the input.", e);
+      }
     }
     return result;
   }
