@@ -176,7 +176,7 @@ public class PositionListIndexTest {
    * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
-  public void testAsList() {
+  public void testAsArray() {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
