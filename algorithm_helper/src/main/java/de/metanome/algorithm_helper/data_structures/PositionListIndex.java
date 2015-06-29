@@ -239,7 +239,7 @@ public class PositionListIndex implements Serializable {
    * @return the pli as list
    */
   public int[] asArray() {
-    int[] materializedPli = new int[getNumberOfRows()];
+    final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
 
     List<Future<?>> tasks = new LinkedList<>();
@@ -252,7 +252,7 @@ public class PositionListIndex implements Serializable {
           @Override
           public void run() {
             for (int rowIndex : sameValues) {
-              addOrExtendList(listPli, finalUniqueValueCount, rowIndex);
+              materializedPli[rowIndex] = finalUniqueValueCount;
             }
           }
         }));
@@ -268,15 +268,6 @@ public class PositionListIndex implements Serializable {
         }
       }
     }
-
-    /*
-    for (IntArrayList sameValues : clusters) {
-      for (int rowIndex : sameValues) {
-        materializedPli[rowIndex] = uniqueValueCount;
-      }
-      uniqueValueCount++;
-    }
-    */
 
     return materializedPli;
   }
