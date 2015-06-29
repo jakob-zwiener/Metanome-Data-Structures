@@ -166,7 +166,7 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    int[] materializedPLI = this.asList();
+    int[] materializedPLI = this.asArray();
     Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
@@ -228,14 +228,11 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * TODO(zwiener): Update docs.
-   *
-   * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
+   * Materializes the PLI to an int array of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  // TODO(zwiener): rename
-  public int[] asList() {
+  public int[] asArray() {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
     for (IntArrayList sameValues : clusters) {

@@ -173,7 +173,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link PositionListIndex#asList()}
+   * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
   public void testAsList() {
@@ -183,7 +183,7 @@ public class PositionListIndexTest {
     //expected Values
     int[] expectedList = fixture.getFirstPLIAsArray();
 
-    assertArrayEquals(expectedList, firstPLI.asList());
+    assertArrayEquals(expectedList, firstPLI.asArray());
   }
 
   /**
