@@ -24,6 +24,12 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -41,6 +47,8 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  // TODO(zwiener): Make thread pool size accessible from the outside.
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
@@ -167,8 +175,8 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     int[] materializedPLI = this.asArray();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(otherPLI, materializedPLI, map);
+    Map<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
+    ConcurrentMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
     for (IntArrayList cluster : map.values()) {
@@ -180,23 +188,55 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
-                          Map<IntPair, IntArrayList> map)
+  protected void buildMap(final PositionListIndex otherPLI, int[] materializedPLI,
+                          final ConcurrentMap<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : otherPLI.clusters) {
-      for (int rowCount : sameValues) {
-        if ((materializedPLI.length > rowCount) &&
-          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
-          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
-          updateMap(map, rowCount, pair);
+
+    List<Future<?>> tasks = new LinkedList<>();
+
+    try {
+      // System.out.println(otherPLI.clusters.size());
+      for (final IntArrayList sameValues : otherPLI.clusters) {
+        final int finalUniqueValueCount = uniqueValueCount;
+        tasks.add(exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
+            long start = System.nanoTime();
+            // System.out.println(sameValues.size());
+            for (int rowCount : sameValues) {
+              // TODO(zwiener): Get is called twice.
+              if ((materializedPLI.length > rowCount) &&
+                (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
+
+                updateMap(internalMap, rowCount, pair);
+              }
+            }
+            map.putAll(internalMap);
+            // System.out.println((System.nanoTime() - start) / 1000000000d);
+          }
+        }));
+        uniqueValueCount++;
+      }
+    }
+    finally {
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        }
+        catch (InterruptedException | ExecutionException e) {
+          // FIXME(zwiener): Rethrow exception.
+          e.printStackTrace();
         }
       }
-      uniqueValueCount++;
     }
   }
 
-  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount, IntPair pair) {
+  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount,
+                           IntPair pair)
+  {
     if (map.containsKey(pair)) {
       IntArrayList currentList = map.get(pair);
       currentList.add(rowCount);
