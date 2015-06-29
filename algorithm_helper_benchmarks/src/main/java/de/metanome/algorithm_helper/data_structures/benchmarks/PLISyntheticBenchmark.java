@@ -20,6 +20,7 @@ import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.concurrent.Executors;
 
 import com.google.common.base.Joiner;
 
@@ -49,29 +50,29 @@ public class PLISyntheticBenchmark {
       writer.write(Joiner.on(',').join("iteration", "numberOfClusters", "clusterSize", "threads", "timeElapsedS"));
       writer.newLine();
 
-      // for (int threads : threadNumbers) {
-      // PositionListIndex.exec = Executors.newFixedThreadPool(threads);
-      for (int numberOfClusters : clusterNumbers) {
-        for (int clusterSize : clusterSizes) {
-          for (int iteration = 0; iteration < iterations; iteration++) {
-            PositionListIndex left = PLIGenerator.generatePli(clusterSize, numberOfClusters);
-            PositionListIndex right = PLIGenerator.generatePli(clusterSize, numberOfClusters);
-            long beforeIntersect = System.nanoTime();
-            left.intersect(right);
-            long afterIntersect = System.nanoTime();
-            final double timeElapsedS = (afterIntersect - beforeIntersect) / 1000000000d;
-            System.out.println(
-              String.format("Intersect iteration %d with %d clusters of size %d computed with %d threads in %fs.",
-                iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
-            writer.write(Joiner.on(',').join(iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
-            writer.newLine();
-            writer.flush();
-            System.gc();
+      for (int threads : threadNumbers) {
+        PositionListIndex.exec = Executors.newFixedThreadPool(threads);
+        for (int numberOfClusters : clusterNumbers) {
+          for (int clusterSize : clusterSizes) {
+            for (int iteration = 0; iteration < iterations; iteration++) {
+              PositionListIndex left = PLIGenerator.generatePli(clusterSize, numberOfClusters);
+              PositionListIndex right = PLIGenerator.generatePli(clusterSize, numberOfClusters);
+              long beforeIntersect = System.nanoTime();
+              left.intersect(right);
+              long afterIntersect = System.nanoTime();
+              final double timeElapsedS = (afterIntersect - beforeIntersect) / 1000000000d;
+              System.out.println(
+                String.format("Intersect iteration %d with %d clusters of size %d computed with %d threads in %fs.",
+                  iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
+              writer.write(Joiner.on(',').join(iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
+              writer.newLine();
+              writer.flush();
+              System.gc();
+            }
           }
         }
+        PositionListIndex.exec.shutdown();
       }
-      // PositionListIndex.exec.shutdown();
-      // }
     }
   }
 }
