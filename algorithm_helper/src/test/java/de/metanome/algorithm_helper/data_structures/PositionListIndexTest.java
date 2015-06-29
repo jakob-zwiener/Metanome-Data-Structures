@@ -16,12 +16,7 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -31,11 +26,12 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import org.junit.Before;
+import org.junit.Test;
+
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}
@@ -135,13 +131,18 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link PositionListIndex#hashCode()}
+   * Test method for {@link PositionListIndex#hashCode()}, and {@link PositionListIndex#equals(Object)}
    */
   @Test
-  public void testHashCode() {
+  public void testEqualsHashCode() {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
     PositionListIndex permutatedfirstPLI = fixture.getPermutatedFirstPLI();
+    PositionListIndex secondPLI = fixture.getSecondPLI();
+    PositionListIndex supersetOfFirstPLI = fixture.getSupersetOfFirstPLI();
+    PositionListIndex firstPLIDifferentNumberOfRows = fixture.getFirstPLI();
+    firstPLIDifferentNumberOfRows.numberOfRows = 42;
+
 
     // Execute functionality
     // Check result
@@ -149,25 +150,10 @@ public class PositionListIndexTest {
     assertEquals(firstPLI.hashCode(), firstPLI.hashCode());
     assertEquals(firstPLI, permutatedfirstPLI);
     assertEquals(firstPLI.hashCode(), permutatedfirstPLI.hashCode());
-  }
-
-  /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#equals(Object)}
-   */
-  @Test
-  public void testEquals() {
-    // Setup
-    PositionListIndex firstPLI = fixture.getFirstPLI();
-    PositionListIndex permutatedfirstPLI = fixture.getPermutatedFirstPLI();
-    PositionListIndex secondPLI = fixture.getSecondPLI();
-    PositionListIndex supersetOfFirstPLI = fixture.getSupersetOfFirstPLI();
-
-    // Execute functionality
-    // Check result
-    assertEquals(firstPLI, firstPLI);
-    assertEquals(firstPLI, permutatedfirstPLI);
     assertNotEquals(firstPLI, secondPLI);
     assertNotEquals(firstPLI, supersetOfFirstPLI);
+    assertNotEquals(firstPLI, firstPLIDifferentNumberOfRows);
+    assertNotEquals(firstPLI.hashCode(), firstPLIDifferentNumberOfRows.hashCode());
   }
 
   /**
@@ -187,7 +173,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link PositionListIndex#asList()}
+   * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
   public void testAsList() {
@@ -195,9 +181,9 @@ public class PositionListIndexTest {
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
     //expected Values
-    IntList expectedList = fixture.getFirstPLIAsList();
+    int[] expectedList = fixture.getFirstPLIAsArray();
 
-    assertEquals(expectedList, firstPLI.asList());
+    assertArrayEquals(expectedList, firstPLI.asArray());
   }
 
   /**
@@ -222,7 +208,7 @@ public class PositionListIndexTest {
   public void testIsEmptyUnique() {
     // Setup
     List<IntArrayList> clusters = new LinkedList<>();
-    PositionListIndex emptyPli = new PositionListIndex(clusters);
+    PositionListIndex emptyPli = new PositionListIndex(clusters, 0);
     PositionListIndex nonEmptyPli = fixture.getFirstPLI();
 
     // Execute functionality
@@ -249,6 +235,21 @@ public class PositionListIndexTest {
     assertEquals(fixture.getExpectedSecondPLIRawKeyError(), secondPli.getRawKeyError());
     assertEquals(fixture.getExpectedIntersectedPLIRawKeyError(),
       firstPli.intersect(secondPli).getRawKeyError());
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#getNumberOfRows()}
+   */
+  @Test
+  public void testNumberOfRows() {
+    // Setup
+    // Expected values
+    int expectedNumberOfRows = 42;
+    PositionListIndex positionListIndex = new PositionListIndex(new LinkedList<IntArrayList>(), expectedNumberOfRows);
+
+    // Execute functionality
+    // Check result
+    assertEquals(expectedNumberOfRows, positionListIndex.getNumberOfRows());
   }
 
   /**
