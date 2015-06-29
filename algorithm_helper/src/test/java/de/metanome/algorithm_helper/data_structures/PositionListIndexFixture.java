@@ -19,62 +19,60 @@ package de.metanome.algorithm_helper.data_structures;
 import java.util.ArrayList;
 import java.util.List;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 public class PositionListIndexFixture {
 
   public PositionListIndex getFirstPLI() {
-    List<LongArrayList> clusters = new ArrayList<>();
+    List<IntArrayList> clusters = new ArrayList<>();
 
-    long[] cluster1 = { 2, 4, 8 };
-    clusters.add(new LongArrayList(cluster1));
-    long[] cluster2 = { 5, 6, 7 };
-    clusters.add(new LongArrayList(cluster2));
+    int[] cluster1 = {2, 4, 8};
+    clusters.add(new IntArrayList(cluster1));
+    int[] cluster2 = {5, 6, 7};
+    clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, 9);
   }
 
   public String getExpectedFirstPliToString() {
-    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], rawKeyError=4}";
+    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], numberOfRows=9, rawKeyError=4}";
   }
 
-  public long getExpectedFirstPLIRawKeyError() {
+  public int getExpectedFirstPLIRawKeyError() {
     return 4;
   }
 
-  public long getFirstPLISize() {
+  public int getFirstPLISize() {
     return getFirstPLI().clusters.size();
   }
 
   protected PositionListIndex getPermutatedFirstPLI() {
-    List<LongArrayList> clusters = new ArrayList<>();
+    List<IntArrayList> clusters = new ArrayList<>();
 
-    long[] cluster1 = { 7, 6, 5 };
-    clusters.add(new LongArrayList(cluster1));
-    long[] cluster2 = { 4, 2, 2, 8 };
-    clusters.add(new LongArrayList(cluster2));
+    int[] cluster1 = {7, 6, 5};
+    clusters.add(new IntArrayList(cluster1));
+    int[] cluster2 = {4, 2, 2, 8};
+    clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, 9);
   }
 
   protected PositionListIndex getSupersetOfFirstPLI() {
-    List<LongArrayList> clusters = new ArrayList<>();
+    List<IntArrayList> clusters = new ArrayList<>();
 
-    long[] cluster1 = { 7, 6, 5 };
-    clusters.add(new LongArrayList(cluster1));
-    long[] cluster2 = { 4, 2, 2, 8 };
-    clusters.add(new LongArrayList(cluster2));
-    long[] cluster3 = { 10, 11 };
-    clusters.add(new LongArrayList(cluster3));
+    int[] cluster1 = {7, 6, 5};
+    clusters.add(new IntArrayList(cluster1));
+    int[] cluster2 = {4, 2, 2, 8};
+    clusters.add(new IntArrayList(cluster2));
+    int[] cluster3 = {10, 11};
+    clusters.add(new IntArrayList(cluster3));
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, 12);
   }
 
-  protected Long2LongOpenHashMap getFirstPLIAsHashMap() {
-    Long2LongOpenHashMap pliMap = new Long2LongOpenHashMap();
+  protected Int2IntOpenHashMap getFirstPLIAsHashMap() {
+    Int2IntOpenHashMap pliMap = new Int2IntOpenHashMap();
 
     pliMap.addTo(5, 1);
     pliMap.addTo(7, 1);
@@ -87,50 +85,48 @@ public class PositionListIndexFixture {
     return pliMap;
   }
 
-  public LongBigList getFirstPLIAsList() {
-    LongBigList pliList = new LongBigArrayBigList();
-
-    pliList.add(PositionListIndex.SINGLETON_VALUE);
-    pliList.add(PositionListIndex.SINGLETON_VALUE);
-    pliList.add(1);
-    pliList.add(PositionListIndex.SINGLETON_VALUE);
-    pliList.add(1);
-    pliList.add(2);
-    pliList.add(2);
-    pliList.add(2);
-    pliList.add(1);
-
-    return pliList;
+  public int[] getFirstPLIAsArray() {
+    return new int[] {
+        PositionListIndex.SINGLETON_VALUE,
+        PositionListIndex.SINGLETON_VALUE,
+        1,
+        PositionListIndex.SINGLETON_VALUE,
+        1,
+        2,
+        2,
+        2,
+        1
+    };
   }
 
   protected PositionListIndex getSecondPLI() {
-    List<LongArrayList> clusters = new ArrayList<>();
+    List<IntArrayList> clusters = new ArrayList<>();
 
-    long[] cluster1 = { 1, 2, 5, 8 };
-    clusters.add(new LongArrayList(cluster1));
-    long[] cluster2 = { 4, 6, 7 };
-    clusters.add(new LongArrayList(cluster2));
+    int[] cluster1 = {1, 2, 5, 8};
+    clusters.add(new IntArrayList(cluster1));
+    int[] cluster2 = {4, 6, 7};
+    clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, 9);
   }
 
   public String getExpectedSecondPliToString() {
-    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], rawKeyError=5}";
+    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], numberOfRows=9, rawKeyError=5}";
   }
 
-  public long getExpectedSecondPLIRawKeyError() {
+  public int getExpectedSecondPLIRawKeyError() {
     return 5;
   }
 
   protected PositionListIndex getExpectedIntersectedPLI() {
-    List<LongArrayList> clusters = new ArrayList<>();
+    List<IntArrayList> clusters = new ArrayList<>();
 
-    long[] cluster1 = { 2, 8 };
-    clusters.add(new LongArrayList(cluster1));
-    long[] cluster2 = { 6, 7 };
-    clusters.add(new LongArrayList(cluster2));
+    int[] cluster1 = {2, 8};
+    clusters.add(new IntArrayList(cluster1));
+    int[] cluster2 = {6, 7};
+    clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, 9);
   }
 
   public int getExpectedIntersectedPLIRawKeyError() {

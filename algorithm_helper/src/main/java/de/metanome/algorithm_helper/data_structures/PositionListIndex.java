@@ -25,13 +25,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -41,13 +39,15 @@ import it.unimi.dsi.fastutil.longs.LongSet;
  */
 public class PositionListIndex implements Serializable {
 
-  public static final transient long SINGLETON_VALUE = 0;
-  private static final long serialVersionUID = 2303419645910810239l;
-  protected List<LongArrayList> clusters;
-  protected long rawKeyError = -1;
+  public static final transient int SINGLETON_VALUE = 0;
+  private static final long serialVersionUID = 2;
+  protected List<IntArrayList> clusters;
+  protected int numberOfRows;
+  protected int rawKeyError = -1;
 
-  public PositionListIndex(List<LongArrayList> clusters) {
+  public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
+    this.numberOfRows = numberOfRows;
   }
 
   /**
@@ -55,6 +55,7 @@ public class PositionListIndex implements Serializable {
    */
   public PositionListIndex() {
     this.clusters = new ArrayList<>();
+    this.numberOfRows = 0;
   }
 
   /**
@@ -69,8 +70,12 @@ public class PositionListIndex implements Serializable {
     return calculateIntersection(otherPLI);
   }
 
-  public List<LongArrayList> getClusters() {
+  public List<IntArrayList> getClusters() {
     return clusters;
+  }
+
+  public int getNumberOfRows() {
+    return numberOfRows;
   }
 
   /**
@@ -79,12 +84,12 @@ public class PositionListIndex implements Serializable {
    */
   @Override
   public PositionListIndex clone() {
-    List<LongArrayList> newClusters = new ArrayList<>();
-    for (LongArrayList cluster : clusters) {
+    List<IntArrayList> newClusters = new ArrayList<>();
+    for (IntArrayList cluster : clusters) {
       newClusters.add(cluster.clone());
     }
 
-    PositionListIndex clone = new PositionListIndex(newClusters);
+    PositionListIndex clone = new PositionListIndex(newClusters, this.numberOfRows);
     clone.rawKeyError = this.rawKeyError;
     return clone;
   }
@@ -92,19 +97,17 @@ public class PositionListIndex implements Serializable {
   @Override
   public int hashCode() {
     final int prime = 31;
-    int result = 1;
 
-    List<LongOpenHashSet> setCluster = convertClustersToSets(clusters);
+    List<IntOpenHashSet> setCluster = convertClustersToSets(getClusters());
 
-    Collections.sort(setCluster, new Comparator<LongSet>() {
+    Collections.sort(setCluster, new Comparator<IntSet>() {
 
       @Override
-      public int compare(LongSet o1, LongSet o2) {
+      public int compare(IntSet o1, IntSet o2) {
         return o1.hashCode() - o2.hashCode();
       }
     });
-    result = prime * result + (setCluster.hashCode());
-    return result;
+    return prime * setCluster.hashCode() + getNumberOfRows();
   }
 
   @Override
@@ -120,21 +123,24 @@ public class PositionListIndex implements Serializable {
       return false;
     }
     PositionListIndex other = (PositionListIndex) obj;
+    if (getNumberOfRows() != other.getNumberOfRows()) {
+      return false;
+    }
     if (clusters == null) {
       if (other.clusters != null) {
         return false;
       }
     }
     else {
-      List<LongOpenHashSet> setCluster = convertClustersToSets(clusters);
-      List<LongOpenHashSet> otherSetCluster = convertClustersToSets(other.clusters);
+      List<IntOpenHashSet> setCluster = convertClustersToSets(clusters);
+      List<IntOpenHashSet> otherSetCluster = convertClustersToSets(other.clusters);
 
-      for (LongOpenHashSet cluster : setCluster) {
+      for (IntOpenHashSet cluster : setCluster) {
         if (!otherSetCluster.contains(cluster)) {
           return false;
         }
       }
-      for (LongOpenHashSet cluster : otherSetCluster) {
+      for (IntOpenHashSet cluster : otherSetCluster) {
         if (!setCluster.contains(cluster)) {
           return false;
         }
@@ -144,10 +150,10 @@ public class PositionListIndex implements Serializable {
     return true;
   }
 
-  protected List<LongOpenHashSet> convertClustersToSets(List<LongArrayList> listCluster) {
-    List<LongOpenHashSet> setClusters = new LinkedList<>();
-    for (LongList cluster : listCluster) {
-      setClusters.add(new LongOpenHashSet(cluster));
+  protected List<IntOpenHashSet> convertClustersToSets(List<IntArrayList> listCluster) {
+    List<IntOpenHashSet> setClusters = new LinkedList<>();
+    for (IntList cluster : listCluster) {
+      setClusters.add(new IntOpenHashSet(cluster));
     }
 
     return setClusters;
@@ -160,29 +166,29 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    LongBigList materializedPLI = this.asList();
-    Map<LongPair, LongArrayList> map = new HashMap<>();
+    int[] materializedPLI = this.asArray();
+    Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
-    List<LongArrayList> clusters = new ArrayList<>();
-    for (LongArrayList cluster : map.values()) {
+    List<IntArrayList> clusters = new ArrayList<>();
+    for (IntArrayList cluster : map.values()) {
       if (cluster.size() < 2) {
         continue;
       }
       clusters.add(cluster);
     }
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, LongBigList materializedPLI,
-                          Map<LongPair, LongArrayList> map)
+  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
+                          Map<IntPair, IntArrayList> map)
   {
-    long uniqueValueCount = 0;
-    for (LongArrayList sameValues : otherPLI.clusters) {
-      for (long rowCount : sameValues) {
-        if ((materializedPLI.size64() > rowCount) &&
-          (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-          LongPair pair = new LongPair(uniqueValueCount, materializedPLI.get(rowCount));
+    int uniqueValueCount = 0;
+    for (IntArrayList sameValues : otherPLI.clusters) {
+      for (int rowCount : sameValues) {
+        if ((materializedPLI.length > rowCount) &&
+          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
           updateMap(map, rowCount, pair);
         }
       }
@@ -190,13 +196,13 @@ public class PositionListIndex implements Serializable {
     }
   }
 
-  protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount, LongPair pair) {
+  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount, IntPair pair) {
     if (map.containsKey(pair)) {
-      LongArrayList currentList = map.get(pair);
+      IntArrayList currentList = map.get(pair);
       currentList.add(rowCount);
     }
     else {
-      LongArrayList newList = new LongArrayList();
+      IntArrayList newList = new IntArrayList();
       newList.add(rowCount);
       map.put(pair, newList);
     }
@@ -209,11 +215,11 @@ public class PositionListIndex implements Serializable {
    * 5=2}.
    * @return the pli as hash map
    */
-  public Long2LongOpenHashMap asHashMap() {
-    Long2LongOpenHashMap hashedPLI = new Long2LongOpenHashMap(clusters.size());
-    long uniqueValueCount = 0;
-    for (LongArrayList sameValues : clusters) {
-      for (long rowIndex : sameValues) {
+  public Int2IntOpenHashMap asHashMap() {
+    Int2IntOpenHashMap hashedPLI = new Int2IntOpenHashMap(clusters.size());
+    int uniqueValueCount = 0;
+    for (IntArrayList sameValues : clusters) {
+      for (int rowIndex : sameValues) {
         hashedPLI.put(rowIndex, uniqueValueCount);
       }
       uniqueValueCount++;
@@ -222,26 +228,25 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
+   * Materializes the PLI to an int array of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public LongBigList asList() {
-    // TODO(zwiener): Initialize with approximate size.
-    LongBigList listPli = new LongBigArrayBigList();
-    long uniqueValueCount = SINGLETON_VALUE + 1;
-    for (LongArrayList sameValues : clusters) {
-      for (long rowIndex : sameValues) {
-        addOrExtendList(listPli, uniqueValueCount, rowIndex);
+  public int[] asArray() {
+    int[] materializedPli = new int[getNumberOfRows()];
+    int uniqueValueCount = SINGLETON_VALUE + 1;
+    for (IntArrayList sameValues : clusters) {
+      for (int rowIndex : sameValues) {
+        materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
     }
 
-    return listPli;
+    return materializedPli;
   }
 
-  protected void addOrExtendList(LongBigList list, long value, long index) {
-    if (list.size64() <= index) {
+  protected void addOrExtendList(IntList list, int value, int index) {
+    if (list.size() <= index) {
       list.size(index + 1);
     }
 
@@ -252,7 +257,7 @@ public class PositionListIndex implements Serializable {
    * Returns the number of non unary clusters.
    * @return the number of clusters in the {@link PositionListIndex}
    */
-  public long size() {
+  public int size() {
     return clusters.size();
   }
 
@@ -274,7 +279,7 @@ public class PositionListIndex implements Serializable {
    * Returns the number of columns to remove in order to make column unique. (raw key error)
    * @return raw key error
    */
-  public long getRawKeyError() {
+  public int getRawKeyError() {
     if (rawKeyError == -1) {
       rawKeyError = calculateRawKeyError();
     }
@@ -282,10 +287,10 @@ public class PositionListIndex implements Serializable {
     return rawKeyError;
   }
 
-  protected long calculateRawKeyError() {
-    long sumClusterSize = 0;
+  protected int calculateRawKeyError() {
+    int sumClusterSize = 0;
 
-    for (LongArrayList cluster : clusters) {
+    for (IntArrayList cluster : clusters) {
       sumClusterSize += cluster.size();
     }
 
@@ -296,6 +301,7 @@ public class PositionListIndex implements Serializable {
   public String toString() {
     return "PositionListIndex{" +
       "clusters=" + clusters +
+      ", numberOfRows=" + getNumberOfRows() +
       ", rawKeyError=" + getRawKeyError() +
       '}';
   }

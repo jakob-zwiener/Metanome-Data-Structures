@@ -29,10 +29,9 @@ import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}
@@ -103,42 +102,47 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {{@link PositionListIndex#addOrExtendList(LongBigList, long, long)}}
+   * Test method for {{@link PositionListIndex#addOrExtendList(IntList, int, int)}}
    * <p>
    * When adding a value beyond the size of the list, the list should be extended and padded with the SINGLETON_VALUE constant.
    */
   @Test
   public void testAddOrExtendList() {
     // Setup
-    LongBigList list = new LongBigArrayBigList();
+    IntList list = new IntArrayList();
     PositionListIndex pli = fixture.getFirstPLI();
-    long index1 = 23;
-    long index2 = 11;
+    int index1 = 23;
+    int index2 = 11;
     // Expected values
-    long expectedValue = 42;
+    int expectedValue = 42;
 
     // Execute functionality
     pli.addOrExtendList(list, expectedValue, index1);
     pli.addOrExtendList(list, expectedValue, index2);
 
     // Check result
-    assertEquals(expectedValue, (long) list.get(index1));
-    for (long i = 0; i < index2; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    assertEquals(expectedValue, (int) list.get(index1));
+    for (int i = 0; i < index2; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
     }
-    for (long i = index2 + 1; i < index1; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (long) list.get(i));
+    for (int i = index2 + 1; i < index1; i++) {
+      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
     }
   }
 
   /**
-   * Test method for {@link PositionListIndex#hashCode()}
+   * Test method for {@link PositionListIndex#hashCode()}, and {@link PositionListIndex#equals(Object)}
    */
   @Test
-  public void testHashCode() {
+  public void testEqualsHashCode() {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
     PositionListIndex permutatedfirstPLI = fixture.getPermutatedFirstPLI();
+    PositionListIndex secondPLI = fixture.getSecondPLI();
+    PositionListIndex supersetOfFirstPLI = fixture.getSupersetOfFirstPLI();
+    PositionListIndex firstPLIDifferentNumberOfRows = fixture.getFirstPLI();
+    firstPLIDifferentNumberOfRows.numberOfRows = 42;
+
 
     // Execute functionality
     // Check result
@@ -146,25 +150,10 @@ public class PositionListIndexTest {
     assertEquals(firstPLI.hashCode(), firstPLI.hashCode());
     assertEquals(firstPLI, permutatedfirstPLI);
     assertEquals(firstPLI.hashCode(), permutatedfirstPLI.hashCode());
-  }
-
-  /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#equals(Object)}
-   */
-  @Test
-  public void testEquals() {
-    // Setup
-    PositionListIndex firstPLI = fixture.getFirstPLI();
-    PositionListIndex permutatedfirstPLI = fixture.getPermutatedFirstPLI();
-    PositionListIndex secondPLI = fixture.getSecondPLI();
-    PositionListIndex supersetOfFirstPLI = fixture.getSupersetOfFirstPLI();
-
-    // Execute functionality
-    // Check result
-    assertEquals(firstPLI, firstPLI);
-    assertEquals(firstPLI, permutatedfirstPLI);
     assertNotEquals(firstPLI, secondPLI);
     assertNotEquals(firstPLI, supersetOfFirstPLI);
+    assertNotEquals(firstPLI, firstPLIDifferentNumberOfRows);
+    assertNotEquals(firstPLI.hashCode(), firstPLIDifferentNumberOfRows.hashCode());
   }
 
   /**
@@ -178,13 +167,13 @@ public class PositionListIndexTest {
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
     //expected Values
-    Long2LongOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
+    Int2IntOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
 
     assertEquals(expectedHashMap, firstPLI.asHashMap());
   }
 
   /**
-   * Test method for {@link PositionListIndex#asList()}
+   * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
   public void testAsList() {
@@ -192,9 +181,9 @@ public class PositionListIndexTest {
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
     //expected Values
-    LongBigList expectedList = fixture.getFirstPLIAsList();
+    int[] expectedList = fixture.getFirstPLIAsArray();
 
-    assertEquals(expectedList, firstPLI.asList());
+    assertArrayEquals(expectedList, firstPLI.asArray());
   }
 
   /**
@@ -218,8 +207,8 @@ public class PositionListIndexTest {
   @Test
   public void testIsEmptyUnique() {
     // Setup
-    List<LongArrayList> clusters = new LinkedList<>();
-    PositionListIndex emptyPli = new PositionListIndex(clusters);
+    List<IntArrayList> clusters = new LinkedList<>();
+    PositionListIndex emptyPli = new PositionListIndex(clusters, 0);
     PositionListIndex nonEmptyPli = fixture.getFirstPLI();
 
     // Execute functionality
@@ -246,6 +235,21 @@ public class PositionListIndexTest {
     assertEquals(fixture.getExpectedSecondPLIRawKeyError(), secondPli.getRawKeyError());
     assertEquals(fixture.getExpectedIntersectedPLIRawKeyError(),
       firstPli.intersect(secondPli).getRawKeyError());
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#getNumberOfRows()}
+   */
+  @Test
+  public void testNumberOfRows() {
+    // Setup
+    // Expected values
+    int expectedNumberOfRows = 42;
+    PositionListIndex positionListIndex = new PositionListIndex(new LinkedList<IntArrayList>(), expectedNumberOfRows);
+
+    // Execute functionality
+    // Check result
+    assertEquals(expectedNumberOfRows, positionListIndex.getNumberOfRows());
   }
 
   /**

@@ -31,7 +31,7 @@ import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.InputIterationException;
 import de.metanome.algorithm_integration.input.RelationalInput;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 public class PLIBuilderFixture {
 
@@ -84,7 +84,7 @@ public class PLIBuilderFixture {
   }
 
 
-  public long getExpectedNumberOfTuples() {
+  public int getExpectedNumberOfTuples() {
     return table.size();
   }
 
@@ -107,24 +107,24 @@ public class PLIBuilderFixture {
 
   public List<PositionListIndex> getExpectedPLIList(boolean nullEqualsNull) {
     List<PositionListIndex> expectedPLIList = new LinkedList<>();
-    List<LongArrayList> list1 = new LinkedList<>();
-    PositionListIndex PLI1 = new PositionListIndex(list1);
+    List<IntArrayList> list1 = new LinkedList<>();
+    PositionListIndex PLI1 = new PositionListIndex(list1, 5);
     expectedPLIList.add(PLI1);
 
-    List<LongArrayList> list2 = new LinkedList<>();
-    LongArrayList arrayList21 = new LongArrayList();
+    List<IntArrayList> list2 = new LinkedList<>();
+    IntArrayList arrayList21 = new IntArrayList();
     arrayList21.add(0);
     arrayList21.add(1);
     arrayList21.add(2);
     arrayList21.add(3);
     arrayList21.add(4);
     list2.add(arrayList21);
-    PositionListIndex PLI2 = new PositionListIndex(list2);
+    PositionListIndex PLI2 = new PositionListIndex(list2, 5);
     expectedPLIList.add(PLI2);
 
-    List<LongArrayList> list3 = new LinkedList<>();
-    LongArrayList arrayList31 = new LongArrayList();
-    LongArrayList arrayList32 = new LongArrayList();
+    List<IntArrayList> list3 = new LinkedList<>();
+    IntArrayList arrayList31 = new IntArrayList();
+    IntArrayList arrayList32 = new IntArrayList();
 
     arrayList31.add(0);
     arrayList31.add(1);
@@ -135,12 +135,12 @@ public class PLIBuilderFixture {
 
     list3.add(arrayList31);
     list3.add(arrayList32);
-    PositionListIndex PLI3 = new PositionListIndex(list3);
+    PositionListIndex PLI3 = new PositionListIndex(list3, 5);
     expectedPLIList.add(PLI3);
 
-    List<LongArrayList> list4 = new LinkedList<>();
+    List<IntArrayList> list4 = new LinkedList<>();
     if (nullEqualsNull) {
-      LongArrayList arrayList41 = new LongArrayList();
+      IntArrayList arrayList41 = new IntArrayList();
 
       arrayList41.add(0);
       arrayList41.add(2);
@@ -148,7 +148,7 @@ public class PLIBuilderFixture {
       list4.add(arrayList41);
     }
 
-    PositionListIndex PLI4 = new PositionListIndex(list4);
+    PositionListIndex PLI4 = new PositionListIndex(list4, 5);
     expectedPLIList.add(PLI4);
     return expectedPLIList;
   }
