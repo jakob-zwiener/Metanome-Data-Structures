@@ -16,11 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.algorithm_integration.input.InputIterationException;
-import de.metanome.algorithm_integration.input.RelationalInput;
-
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,7 +25,7 @@ import java.util.TreeSet;
 
 import de.metanome.algorithm_integration.input.InputIterationException;
 import de.metanome.algorithm_integration.input.RelationalInput;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * Constructs a list of {@link PositionListIndex}es from the given {@link

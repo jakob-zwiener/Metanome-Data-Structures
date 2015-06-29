@@ -18,11 +18,6 @@ package de.metanome.algorithm_helper.data_structures;
 
 import static org.mockito.Mockito.*;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -36,7 +31,7 @@ import de.metanome.algorithm_integration.input.InputGenerationException;
 import de.metanome.algorithm_integration.input.InputIterationException;
 import de.metanome.algorithm_integration.input.RelationalInput;
 import de.metanome.algorithm_integration.input.RelationalInputGenerator;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 public class PLIBuilderFixture {
 

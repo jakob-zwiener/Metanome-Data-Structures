@@ -16,12 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,13 +31,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongBigArrayBigList;
-import it.unimi.dsi.fastutil.longs.LongBigList;
-import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -175,7 +167,7 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     IntList materializedPLI = this.asList();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
+    ConcurrentMap<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
@@ -188,28 +180,28 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(final PositionListIndex otherPLI, final LongBigList materializedPLI,
-                          final ConcurrentMap<LongPair, LongArrayList> map)
+  protected void buildMap(final PositionListIndex otherPLI, final IntList materializedPLI,
+                          final ConcurrentMap<IntPair, IntArrayList> map)
   {
-    long uniqueValueCount = 0;
+    int uniqueValueCount = 0;
 
     List<Future<?>> tasks = new LinkedList<>();
 
     try {
       // System.out.println(otherPLI.clusters.size());
-      for (final LongArrayList sameValues : otherPLI.clusters) {
-        final long finalUniqueValueCount = uniqueValueCount;
+      for (final IntArrayList sameValues : otherPLI.clusters) {
+        final int finalUniqueValueCount = uniqueValueCount;
         tasks.add(exec.submit(new Runnable() {
           @Override
           public void run() {
-            final Map<LongPair, LongArrayList> internalMap = new HashMap<>();
+            final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
             long start = System.nanoTime();
             // System.out.println(sameValues.size());
-            for (long rowCount : sameValues) {
+            for (int rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
-              if ((materializedPLI.size64() > rowCount) &&
+              if ((materializedPLI.size() > rowCount) &&
                 (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-                LongPair pair = new LongPair(finalUniqueValueCount, materializedPLI.get(rowCount));
+                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI.get(rowCount));
 
                 updateMap(internalMap, rowCount, pair);
               }
@@ -234,15 +226,15 @@ public class PositionListIndex implements Serializable {
     }
   }
 
-  protected void updateMap(Map<LongPair, LongArrayList> map, long rowCount,
-                           LongPair pair)
+  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount,
+                           IntPair pair)
   {
     if (map.containsKey(pair)) {
       IntArrayList currentList = map.get(pair);
       currentList.add(rowCount);
     }
     else {
-      LongArrayList newList = new LongArrayList();
+      IntArrayList newList = new IntArrayList();
       newList.add(rowCount);
       map.put(pair, newList);
     }
