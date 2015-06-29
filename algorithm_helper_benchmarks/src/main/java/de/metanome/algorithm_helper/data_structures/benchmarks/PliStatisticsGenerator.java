@@ -16,15 +16,14 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import de.metanome.algorithm_integration.AlgorithmConfigurationException;
-
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
+
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * @author Jakob Zwiener
@@ -39,10 +38,10 @@ public class PliStatisticsGenerator {
 
     PrintWriter statisticsOutput = new PrintWriter("statistics.txt");
     for (PositionListIndex pli : plis) {
-      List<LongArrayList> clusters = pli.getClusters();
+      List<IntArrayList> clusters = pli.getClusters();
       StringBuilder lineStatistics = new StringBuilder();
       lineStatistics.append(clusters.size()).append(": ");
-      for (LongArrayList cluster : clusters) {
+      for (IntArrayList cluster : clusters) {
         lineStatistics.append(cluster.size()).append(", ");
       }
       statisticsOutput.println(lineStatistics.toString());
