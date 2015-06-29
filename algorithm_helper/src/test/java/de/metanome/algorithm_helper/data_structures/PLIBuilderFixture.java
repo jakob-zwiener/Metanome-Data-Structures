@@ -18,6 +18,11 @@ package de.metanome.algorithm_helper.data_structures;
 
 import static org.mockito.Mockito.*;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -84,7 +89,7 @@ public class PLIBuilderFixture {
   }
 
 
-  public long getExpectedNumberOfTuples() {
+  public int getExpectedNumberOfTuples() {
     return table.size();
   }
 
@@ -107,12 +112,12 @@ public class PLIBuilderFixture {
 
   public List<PositionListIndex> getExpectedPLIList(boolean nullEqualsNull) {
     List<PositionListIndex> expectedPLIList = new LinkedList<>();
-    List<LongArrayList> list1 = new LinkedList<>();
+    List<IntArrayList> list1 = new LinkedList<>();
     PositionListIndex PLI1 = new PositionListIndex(list1);
     expectedPLIList.add(PLI1);
 
-    List<LongArrayList> list2 = new LinkedList<>();
-    LongArrayList arrayList21 = new LongArrayList();
+    List<IntArrayList> list2 = new LinkedList<>();
+    IntArrayList arrayList21 = new IntArrayList();
     arrayList21.add(0);
     arrayList21.add(1);
     arrayList21.add(2);
@@ -122,9 +127,9 @@ public class PLIBuilderFixture {
     PositionListIndex PLI2 = new PositionListIndex(list2);
     expectedPLIList.add(PLI2);
 
-    List<LongArrayList> list3 = new LinkedList<>();
-    LongArrayList arrayList31 = new LongArrayList();
-    LongArrayList arrayList32 = new LongArrayList();
+    List<IntArrayList> list3 = new LinkedList<>();
+    IntArrayList arrayList31 = new IntArrayList();
+    IntArrayList arrayList32 = new IntArrayList();
 
     arrayList31.add(0);
     arrayList31.add(1);
@@ -138,9 +143,9 @@ public class PLIBuilderFixture {
     PositionListIndex PLI3 = new PositionListIndex(list3);
     expectedPLIList.add(PLI3);
 
-    List<LongArrayList> list4 = new LinkedList<>();
+    List<IntArrayList> list4 = new LinkedList<>();
     if (nullEqualsNull) {
-      LongArrayList arrayList41 = new LongArrayList();
+      IntArrayList arrayList41 = new IntArrayList();
 
       arrayList41.add(0);
       arrayList41.add(2);

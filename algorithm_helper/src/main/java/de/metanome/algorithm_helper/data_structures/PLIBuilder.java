@@ -16,6 +16,11 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import de.metanome.algorithm_integration.input.InputIterationException;
+import de.metanome.algorithm_integration.input.RelationalInput;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -34,8 +39,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
  */
 public class PLIBuilder implements GenericPLIBuilder {
 
-  protected long numberOfTuples = -1;
-  protected List<HashMap<String, LongArrayList>> columns = null;
+  protected int numberOfTuples = -1;
+  protected List<HashMap<String, IntArrayList>> columns = null;
   protected RelationalInput input;
   protected boolean nullEqualsNull;
 
@@ -54,7 +59,7 @@ public class PLIBuilder implements GenericPLIBuilder {
    */
   @Override
   public List<PositionListIndex> getPLIList() throws PLIBuildingException {
-    List<List<LongArrayList>> rawPLIs;
+    List<List<IntArrayList>> rawPLIs;
     try {
       rawPLIs = getRawPLIs();
     }
@@ -63,7 +68,7 @@ public class PLIBuilder implements GenericPLIBuilder {
         "The pli could not be built, because there was an error iterating over the input.", e);
     }
     List<PositionListIndex> result = new ArrayList<>();
-    for (List<LongArrayList> rawPLI : rawPLIs) {
+    for (List<IntArrayList> rawPLI : rawPLIs) {
       result.add(new PositionListIndex(rawPLI));
     }
     return result;
@@ -74,7 +79,7 @@ public class PLIBuilder implements GenericPLIBuilder {
    * @return list of associated clusters (PLI)
    * @throws InputIterationException if the input cannot be iterated
    */
-  protected List<List<LongArrayList>> getRawPLIs() throws InputIterationException {
+  protected List<List<IntArrayList>> getRawPLIs() throws InputIterationException {
     if (columns == null) {
       columns = new ArrayList<>();
       calculateUnpurgedPLI();
@@ -87,7 +92,7 @@ public class PLIBuilder implements GenericPLIBuilder {
    * calculateUnpurgedPLI was called.
    * @return number of tuples in dataset
    */
-  public long getNumberOfTuples() throws InputIterationException {
+  public int getNumberOfTuples() throws InputIterationException {
     if (this.numberOfTuples == -1) {
       throw new InputIterationException();
     }
@@ -110,7 +115,7 @@ public class PLIBuilder implements GenericPLIBuilder {
 
     List<TreeSet<String>> distinctSortedColumns = new LinkedList<>();
 
-    for (HashMap<String, LongArrayList> columnMap : columns) {
+    for (HashMap<String, IntArrayList> columnMap : columns) {
       if (columnMap.containsKey(null)) {
         columnMap.remove(null);
       }
@@ -121,7 +126,7 @@ public class PLIBuilder implements GenericPLIBuilder {
   }
 
   protected void calculateUnpurgedPLI() throws InputIterationException {
-    long rowCount = 0;
+    int rowCount = 0;
     this.numberOfTuples = 0;
     while (input.hasNext()) {
       this.numberOfTuples++;
@@ -135,9 +140,9 @@ public class PLIBuilder implements GenericPLIBuilder {
     }
   }
 
-  protected void addValue(long rowCount, int columnCount, String attributeCell) {
+  protected void addValue(int rowCount, int columnCount, String attributeCell) {
     if (columns.size() <= columnCount) {
-      columns.add(new HashMap<String, LongArrayList>());
+      columns.add(new HashMap<String, IntArrayList>());
     }
 
     if (!this.nullEqualsNull && attributeCell == null) {
@@ -148,18 +153,18 @@ public class PLIBuilder implements GenericPLIBuilder {
       columns.get(columnCount).get(attributeCell).add(rowCount);
     }
     else {
-      LongArrayList newList = new LongArrayList();
+      IntArrayList newList = new IntArrayList();
       newList.add(rowCount);
       columns.get(columnCount).put(attributeCell, newList);
     }
   }
 
-  protected List<List<LongArrayList>> purgePLIEntries() {
-    List<List<LongArrayList>> rawPLIList = new ArrayList<>();
-    Iterator<HashMap<String, LongArrayList>> columnsIterator = columns.iterator();
+  protected List<List<IntArrayList>> purgePLIEntries() {
+    List<List<IntArrayList>> rawPLIList = new ArrayList<>();
+    Iterator<HashMap<String, IntArrayList>> columnsIterator = columns.iterator();
     while (columnsIterator.hasNext()) {
-      List<LongArrayList> clusters = new ArrayList<>();
-      for (LongArrayList cluster : columnsIterator.next().values()) {
+      List<IntArrayList> clusters = new ArrayList<>();
+      for (IntArrayList cluster : columnsIterator.next().values()) {
         if (cluster.size() < 2) {
           continue;
         }
