@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -41,6 +45,8 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  // TODO(zwiener): Make thread pool size accessible from the outside.
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(10);
   protected List<IntArrayList> clusters;
   protected int rawKeyError = -1;
 
@@ -226,14 +232,44 @@ public class PositionListIndex implements Serializable {
    */
   public IntList asList() {
     // TODO(zwiener): Initialize with approximate size.
-    IntList listPli = new IntArrayList();
+    final IntList listPli = new IntArrayList(100000000);
     int uniqueValueCount = SINGLETON_VALUE + 1;
+
+    List<Future<?>> tasks = new LinkedList<>();
+
+    try {
+      for (final IntArrayList sameValues : clusters) {
+
+        final int finalUniqueValueCount = uniqueValueCount;
+        tasks.add(exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (int rowIndex : sameValues) {
+              addOrExtendList(listPli, finalUniqueValueCount, rowIndex);
+            }
+          }
+        }));
+        uniqueValueCount++;
+      }
+    } finally {
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        } catch (InterruptedException | ExecutionException e) {
+          // FIXME(zwiener): Rethrow exception.
+          e.printStackTrace();
+        }
+      }
+    }
+
+    /*
     for (IntArrayList sameValues : clusters) {
       for (int rowIndex : sameValues) {
         addOrExtendList(listPli, uniqueValueCount, rowIndex);
       }
       uniqueValueCount++;
     }
+    */
 
     return listPli;
   }
