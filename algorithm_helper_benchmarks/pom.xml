@@ -75,6 +75,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>de.metanome</groupId>
       <artifactId>metanome_data_structures</artifactId>
       <version>0.0.2-SNAPSHOT</version>
