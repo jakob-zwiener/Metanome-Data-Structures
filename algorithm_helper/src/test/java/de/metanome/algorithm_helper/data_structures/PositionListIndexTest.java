@@ -61,7 +61,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex...)}
    * <p>
    * Two {@link PositionListIndex} should be correctly intersected.
    */
@@ -81,7 +81,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link PositionListIndex#intersect(PositionListIndex...)}
    * <p>
    * The intersection with a unique PLI should be unique.
    * <p>
@@ -99,6 +99,24 @@ public class PositionListIndexTest {
 
     // Check result
     assertTrue(actualIntersectedPLI.isUnique());
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#intersect(PositionListIndex...)}
+   *
+   * Tests the intersection of several plis.
+   */
+  @Test
+  public void testMultiIntersect() {
+    // Setup
+    PositionListIndexMultiFixture fixture = new PositionListIndexMultiFixture();
+
+    // Execute functionality
+    PositionListIndex actualIntersectedPLI = fixture.getFirstPLI().intersect(fixture.getSecondPLI(),
+      fixture.getThirdPLI());
+
+    // Check result
+    assertEquals(fixture.getExpectedIntersectedPLI(), actualIntersectedPLI);
   }
 
   /**

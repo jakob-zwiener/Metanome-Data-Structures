@@ -59,15 +59,31 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * Intersects the given PositionListIndex with this PositionListIndex returning a new
-   * PositionListIndex. For the intersection the smaller PositionListIndex is converted into a
-   * HashMap.
-   * @param otherPLI the other {@link PositionListIndex} to intersect
+   * Intersects the given {@link PositionListIndex}es with this {@link PositionListIndex} returning a new
+   * {@link PositionListIndex}. For the intersection the all given plis are materialized.
+   * @param otherPLIs the other {@link PositionListIndex}es to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  public PositionListIndex intersect(PositionListIndex otherPLI) {
+  public PositionListIndex intersect(PositionListIndex... otherPLIs) {
+
+    // TODO(zwiener): Remove commented code.
+    /*
+    PositionListIndex intermediatePLI = null;
+
+    for (PositionListIndex otherPLI : otherPLIs) {
+      if (intermediatePLI == null) {
+        intermediatePLI = otherPLI;
+        continue;
+      }
+      intermediatePLI = intermediatePLI.intersect(otherPLI);
+    }
+
+    return intermediatePLI;
+    */
+
     //TODO Optimize Smaller PLI as Hashmap?
-    return calculateIntersection(otherPLI);
+    return calculateIntersection(otherPLIs);
+
   }
 
   public List<IntArrayList> getClusters() {
@@ -160,15 +176,19 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * Intersects the two given {@link PositionListIndex} and returns the outcome as new
+   * Intersects given {@link PositionListIndex}es with this pli and returns the outcome as a new
    * PositionListIndex.
-   * @param otherPLI the other {@link PositionListIndex} to intersect
+   * @param otherPLIs the other {@link PositionListIndex}s to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    int[] materializedPLI = this.asArray();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(otherPLI, materializedPLI, map);
+  protected PositionListIndex calculateIntersection(PositionListIndex... otherPLIs) {
+    int[][] materializedPLIs = new int[otherPLIs.length][];
+    for (int i = 0; i < otherPLIs.length; i++) {
+      materializedPLIs[i] = otherPLIs[i].asArray();
+    }
+
+    Map<IntList, IntArrayList> map = new HashMap<>();
+    buildMap(materializedPLIs, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
     for (IntArrayList cluster : map.values()) {
@@ -180,31 +200,36 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
-                          Map<IntPair, IntArrayList> map)
+  protected void buildMap(int[][] materializedPLIs, Map<IntList, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : otherPLI.clusters) {
+    for (IntArrayList sameValues : this.clusters) {
       for (int rowCount : sameValues) {
-        if ((materializedPLI.length > rowCount) &&
-          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
-          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
-          updateMap(map, rowCount, pair);
+        int[] materializedRow = new int[materializedPLIs.length + 1];  // Extra slot for not materialized pli.
+        for (int i = 0; i < materializedPLIs.length; i++) {
+          int[] materializedPLI = materializedPLIs[i];
+          if ((materializedPLI.length <= rowCount) ||
+            (materializedPLI[rowCount] == SINGLETON_VALUE)) {
+            break;
+          }
+          materializedRow[i] = materializedPLI[rowCount];
         }
+        materializedRow[materializedPLIs.length] = uniqueValueCount;
+        updateMap(map, rowCount, new IntArrayList(materializedRow));
       }
       uniqueValueCount++;
     }
   }
 
-  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount, IntPair pair) {
-    if (map.containsKey(pair)) {
-      IntArrayList currentList = map.get(pair);
+  protected void updateMap(Map<IntList, IntArrayList> map, int rowCount, IntList materializedRow) {
+    if (map.containsKey(materializedRow)) {
+      IntArrayList currentList = map.get(materializedRow);
       currentList.add(rowCount);
     }
     else {
       IntArrayList newList = new IntArrayList();
       newList.add(rowCount);
-      map.put(pair, newList);
+      map.put(materializedRow, newList);
     }
   }
 
