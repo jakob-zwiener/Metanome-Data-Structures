@@ -23,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -117,6 +118,35 @@ public class PositionListIndexTest {
 
     // Check result
     assertEquals(fixture.getExpectedIntersectedPLI(), actualIntersectedPLI);
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#intersect(PositionListIndex...)}
+   * <p>
+   * Regression test for incorrect break statement leading to several unique rows ending up forming a cluster.
+   */
+  @Test
+  public void testIntersectSingletonEncounteredContinueRegression() {
+    // Setup
+    List<IntArrayList> clusters1 = new ArrayList<>();
+    int[] cluster11 = { 0, 1, 2, 4 };
+    clusters1.add(new IntArrayList(cluster11));
+    PositionListIndex firstPLI = new PositionListIndex(clusters1, 42);
+    List<IntArrayList> clusters2 = new ArrayList<>();
+    int[] cluster21 = { 2, 3, 4 };
+    clusters2.add(new IntArrayList(cluster21));
+    PositionListIndex secondPLI = new PositionListIndex(clusters2, 42);
+    // Expected values
+    List<IntArrayList> expectedClusters = new ArrayList<>();
+    int[] expectedCluster1 = { 2, 4 };
+    expectedClusters.add(new IntArrayList(expectedCluster1));
+    PositionListIndex expectedIntersect = new PositionListIndex(expectedClusters, 42);
+
+    // Execute functionality
+    PositionListIndex actualIntersectedPLI = firstPLI.intersect(secondPLI);
+
+    // Check result
+    assertEquals(expectedIntersect, actualIntersectedPLI);
   }
 
   /**

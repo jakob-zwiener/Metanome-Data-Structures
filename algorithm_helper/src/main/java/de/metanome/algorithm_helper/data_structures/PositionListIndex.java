@@ -206,16 +206,20 @@ public class PositionListIndex implements Serializable {
     for (IntArrayList sameValues : this.clusters) {
       for (int rowCount : sameValues) {
         int[] materializedRow = new int[materializedPLIs.length + 1];  // Extra slot for not materialized pli.
+        boolean rowIsUnique = false;
         for (int i = 0; i < materializedPLIs.length; i++) {
           int[] materializedPLI = materializedPLIs[i];
           if ((materializedPLI.length <= rowCount) ||
             (materializedPLI[rowCount] == SINGLETON_VALUE)) {
+            rowIsUnique = true;
             break;
           }
           materializedRow[i] = materializedPLI[rowCount];
         }
-        materializedRow[materializedPLIs.length] = uniqueValueCount;
-        updateMap(map, rowCount, new IntArrayList(materializedRow));
+        if (!rowIsUnique) {
+          materializedRow[materializedPLIs.length] = uniqueValueCount;
+          updateMap(map, rowCount, new IntArrayList(materializedRow));
+        }
       }
       uniqueValueCount++;
     }
