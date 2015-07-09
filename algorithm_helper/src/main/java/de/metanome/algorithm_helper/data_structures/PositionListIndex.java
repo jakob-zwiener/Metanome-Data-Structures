@@ -20,20 +20,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -47,14 +43,17 @@ public class PositionListIndex implements Serializable {
   private static final long serialVersionUID = 2;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(4);
-  protected List<IntArrayList> clusters;
+  protected List<HashSet<Integer>> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
 
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
-    this.clusters = clusters;
+    // FIXME(zwiener): Remove conversion.
+    this.clusters = convertClustersToSets(clusters);
+    // this.clusters = clusters;
     this.numberOfRows = numberOfRows;
   }
+
 
   /**
    * Constructs an empty {@link PositionListIndex}.
@@ -71,29 +70,26 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   public PositionListIndex intersect(PositionListIndex... otherPLIs) {
-
-    // TODO(zwiener): Remove commented code.
-    // /*
-    PositionListIndex intermediatePLI = null;
-
-    for (PositionListIndex otherPLI : otherPLIs) {
-      if (intermediatePLI == null) {
-        intermediatePLI = otherPLI;
-        continue;
-      }
-      intermediatePLI = calculateIntersection(otherPLI);
-    }
-
-    return intermediatePLI;
-    // */
-
     //TODO Optimize Smaller PLI as Hashmap?
-    //return calculateIntersection(otherPLIs);
+    return calculateIntersection(otherPLIs);
 
   }
 
   public List<IntArrayList> getClusters() {
-    return clusters;
+    // FIXME(zwiener): Remove conversion.
+    return toListOfArrayLists(clusters);
+
+    // return clusters;
+  }
+
+  protected List<IntArrayList> toListOfArrayLists(List<HashSet<Integer>> clusters) {
+    List<IntArrayList> convertedClusters = new ArrayList<>();
+
+    for (HashSet<Integer> cluster : clusters) {
+      convertedClusters.add(new IntArrayList(cluster));
+    }
+
+    return convertedClusters;
   }
 
   public int getNumberOfRows() {
@@ -107,7 +103,8 @@ public class PositionListIndex implements Serializable {
   @Override
   public PositionListIndex clone() {
     List<IntArrayList> newClusters = new ArrayList<>();
-    for (IntArrayList cluster : clusters) {
+    for (IntArrayList cluster : toListOfArrayLists(clusters)) {
+      // for (IntArrayList cluster : clusters) {
       newClusters.add(cluster.clone());
     }
 
@@ -120,12 +117,12 @@ public class PositionListIndex implements Serializable {
   public int hashCode() {
     final int prime = 31;
 
-    List<IntOpenHashSet> setCluster = convertClustersToSets(getClusters());
+    List<HashSet<Integer>> setCluster = convertClustersToSets(getClusters());
 
-    Collections.sort(setCluster, new Comparator<IntSet>() {
+    Collections.sort(setCluster, new Comparator<HashSet<Integer>>() {
 
       @Override
-      public int compare(IntSet o1, IntSet o2) {
+      public int compare(HashSet<Integer> o1, HashSet<Integer> o2) {
         return o1.hashCode() - o2.hashCode();
       }
     });
@@ -154,15 +151,16 @@ public class PositionListIndex implements Serializable {
       }
     }
     else {
-      List<IntOpenHashSet> setCluster = convertClustersToSets(clusters);
-      List<IntOpenHashSet> otherSetCluster = convertClustersToSets(other.clusters);
+      // FIXME(zwiener): Inline variables.
+      List<HashSet<Integer>> setCluster = clusters;
+      List<HashSet<Integer>> otherSetCluster = other.clusters;
 
-      for (IntOpenHashSet cluster : setCluster) {
+      for (HashSet<Integer> cluster : setCluster) {
         if (!otherSetCluster.contains(cluster)) {
           return false;
         }
       }
-      for (IntOpenHashSet cluster : otherSetCluster) {
+      for (HashSet<Integer> cluster : otherSetCluster) {
         if (!setCluster.contains(cluster)) {
           return false;
         }
@@ -172,10 +170,10 @@ public class PositionListIndex implements Serializable {
     return true;
   }
 
-  protected List<IntOpenHashSet> convertClustersToSets(List<IntArrayList> listCluster) {
-    List<IntOpenHashSet> setClusters = new LinkedList<>();
+  protected List<HashSet<Integer>> convertClustersToSets(List<IntArrayList> listCluster) {
+    List<HashSet<Integer>> setClusters = new LinkedList<>();
     for (IntList cluster : listCluster) {
-      setClusters.add(new IntOpenHashSet(cluster));
+      setClusters.add(new HashSet<Integer>(cluster));
     }
 
     return setClusters;
@@ -188,54 +186,105 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(final PositionListIndex... otherPLIs) {
-    final int[][] materializedPLIs = new int[otherPLIs.length][];
+    HashSet<Integer>[] materializedPli = this.asSetArray();
 
 
-    List<Future<?>> tasks = new LinkedList<>();
-
-    try {
-      for (int i = 0; i < otherPLIs.length; i++) {
-        final int finalI = i;
-        tasks.add(exec.submit(new Runnable() {
-          @Override
-          public void run() {
-            //long beforeMaterialization = System.nanoTime();
-            materializedPLIs[finalI] = otherPLIs[finalI].asArray();
-            /*long afterMaterialization = System.nanoTime();
-            System.out.println((afterMaterialization - beforeMaterialization) / 1000000000d);*/
+    for (PositionListIndex currentPLI : otherPLIs) {
+      boolean[] currentUniqueRows = new boolean[getNumberOfRows()];
+      int processedClusters = 0;
+      boolean[] skipSet = new boolean[getNumberOfRows()];
+      for (HashSet<Integer> rightCluster : currentPLI.clusters) {
+        // System.out.println(String.format("%d / %d", processedClusters++, currentPLI.clusters.size()));
+        for (int rowIndex : rightCluster) {
+          if ((rowIndex > materializedPli.length) || (materializedPli[rowIndex] == null)) {
+            continue;
           }
-        }));
+
+          // System.out.println(rowIndex);
+          currentUniqueRows[rowIndex] = true;
+          // If the cluster has already been intersected it does not need to be intersected again.
+          if (skipSet[rowIndex]) {
+            continue;
+          }
+
+          HashSet<Integer> leftIntersect = materializedPli[rowIndex];
+          HashSet<Integer> leftDifference = new HashSet<Integer>(leftIntersect);
+          leftIntersect.retainAll(rightCluster);
+          leftDifference.removeAll(rightCluster);
+          if (leftDifference.size() < 2) {
+            for (int rowToUpdate : leftDifference) {
+              materializedPli[rowToUpdate] = null;
+            }
+          }
+          else {
+            for (int rowToUpdate : leftDifference) {
+              materializedPli[rowToUpdate] = leftDifference;
+            }
+          }
+
+          for (int rowIndicesToSkip : leftIntersect) {
+            skipSet[rowIndicesToSkip] = true;
+          }
+        }
       }
-    }
-    finally {
-      for (Future<?> task : tasks) {
-        try {
-          task.get();
+      // Intersect clusters with stripped rows.
+      int numberOfProcessedRows = 0;
+      for (int uniqueRow = 0; uniqueRow < currentUniqueRows.length; uniqueRow++) {
+        // System.out.println(String.format("%d / %d", numberOfProcessedRows++, currentUniqueRows.size()));
+        if ((currentUniqueRows[uniqueRow]) || (uniqueRow > materializedPli.length) || (materializedPli[uniqueRow] == null)) {
+          continue;
         }
-        catch (InterruptedException | ExecutionException e) {
-          // FIXME(zwiener): Rethrow exception.
-          e.printStackTrace();
+        materializedPli[uniqueRow].remove(uniqueRow);
+        if (materializedPli[uniqueRow].size() < 2) {
+          for (int rowToUpdate : materializedPli[uniqueRow]) {
+            materializedPli[rowToUpdate] = null;
+          }
         }
+        materializedPli[uniqueRow] = null;
       }
     }
 
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(materializedPLIs, map);
-
-    List<IntArrayList> clusters = new ArrayList<>();
-    for (IntArrayList cluster : map.values()) {
-      if (cluster.size() < 2) {
+    List<HashSet<Integer>> strippedDeduplicatedClusters = new ArrayList<>();
+    boolean[] skipSet = new boolean[getNumberOfRows()];
+    for (int rowIndex = 0; rowIndex < materializedPli.length; rowIndex++) {
+      if (skipSet[rowIndex]) {
         continue;
       }
-      clusters.add(cluster);
+
+      HashSet<Integer> cluster = materializedPli[rowIndex];
+      if ((cluster == null) || (cluster.size() < 2)) {
+        continue;
+      }
+
+      for (int rowIndicesToSkip : cluster) {
+        skipSet[rowIndicesToSkip] = true;
+      }
+
+      strippedDeduplicatedClusters.add(cluster);
     }
-    return new PositionListIndex(clusters, numberOfRows);
+
+    /*
+    Set<HashSet<Integer>> strippedDeduplicatedClusters = new HashSet<>();
+    for (HashSet<Integer> cluster : materializedPli) {
+      if ((cluster == null) || (cluster.size() < 2)) {
+        continue;
+      }
+
+      strippedDeduplicatedClusters.add(cluster);
+    }
+    */
+
+    // FIXME(zwiener): remove this conversion hack.
+    PositionListIndex intersectedPLI = new PositionListIndex(new ArrayList<IntArrayList>(), numberOfRows);
+    intersectedPLI.clusters = strippedDeduplicatedClusters;
+
+    return intersectedPLI;
   }
 
   protected void buildMap(int[][] materializedPLIs, Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : this.clusters) {
+    for (HashSet<Integer> sameValues : this.clusters) {
       for (int rowCount : sameValues) {
         int[] materializedRow = new int[materializedPLIs.length + 1];  // Extra slot for not materialized pli.
         boolean rowIsUnique = false;
@@ -279,7 +328,8 @@ public class PositionListIndex implements Serializable {
   public Int2IntOpenHashMap asHashMap() {
     Int2IntOpenHashMap hashedPLI = new Int2IntOpenHashMap(clusters.size());
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : clusters) {
+    // for (IntArrayList sameValues : toListOfArrayLists(clusters)) {
+    for (HashSet<Integer> sameValues : clusters) {
       for (int rowIndex : sameValues) {
         hashedPLI.put(rowIndex, uniqueValueCount);
       }
@@ -296,11 +346,24 @@ public class PositionListIndex implements Serializable {
   public int[] asArray() {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
-    for (IntArrayList sameValues : clusters) {
+    // for (IntArrayList sameValues : toListOfArrayLists(clusters)) {
+    for (HashSet<Integer> sameValues : clusters) {
       for (int rowIndex : sameValues) {
         materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
+    }
+
+    return materializedPli;
+  }
+
+  public HashSet<Integer>[] asSetArray() {
+    HashSet<Integer>[] materializedPli = new HashSet[getNumberOfRows()];
+
+    for (HashSet<Integer> currentCluster : clusters) {
+      for (int rowIndex : currentCluster) {
+        materializedPli[rowIndex] = currentCluster;
+      }
     }
 
     return materializedPli;
@@ -351,7 +414,8 @@ public class PositionListIndex implements Serializable {
   protected int calculateRawKeyError() {
     int sumClusterSize = 0;
 
-    for (IntArrayList cluster : clusters) {
+    // for (IntArrayList cluster : toListOfArrayLists(clusters)) {
+    for (HashSet<Integer> cluster : clusters) {
       sumClusterSize += cluster.size();
     }
 
