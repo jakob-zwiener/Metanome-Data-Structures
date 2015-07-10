@@ -19,6 +19,7 @@ package de.metanome.algorithm_helper.data_structures.benchmarks;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -55,6 +56,7 @@ public class PLIGenerator {
 
         cluster.add(rand.nextInt(numberOfRows));
       }
+      Collections.sort(cluster);
       clusters.add(cluster);
     }
 
