@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -41,10 +42,10 @@ import it.unimi.dsi.fastutil.ints.IntList;
 public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
-  private static final long serialVersionUID = 2;
+  private static final long serialVersionUID = 3;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(4);
-  protected List<IntArrayList> clusters;
+  protected List<IntOpenHashSet> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
 
@@ -83,10 +84,10 @@ public class PositionListIndex implements Serializable {
     // return clusters;
   }
 
-  protected List<IntArrayList> toListOfArrayLists(List<IntArrayList> clusters) {
+  protected List<IntArrayList> toListOfArrayLists(List<IntOpenHashSet> clusters) {
     List<IntArrayList> convertedClusters = new ArrayList<>();
 
-    for (IntArrayList cluster : clusters) {
+    for (IntOpenHashSet cluster : clusters) {
       convertedClusters.add(new IntArrayList(cluster));
     }
 
@@ -118,12 +119,12 @@ public class PositionListIndex implements Serializable {
   public int hashCode() {
     final int prime = 31;
 
-    List<IntArrayList> setCluster = convertClustersToSets(getClusters());
+    List<IntOpenHashSet> setCluster = convertClustersToSets(getClusters());
 
-    Collections.sort(setCluster, new Comparator<IntArrayList>() {
+    Collections.sort(setCluster, new Comparator<IntOpenHashSet>() {
 
       @Override
-      public int compare(IntArrayList o1, IntArrayList o2) {
+      public int compare(IntOpenHashSet o1, IntOpenHashSet o2) {
         return o1.hashCode() - o2.hashCode();
       }
     });
@@ -153,15 +154,15 @@ public class PositionListIndex implements Serializable {
     }
     else {
       // FIXME(zwiener): Inline variables.
-      List<IntArrayList> setCluster = clusters;
-      List<IntArrayList> otherSetCluster = other.clusters;
+      List<IntOpenHashSet> setCluster = clusters;
+      List<IntOpenHashSet> otherSetCluster = other.clusters;
 
-      for (IntArrayList cluster : setCluster) {
+      for (IntOpenHashSet cluster : setCluster) {
         if (!otherSetCluster.contains(cluster)) {
           return false;
         }
       }
-      for (IntArrayList cluster : otherSetCluster) {
+      for (IntOpenHashSet cluster : otherSetCluster) {
         if (!setCluster.contains(cluster)) {
           return false;
         }
@@ -171,10 +172,10 @@ public class PositionListIndex implements Serializable {
     return true;
   }
 
-  protected List<IntArrayList> convertClustersToSets(List<IntArrayList> listCluster) {
-    List<IntArrayList> setClusters = new LinkedList<>();
+  protected List<IntOpenHashSet> convertClustersToSets(List<IntArrayList> listCluster) {
+    List<IntOpenHashSet> setClusters = new LinkedList<>();
     for (IntList cluster : listCluster) {
-      setClusters.add(new IntArrayList(cluster));
+      setClusters.add(new IntOpenHashSet(cluster));
     }
 
     return setClusters;
@@ -194,7 +195,7 @@ public class PositionListIndex implements Serializable {
     for (PositionListIndex currentPLI : otherPLIs) {
       int processedClusters = 0;
       boolean[] skipSet = new boolean[getNumberOfRows()];
-      for (IntArrayList rightCluster : currentPLI.clusters) {
+      for (IntOpenHashSet rightCluster : currentPLI.clusters) {
         // System.out.println(String.format("%d / %d", processedClusters++, currentPLI.clusters.size()));
         int processedClusterEntries = 0;
         for (int rowIndex : rightCluster) {
@@ -215,8 +216,8 @@ public class PositionListIndex implements Serializable {
           LinkedList<Integer> leftIntersect = materializedPli[rowIndex];
           LinkedList<Integer> leftDifference = new LinkedList<>();
           // TODO(zwiener): Try always using arrays.
-          final int[] rightIntArray = rightCluster.toIntArray();
-          removeRetainAll(leftIntersect, leftDifference, rightIntArray);
+          // final int[] rightIntArray = rightCluster.toIntArray();
+          removeRetainAll(leftIntersect, leftDifference, rightCluster);
           // retainAll(leftIntersect, rightIntArray);
           // removeAll(leftDifference, rightIntArray);
           if (leftDifference.size() < 2) {
@@ -254,7 +255,7 @@ public class PositionListIndex implements Serializable {
       */
     }
 
-    List<IntArrayList> strippedDeduplicatedClusters = new ArrayList<>();
+    List<IntOpenHashSet> strippedDeduplicatedClusters = new ArrayList<>();
     boolean[] skipSet = new boolean[getNumberOfRows()];
     for (int rowIndex = 0; rowIndex < materializedPli.length; rowIndex++) {
       if (skipSet[rowIndex]) {
@@ -274,7 +275,7 @@ public class PositionListIndex implements Serializable {
         skipSet[rowIndicesToSkip] = true;
       }
 
-      strippedDeduplicatedClusters.add(new IntArrayList(cluster));
+      strippedDeduplicatedClusters.add(new IntOpenHashSet(cluster));
     }
 
     /*
@@ -332,16 +333,17 @@ public class PositionListIndex implements Serializable {
     }
   }
 
-  protected void removeRetainAll(LinkedList<Integer> retain, LinkedList<Integer> remove, int[] right) {
+  protected void removeRetainAll(LinkedList<Integer> retain, LinkedList<Integer> remove, IntOpenHashSet right) {
     Iterator<Integer> retainIterator = retain.iterator();
 
     while (retainIterator.hasNext()) {
       int leftIndex = retainIterator.next();
 
       // TODO(zwiener): search could be restricted.
-      int index = Arrays.binarySearch(right, leftIndex);
+      // int index = Arrays.binarySearch(right, leftIndex);
 
-      if ((index < 0) || (right[index] != leftIndex)) {
+      // if ((index < 0) || (right[index] != leftIndex)) {
+      if (!right.contains(leftIndex)) {
         retainIterator.remove();
         remove.add(leftIndex);
       }
@@ -351,7 +353,7 @@ public class PositionListIndex implements Serializable {
   protected void buildMap(int[][] materializedPLIs, Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : this.clusters) {
+    for (IntOpenHashSet sameValues : this.clusters) {
       for (int rowCount : sameValues) {
         int[] materializedRow = new int[materializedPLIs.length + 1];  // Extra slot for not materialized pli.
         boolean rowIsUnique = false;
@@ -396,7 +398,7 @@ public class PositionListIndex implements Serializable {
     Int2IntOpenHashMap hashedPLI = new Int2IntOpenHashMap(clusters.size());
     int uniqueValueCount = 0;
     // for (IntArrayList sameValues : toListOfArrayLists(clusters)) {
-    for (IntArrayList sameValues : clusters) {
+    for (IntOpenHashSet sameValues : clusters) {
       for (int rowIndex : sameValues) {
         hashedPLI.put(rowIndex, uniqueValueCount);
       }
@@ -414,7 +416,7 @@ public class PositionListIndex implements Serializable {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
     // for (IntArrayList sameValues : toListOfArrayLists(clusters)) {
-    for (IntArrayList sameValues : clusters) {
+    for (IntOpenHashSet sameValues : clusters) {
       for (int rowIndex : sameValues) {
         materializedPli[rowIndex] = uniqueValueCount;
       }
@@ -427,9 +429,9 @@ public class PositionListIndex implements Serializable {
   public IntArrayList[] asSetArray() {
     IntArrayList[] materializedPli = new IntArrayList[getNumberOfRows()];
 
-    for (IntArrayList currentCluster : clusters) {
+    for (IntOpenHashSet currentCluster : clusters) {
       for (int rowIndex : currentCluster) {
-        materializedPli[rowIndex] = currentCluster;
+        materializedPli[rowIndex] = new IntArrayList(currentCluster);
       }
     }
 
@@ -439,10 +441,10 @@ public class PositionListIndex implements Serializable {
   public int[] asPointerArray() {
     int[] pointerArray = new int[getNumberOfRows() + 1];
 
-    for (IntArrayList currentCluster : clusters) {
+    for (IntOpenHashSet currentCluster : clusters) {
       for (int i = 0; i < currentCluster.size(); i++) {
         int nextIndex = (i + 1) % currentCluster.size();
-        pointerArray[currentCluster.get(i) + 1] = currentCluster.get(nextIndex) + 1;
+        // pointerArray[currentCluster.get(i) + 1] = currentCluster.get(nextIndex) + 1;
       }
     }
 
@@ -453,10 +455,10 @@ public class PositionListIndex implements Serializable {
 
     LinkedList<Integer>[] materializedPli = new LinkedList[getNumberOfRows()];
 
-    for (IntArrayList currentCluster : clusters) {
+    for (IntOpenHashSet currentCluster : clusters) {
       LinkedList<Integer> clusterList = new LinkedList<>(currentCluster);
-      for (int i = 0; i < currentCluster.size(); i++) {
-        materializedPli[currentCluster.get(i)] = clusterList;
+      for (int i : currentCluster) {
+        materializedPli[i] = clusterList;
       }
     }
 
@@ -509,7 +511,7 @@ public class PositionListIndex implements Serializable {
     int sumClusterSize = 0;
 
     // for (IntArrayList cluster : toListOfArrayLists(clusters)) {
-    for (IntArrayList cluster : clusters) {
+    for (IntOpenHashSet cluster : clusters) {
       sumClusterSize += cluster.size();
     }
 
