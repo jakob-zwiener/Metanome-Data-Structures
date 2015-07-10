@@ -16,64 +16,42 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.util.Arrays;
+
 /**
  * A pair of int values.
  * @author Jakob Zwiener
  */
 public class IntPair implements Comparable<IntPair> {
 
-  private int first;
-  private int second;
+  private int[] first;
 
-  public IntPair(int first, int second) {
+  public IntPair(int... first) {
     this.first = first;
-    this.second = second;
   }
 
-  @Override
-  public int hashCode() {
-    int result = first;
-    result = 31 * result + second;
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  @Override public boolean equals(final Object o) {
+    if (this == o) {
       return true;
     }
-    if (obj == null) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    IntPair other = (IntPair) obj;
-    if (first != other.first) {
-      return false;
-    }
-    return second == other.second;
+
+    final IntPair intPair = (IntPair) o;
+
+    return Arrays.equals(first, intPair.first);
+
   }
 
-  public int getFirst() {
-    return this.first;
+  @Override public int hashCode() {
+    return first != null ? Arrays.hashCode(first) : 0;
   }
 
-  public void setFirst(int first) {
-    this.first = first;
-  }
-
-  public int getSecond() {
-    return this.second;
-  }
-
-  public void setSecond(int second) {
-    this.second = second;
-  }
-
-  @Override
-  public String toString() {
-    return "IntPair{" + first + ", " + second + '}';
+  @Override public String toString() {
+    return "IntPair{" +
+      "first=" + Arrays.toString(first) +
+      '}';
   }
 
   @Override
@@ -82,10 +60,22 @@ public class IntPair implements Comparable<IntPair> {
       return 1;
     }
 
-    if (other.first == this.first) {
-      return this.second - other.second;
-    }
-    return this.first - other.first;
-  }
+    int sizeDifference = this.first.length - other.first.length;
 
+    if (sizeDifference != 0) {
+      return sizeDifference;
+    }
+
+    if (sizeDifference == 0) {
+      for (int i = 0; i < this.first.length; i++) {
+        int difference = this.first[i] - other.first[i];
+        if (difference != 0) {
+          return difference;
+        }
+      }
+    }
+
+    return 0;
+
+  }
 }

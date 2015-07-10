@@ -16,12 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.test_helper.CompareToTester;
-import de.metanome.test_helper.EqualsAndHashCodeTester;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import de.metanome.test_helper.CompareToTester;
+import de.metanome.test_helper.EqualsAndHashCodeTester;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.IntPair}
@@ -47,7 +47,7 @@ public class IntPairTest {
     // Check result
     new EqualsAndHashCodeTester<IntPair>()
         .performBasicEqualsAndHashCodeChecks(intPair, equalIntPair, notEqualIntPair1,
-                                             notEqualIntPair2);
+          notEqualIntPair2);
   }
 
   /**
@@ -59,8 +59,8 @@ public class IntPairTest {
     IntPair intPair = new IntPair(1, 2);
     IntPair otherIntPair = new IntPair(2, 2);
     // Expected values
-    String expectedIntPairRepresentation = "IntPair{1, 2}";
-    String expectedOtherIntPairRepresentation = "IntPair{2, 2}";
+    String expectedIntPairRepresentation = "IntPair{first=[1, 2]}";
+    String expectedOtherIntPairRepresentation = "IntPair{first=[2, 2]}";
 
     // Execute functionality
     String actualIntPairRepresentation = intPair.toString();
@@ -90,34 +90,4 @@ public class IntPairTest {
     compareToTester.performCompareToTestNotSmaller(new IntPair(5, 2));
   }
 
-  /**
-   * Test method for {@link IntPair#getFirst()} and {@link IntPair#setFirst(int)}
-   */
-  @Test
-  public void testGetSetFirst() {
-    // Setup
-    IntPair intPair = new IntPair(2, 3);
-
-    // Execute functionality
-    // Check result
-    assertEquals(2, intPair.getFirst());
-    intPair.setFirst(42);
-    assertEquals(42, intPair.getFirst());
-  }
-
-  /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.IntPair#getSecond()} and
-   * {@link de.metanome.algorithm_helper.data_structures.IntPair#setSecond(int)}
-   */
-  @Test
-  public void testGetSetSecond() {
-    // Setup
-    IntPair intPair = new IntPair(5, 6);
-
-    // Execute functionality
-    // Check result
-    assertEquals(6, intPair.getSecond());
-    intPair.setSecond(23);
-    assertEquals(23, intPair.getSecond());
-  }
 }
