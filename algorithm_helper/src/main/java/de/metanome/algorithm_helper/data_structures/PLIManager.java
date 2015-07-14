@@ -16,7 +16,18 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Manages plis and performs intersect operations.
@@ -25,6 +36,9 @@ import java.util.List;
  */
 public class PLIManager {
 
+  // TODO(zwiener): Make thread pool size accessible from the outside.
+  public static transient ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
+    4));
   protected List<PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
 
@@ -37,22 +51,59 @@ public class PLIManager {
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
   }
 
-  public PositionListIndex buildPli(final ColumnCombinationBitset columnCombination) throws PLIBuildingException {
+  public PositionListIndex buildPli(final ColumnCombinationBitset columnCombination) throws PLIBuildingException
+  {
     if (!columnCombination.isSubsetOf(allColumnCombination)) {
       throw new PLIBuildingException(
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
-    PositionListIndex intersect = null;
-    for (int columnIndex : columnCombination.getSetBits()) {
-      if (intersect == null) {
-        intersect = plis.get(columnIndex);
-        continue;
-      }
-      intersect = intersect.intersect(plis.get(columnIndex));
+
+    long start = System.nanoTime();
+
+    final Queue<ListenableFuture<PositionListIndex>> futures = new LinkedList<>();
+    List<Integer> setBits = columnCombination.getSetBits();
+    for (int i = 0; i < columnCombination.size() - 1; i += 2) {
+      final int leftColumnIndex = setBits.get(i);
+      final int rightColumnIndex = setBits.get(i + 1);
+
+      futures.add(exec.submit(new Callable<PositionListIndex>() {
+        @Override public PositionListIndex call() throws Exception {
+          return plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
+        }
+      }));
+    }
+    //
+    if (columnCombination.size() % 2 != 0) {
+      futures.add(exec.submit(new Callable<PositionListIndex>() {
+        @Override public PositionListIndex call() throws Exception {
+          return plis.get(columnCombination.size() - 1);
+        }
+      }));
     }
 
-    return intersect;
+    while (futures.size() > 1) {
+      ListenableFuture<PositionListIndex> leftPliFuture = futures.remove();
+      ListenableFuture<PositionListIndex> rightPliFuture = futures.remove();
+      ListenableFuture<List<PositionListIndex>> joinedFuture = Futures.allAsList(leftPliFuture, rightPliFuture);
 
+      // TODO(zwiener): maybe use asyncfunction
+      futures.add(Futures.transform(joinedFuture, new Function<List<PositionListIndex>, PositionListIndex>() {
+        @Override public PositionListIndex apply(final List<PositionListIndex> input) {
+          return input.get(0).intersect(input.get(1));
+        }
+      }, exec));
+    }
+
+    System.out.println((System.nanoTime() - start) / 1000000000d);
+
+    try {
+      return futures.remove().get();
+    }
+    catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
+    }
+
+    return null;
   }
 
 
