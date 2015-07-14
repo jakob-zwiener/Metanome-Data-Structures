@@ -18,16 +18,15 @@ package de.metanome.algorithm_helper.data_structures;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -73,7 +72,7 @@ public class PositionListIndex implements Serializable {
   public PositionListIndex intersect(PositionListIndex... otherPLIs) {
 
     // TODO(zwiener): Remove commented code.
-    // /*
+    /*
     PositionListIndex intermediatePLI = null;
 
     for (PositionListIndex otherPLI : otherPLIs) {
@@ -85,10 +84,10 @@ public class PositionListIndex implements Serializable {
     }
 
     return intermediatePLI;
-    // */
+    */
 
     //TODO Optimize Smaller PLI as Hashmap?
-    //return calculateIntersection(otherPLIs);
+    return calculateIntersection(otherPLIs);
 
   }
 
@@ -188,48 +187,70 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(final PositionListIndex... otherPLIs) {
-    final int[][] materializedPLIs = new int[otherPLIs.length][];
+    int[][] rows = new int[getNumberOfRows()][];
+    int numberOfColumns = otherPLIs.length + 1;
 
+    List<PositionListIndex> plis = new LinkedList<>(Arrays.asList(otherPLIs));
+    plis.add(this);
 
-    List<Future<?>> tasks = new LinkedList<>();
-
-    try {
-      for (int i = 0; i < otherPLIs.length; i++) {
-        final int finalI = i;
-        tasks.add(exec.submit(new Runnable() {
-          @Override
-          public void run() {
-            //long beforeMaterialization = System.nanoTime();
-            materializedPLIs[finalI] = otherPLIs[finalI].asArray();
-            /*long afterMaterialization = System.nanoTime();
-            System.out.println((afterMaterialization - beforeMaterialization) / 1000000000d);*/
-          }
-        }));
-      }
-    }
-    finally {
-      for (Future<?> task : tasks) {
-        try {
-          task.get();
+    int clusterIdentifier = 0;
+    int columnIdentifier = 0;
+    for (PositionListIndex right : plis) {
+      // boolean[] touchedRows = new boolean[getNumberOfRows()];
+      for (IntArrayList cluster : right.clusters) {
+        for (int rowIndex : cluster) {
+          setIdentifierAndCreate(rows, rowIndex, clusterIdentifier, numberOfColumns, columnIdentifier);
+          // touchedRows[rowIndex] = true;
         }
-        catch (InterruptedException | ExecutionException e) {
-          // FIXME(zwiener): Rethrow exception.
-          e.printStackTrace();
-        }
+        clusterIdentifier++;
       }
+      System.out.println(clusterIdentifier);
+      /*for (int rowIndex = 0; rowIndex < touchedRows.length; rowIndex++) {
+        if (touchedRows[rowIndex]) {
+          continue;
+        }
+        setIdentifierAndCreate(rows, rowIndex, clusterIdentifier++, numberOfColumns, columnIdentifier);
+      }
+      System.out.println(clusterIdentifier);
+      columnIdentifier++;*/
     }
 
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(materializedPLIs, map);
+
+    HashMap<IntArrayList, IntArrayList> rawClusters = new HashMap<>();
+    for (int i = 0; i < rows.length; i++) {
+      if (rows[i] == null) {
+        continue;
+      }
+      IntArrayList rowIdentifier = new IntArrayList(rows[i]);
+      if (!rawClusters.containsKey(rowIdentifier)) {
+        rawClusters.put(rowIdentifier, new IntArrayList());
+      }
+
+      rawClusters.get(rowIdentifier).add(i);
+    }
 
     List<IntArrayList> clusters = new ArrayList<>();
-    for (IntArrayList cluster : map.values()) {
+    for (IntArrayList cluster : rawClusters.values()) {
       if (cluster.size() < 2) {
         continue;
       }
+
       clusters.add(cluster);
     }
-    return new PositionListIndex(clusters, numberOfRows);
+
+    return new PositionListIndex(clusters, getNumberOfRows());
+  }
+
+  protected void setIdentifierAndCreate(int[][] rows,
+                                        final int rowIndex,
+                                        final int clusterIdentifier,
+                                        final int numberOfColumns,
+                                        final int columnIdentifier)
+  {
+    if (rows[rowIndex] == null) {
+      rows[rowIndex] = new int[numberOfColumns];
+    }
+    rows[rowIndex][columnIdentifier] = clusterIdentifier;
   }
 
   protected void buildMap(int[][] materializedPLIs, Map<IntPair, IntArrayList> map)
