@@ -16,15 +16,15 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -36,9 +36,10 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class PLIManager {
 
+  public static final int N_THREADS = 4;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
-    4));
+    N_THREADS));
   protected List<PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
 
@@ -58,52 +59,138 @@ public class PLIManager {
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
 
-    long start = System.nanoTime();
+    final MinMaxPriorityQueue<PositionListIndex> priorityQueue = MinMaxPriorityQueue.orderedBy(
+      new Comparator<PositionListIndex>() {
+        @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
+          return o1.getRawKeyError() - o2.getRawKeyError();
+        }
+      }).create();
 
-    final Queue<ListenableFuture<PositionListIndex>> futures = new LinkedList<>();
-    List<Integer> setBits = columnCombination.getSetBits();
-    for (int i = 0; i < columnCombination.size() - 1; i += 2) {
-      final int leftColumnIndex = setBits.get(i);
-      final int rightColumnIndex = setBits.get(i + 1);
+    for (int columnIndex : columnCombination.getSetBits()) {
+      priorityQueue.add(plis.get(columnIndex));
+    }
 
-      futures.add(exec.submit(new Callable<PositionListIndex>() {
-        @Override public PositionListIndex call() throws Exception {
-          return plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
+    long sumSync = 0;
+
+    List<ListenableFuture<PositionListIndex>> tasks = new LinkedList<>();
+    while (true) {
+      if (priorityQueue.size() < 2) {
+        break;
+      }
+      // printQueue(priorityQueue);
+      PositionListIndex minPli = priorityQueue.peek();
+      for (int i = 0; i < N_THREADS; i++) {
+        if (priorityQueue.size() < 2) {
+          break;
+        }
+
+        final PositionListIndex leftPli = priorityQueue.poll();
+
+        final PositionListIndex rightPli;
+        if (minPli.getRawKeyError() < leftPli.getRawKeyError()) {
+          System.out.println(String.format("exchange %d %d", minPli.getRawKeyError(), leftPli.getRawKeyError()));
+          rightPli = minPli;
+        }
+        else {
+          rightPli = priorityQueue.poll();
+        }
+
+        tasks.add(exec.submit(new Callable<PositionListIndex>() {
+
+          @Override public PositionListIndex call() throws Exception {
+            PositionListIndex intersect = leftPli.intersect(rightPli);
+            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
+              intersect.calculateRawKeyError()));
+            return intersect;
+          }
+        }));
+      }
+      long beforeSync = -1;
+      for (ListenableFuture<PositionListIndex> task : tasks) {
+        try {
+          PositionListIndex result = task.get();
+          if (beforeSync == -1) {
+            beforeSync = System.nanoTime();
+          }
+          if (result.getRawKeyError() == 0) {
+            System.out.println("Hello");
+          }
+          priorityQueue.add(result);
+        }
+        catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+        catch (ExecutionException e) {
+          e.printStackTrace();
+        }
+      }
+      final long syncElapsed = System.nanoTime() - beforeSync;
+      System.out.println(String.format("Sync took: %f", syncElapsed / 1000000000d));
+      sumSync += syncElapsed;
+      tasks.clear();
+    }
+
+    System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));
+
+    /*final Object lock1 = new Object();
+
+    List<ListenableFuture<?>> tasks = new LinkedList<>();
+    for (int i = 0; i < N_THREADS; i++) {
+      tasks.add(exec.submit(new Runnable() {
+        @Override public void run() {
+          while (priorityQueue.size() > 1) {
+            System.out.println(priorityQueue.peek().getRawKeyError());
+            System.out.println(priorityQueue.peekLast().getRawKeyError());
+            PositionListIndex leftPli;
+            PositionListIndex rightPli;
+            synchronized (lock1) {
+              leftPli = priorityQueue.poll();
+              rightPli = priorityQueue.pollLast();
+            }
+            PositionListIndex intersect = leftPli.intersect(rightPli);
+            if (intersect.isUnique()) {
+              break;
+            }
+            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
+              intersect.calculateRawKeyError()));
+            if (intersect.getRawKeyError() < 100) {
+              System.out.println("Stop");
+            }
+            synchronized (lock1) {
+              priorityQueue.add(intersect);
+            }
+          }
         }
       }));
     }
-    //
-    if (columnCombination.size() % 2 != 0) {
-      futures.add(exec.submit(new Callable<PositionListIndex>() {
-        @Override public PositionListIndex call() throws Exception {
-          return plis.get(columnCombination.size() - 1);
-        }
-      }));
+
+    for (ListenableFuture<?> task : tasks) {
+      try {
+        task.get();
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+    }*/
+
+    return priorityQueue.poll();
+  }
+
+  private void printQueue(final MinMaxPriorityQueue<PositionListIndex> priorityQueue) {
+    System.out.println("queue");
+    List<PositionListIndex> pliList = new ArrayList<>(priorityQueue);
+    pliList.sort(new Comparator<PositionListIndex>() {
+      @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
+        return o1.getRawKeyError() - o2.getRawKeyError();
+      }
+    });
+    for (PositionListIndex pli : pliList) {
+      System.out.println(pli.getRawKeyError());
     }
-
-    while (futures.size() > 1) {
-      ListenableFuture<PositionListIndex> leftPliFuture = futures.remove();
-      ListenableFuture<PositionListIndex> rightPliFuture = futures.remove();
-      ListenableFuture<List<PositionListIndex>> joinedFuture = Futures.allAsList(leftPliFuture, rightPliFuture);
-
-      // TODO(zwiener): maybe use asyncfunction
-      futures.add(Futures.transform(joinedFuture, new Function<List<PositionListIndex>, PositionListIndex>() {
-        @Override public PositionListIndex apply(final List<PositionListIndex> input) {
-          return input.get(0).intersect(input.get(1));
-        }
-      }, exec));
-    }
-
-    System.out.println((System.nanoTime() - start) / 1000000000d);
-
-    try {
-      return futures.remove().get();
-    }
-    catch (InterruptedException | ExecutionException e) {
-      e.printStackTrace();
-    }
-
-    return null;
+    System.out.println("queue");
   }
 
 
