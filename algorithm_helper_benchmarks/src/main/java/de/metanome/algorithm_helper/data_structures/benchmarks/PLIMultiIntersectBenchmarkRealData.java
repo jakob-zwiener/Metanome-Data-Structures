@@ -16,15 +16,14 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import java.io.IOException;
-import java.util.List;
-
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PLIManager;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * TODO(zwiener): docs
@@ -39,7 +38,7 @@ public class PLIMultiIntersectBenchmarkRealData {
 
     PLIManager pliManager = new PLIManager(plis);
 
-    int j = 0;
+    /*int j = 0;
     for (PositionListIndex pli : plis) {
       System.out.println(j++);
       System.out.println(pli.getRawKeyError());
@@ -53,7 +52,7 @@ public class PLIMultiIntersectBenchmarkRealData {
           i++;
         }
       }
-    }
+    }*/
 
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
@@ -66,6 +65,8 @@ public class PLIMultiIntersectBenchmarkRealData {
     long start = System.nanoTime();
     pliManager.buildPli(allColumnCombination);
     System.out.println((System.nanoTime() - start) / 1000000000d);
+
+    PLIManager.exec.shutdown();
   }
 
 }
