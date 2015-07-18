@@ -16,19 +16,19 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.util.ArrayList;
-import java.util.List;
-
 import com.google.common.base.Joiner;
 
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PLIManager;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TODO(zwiener): docs
@@ -49,8 +49,6 @@ public class PLISyntheticMultiIntersectBenchmark {
       8 * 1000 * 1000,  // 8m,
     };
     final int numberOfPlis = 128;
-
-    Thread.sleep(10000);
 
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
       new FileOutputStream("benchmark_result.csv"), "utf-8"))) {
