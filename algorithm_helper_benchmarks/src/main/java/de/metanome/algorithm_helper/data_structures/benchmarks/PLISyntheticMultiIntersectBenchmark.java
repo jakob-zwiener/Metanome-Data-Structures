@@ -50,8 +50,6 @@ public class PLISyntheticMultiIntersectBenchmark {
     };
     final int numberOfPlis = 128;
 
-    Thread.sleep(10000);
-
     try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
       new FileOutputStream("benchmark_result.csv"), "utf-8"))) {
       writer.write(Joiner.on(',').join("iteration", "numberOfClusters", "clusterSize", "threads", "timeElapsedS"));
