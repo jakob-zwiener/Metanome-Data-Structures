@@ -17,6 +17,7 @@
 package de.metanome.algorithm_helper.data_structures;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manages plis and performs intersect operations.
@@ -25,11 +26,15 @@ import java.util.List;
  */
 public class PLIManager {
 
-  protected List<PositionListIndex> plis;
+  public long searchTime;
+  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
+  protected SubSetGraph pliGraph;
 
-  public PLIManager(final List<PositionListIndex> pliList) {
-    plis = pliList;
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
+    this.plis = plis;
+    pliGraph = new SubSetGraph();
+    pliGraph.addAll(plis.keySet());
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -42,17 +47,37 @@ public class PLIManager {
       throw new PLIBuildingException(
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
-    PositionListIndex intersect = null;
-    for (int columnIndex : columnCombination.getSetBits()) {
-      if (intersect == null) {
-        intersect = plis.get(columnIndex);
-        continue;
+
+
+    long startSearch = System.nanoTime();
+    List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
+    PositionListIndex minPli = null;
+    int minKeyError = Integer.MAX_VALUE;
+    // FIXME(zwiener): A null pointer exception could originate here. Add test for the case that no subsets are found.
+    ColumnCombinationBitset minKeyErrorSubset = null;
+    for (ColumnCombinationBitset subset : subsets) {
+      PositionListIndex pli = plis.get(subset);
+      if (pli.getRawKeyError() < minKeyError) {
+        minPli = pli;
+        minKeyErrorSubset = subset;
       }
-      intersect = intersect.intersect(plis.get(columnIndex));
+    }
+    searchTime += (System.nanoTime() - startSearch);
+
+    ColumnCombinationBitset missingColumns = columnCombination.minus(minKeyErrorSubset);
+
+    PositionListIndex intersect = minPli;
+    ColumnCombinationBitset currentColumnCombination = minKeyErrorSubset;
+    System.out.println(missingColumns);
+    for (ColumnCombinationBitset oneColumnCombination : missingColumns.getContainedOneColumnCombinations()) {
+      intersect = intersect.intersect(plis.get(oneColumnCombination));
+      // TODO(zwiener): Whether plis get cached or not is currently not tested.
+      currentColumnCombination = currentColumnCombination.union(oneColumnCombination);
+      plis.put(currentColumnCombination, intersect);
+      pliGraph.add(currentColumnCombination);
     }
 
     return intersect;
-
   }
 
 
