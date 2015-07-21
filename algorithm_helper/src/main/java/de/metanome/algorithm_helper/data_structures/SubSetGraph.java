@@ -275,23 +275,22 @@ public class SubSetGraph {
     if (level >= rows.size()) {
       rows.add("");
     }
-    String row = rows.get(level);
+    StringBuilder row = new StringBuilder(rows.get(level));
     for (int columnIndex : sortedKeySet) {
       while (row.length() < leftMargin) {
-        row += " ";
+        row.append(" ");
       }
       int newLeftMargin = row.length();
-      row += columnIndex;
+      row.append(columnIndex);
       if (subGraphs.get(columnIndex).subSetEnds) {
-        row += "X";
+        row.append("X");
       }
-      row += " ";
+      row.append(" ");
       numberOfColumnsWritten = subGraphs.get(columnIndex).stringRepresentation(rows, level + 1, newLeftMargin);
       while (row.length() < numberOfColumnsWritten) {
-        row += " ";
+        row.append(" ");
       }
     }
-
     rows.set(level, CharMatcher.WHITESPACE.trimTrailingFrom(row));
 
     return row.length();
