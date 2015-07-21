@@ -68,10 +68,10 @@ public class SubSetGraphFixture {
 
   public String getExpectedStringRepresentation() {
     return
-      "1      2  5\n"
-        + "2 3 5  3  6\n"
-        + "4 4 6  4  11\n"
-        + "7 6 11 7\n"
-        + "       11";
+      "1         2   5\n"
+        + "2  3X 5   3   6\n"
+        + "4  4  6   4   11X\n"
+        + "7X 6X 11X 7\n"
+        + "          11X";
   }
 }

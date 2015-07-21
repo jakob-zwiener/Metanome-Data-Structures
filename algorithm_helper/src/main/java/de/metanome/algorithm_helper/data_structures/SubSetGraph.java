@@ -281,7 +281,11 @@ public class SubSetGraph {
         row += " ";
       }
       int newLeftMargin = row.length();
-      row += columnIndex + " ";
+      row += columnIndex;
+      if (subGraphs.get(columnIndex).subSetEnds) {
+        row += "X";
+      }
+      row += " ";
       numberOfColumnsWritten = subGraphs.get(columnIndex).stringRepresentation(rows, level + 1, newLeftMargin);
       while (row.length() < numberOfColumnsWritten) {
         row += " ";
