@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import com.google.common.collect.MinMaxPriorityQueue;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -36,7 +36,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  */
 public class PLIManager {
 
-  public static final int N_THREADS = 4;
+  public static final int N_THREADS = 10;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
     N_THREADS));
@@ -59,18 +59,127 @@ public class PLIManager {
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
 
-    final MinMaxPriorityQueue<PositionListIndex> priorityQueue = MinMaxPriorityQueue.orderedBy(
-      new Comparator<PositionListIndex>() {
-        @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
-          return o1.getRawKeyError() - o2.getRawKeyError();
-        }
-      }).create();
+    System.out.println("Start intersect");
+
+    final MinMaxPriorityQueue<PositionListIndex>[] priorityQueue = new MinMaxPriorityQueue[] {
+      MinMaxPriorityQueue.orderedBy(
+        new Comparator<PositionListIndex>() {
+          @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
+            return o1.getRawKeyError() - o2.getRawKeyError();
+          }
+        }).create()
+    };
+    final MinMaxPriorityQueue<PositionListIndex>[] preparationQueue = new MinMaxPriorityQueue[] {
+      MinMaxPriorityQueue.orderedBy(
+        new Comparator<PositionListIndex>() {
+          @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
+            return o1.getRawKeyError() - o2.getRawKeyError();
+          }
+        }).create()
+    };
 
     for (int columnIndex : columnCombination.getSetBits()) {
-      priorityQueue.add(plis.get(columnIndex));
+      preparationQueue[0].add(plis.get(columnIndex));
     }
 
-    long sumSync = 0;
+    priorityQueue[0].add(preparationQueue[0].poll());
+    priorityQueue[0].add(preparationQueue[0].poll());
+
+    final Object prioLock = new Object();
+    final Object prepLock = new Object();
+    final Semaphore prioSemaphore = new Semaphore(2);
+
+    final PositionListIndex[] minPli = { priorityQueue[0].peek() };
+    final int[] minError = { minPli[0].getRawKeyError() };
+
+    List<ListenableFuture<?>> tasks = new LinkedList<>();
+    while (true) {
+      tasks.add(exec.submit(new Runnable() {
+        @Override public void run() {
+          while (true) {
+            if (priorityQueue[0].size() < 2) {
+              break;
+            }
+            PositionListIndex left;
+            PositionListIndex right;
+            synchronized (prioLock) {
+              try {
+                prioSemaphore.acquire(2);
+              }
+              catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+              left = priorityQueue[0].poll();
+              right = priorityQueue[0].poll();
+            }
+            PositionListIndex intersect = left.intersect(right);
+            synchronized (prioLock) {
+              priorityQueue[0].add(intersect);
+              if (intersect.getRawKeyError() < minError[0]) {
+                minError[0] = intersect.getRawKeyError();
+                minPli[0] = intersect;
+              }
+              prioSemaphore.release();
+            }
+          }
+        }
+      }));
+      for (int i = 0; i < N_THREADS; i++) {
+        tasks.add(exec.submit(new Runnable() {
+          @Override public void run() {
+            while (true) {
+              PositionListIndex left;
+              PositionListIndex right;
+
+              synchronized (prepLock) {
+                if (preparationQueue[0].size() < 2) {
+                  break;
+                }
+
+                left = preparationQueue[0].poll();
+                // right = preparationQueue[0].poll();
+              }
+              PositionListIndex intersect = left.intersect(minPli[0]);
+              synchronized (prioLock) {
+                priorityQueue[0].add(intersect);
+                prioSemaphore.release();
+              }
+            }
+          }
+        }));
+      }
+      try {
+        for (ListenableFuture<?> task : tasks) {
+          task.get();
+        }
+      }
+      catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      catch (ExecutionException e) {
+        e.printStackTrace();
+      }
+      tasks.clear();
+
+      if (preparationQueue[0].size() == 1) {
+        priorityQueue[0].add(preparationQueue[0].poll());
+      }
+      if (priorityQueue[0].size() < 2) {
+        break;
+      }
+      if (preparationQueue[0].size() < 1) {
+        MinMaxPriorityQueue<PositionListIndex> aux = priorityQueue[0];
+        priorityQueue[0] = preparationQueue[0];
+        preparationQueue[0] = aux;
+        priorityQueue[0].add(preparationQueue[0].poll());
+        priorityQueue[0].add(preparationQueue[0].poll());
+        prioSemaphore.release(2);
+      }
+    }
+
+
+
+    /*long sumSync = 0;
 
     List<ListenableFuture<PositionListIndex>> tasks = new LinkedList<>();
     while (true) {
@@ -130,27 +239,35 @@ public class PLIManager {
       tasks.clear();
     }
 
-    System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));
+    System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));*/
 
     /*final Object lock1 = new Object();
+    final PositionListIndex[] minPli = { priorityQueue.peek() };
+    final int[] minKeyError = { minPli[0].getRawKeyError() };
 
     List<ListenableFuture<?>> tasks = new LinkedList<>();
     for (int i = 0; i < N_THREADS; i++) {
       tasks.add(exec.submit(new Runnable() {
         @Override public void run() {
-          while (priorityQueue.size() > 1) {
-            System.out.println(priorityQueue.peek().getRawKeyError());
-            System.out.println(priorityQueue.peekLast().getRawKeyError());
+          while (true) {
             PositionListIndex leftPli;
             PositionListIndex rightPli;
             synchronized (lock1) {
+              if (priorityQueue.size() < 2) {
+                break;
+              }
+              // printQueue(priorityQueue);
               leftPli = priorityQueue.poll();
-              rightPli = priorityQueue.pollLast();
+              if (minKeyError[0] < leftPli.getRawKeyError()) {
+                rightPli = minPli[0];
+                System.out.println(String.format("exchange %d %d", rightPli.getRawKeyError(),
+                  leftPli.getRawKeyError()));
+              }
+              else {
+                rightPli = priorityQueue.poll();
+              }
             }
             PositionListIndex intersect = leftPli.intersect(rightPli);
-            if (intersect.isUnique()) {
-              break;
-            }
             System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
               intersect.calculateRawKeyError()));
             if (intersect.getRawKeyError() < 100) {
@@ -158,6 +275,10 @@ public class PLIManager {
             }
             synchronized (lock1) {
               priorityQueue.add(intersect);
+              if (intersect.getRawKeyError() < minKeyError[0]) {
+                minPli[0] = intersect;
+                minKeyError[0] = intersect.getRawKeyError();
+              }
             }
           }
         }
@@ -176,7 +297,9 @@ public class PLIManager {
       }
     }*/
 
-    return priorityQueue.poll();
+    System.out.println(String.format("End intersect %d", priorityQueue[0].peek().getRawKeyError()));
+
+    return priorityQueue[0].poll();
   }
 
   private void printQueue(final MinMaxPriorityQueue<PositionListIndex> priorityQueue) {
