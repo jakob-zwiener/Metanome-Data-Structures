@@ -73,6 +73,15 @@ public class PLIManager {
           bestSubset = subset;
           bestUnion = currentUnion;
         }
+        else if (currentUnion.size() == bestUnion.size()) {
+          System.out.println("equal--------");
+          System.out.println(String.format("best: %d current: %d", plis.get(bestSubset).getRawKeyError(), plis.get(
+            subset).getRawKeyError()));
+          if (plis.get(bestSubset).getRawKeyError() > plis.get(subset).getRawKeyError()) {
+            bestSubset = subset;
+            bestUnion = currentUnion;
+          }
+        }
       }
       solution.add(bestSubset);
       unionSoFar = unionSoFar.union(bestSubset);
