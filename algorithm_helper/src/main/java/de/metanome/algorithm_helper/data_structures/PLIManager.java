@@ -16,9 +16,10 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.util.LinkedList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Manages plis and performs intersect operations.
@@ -58,7 +59,38 @@ public class PLIManager {
 
     List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
 
-    System.out.println(subsets.size());
+    PriorityQueue<ColumnCombinationBitset> pq = new PriorityQueue<ColumnCombinationBitset>(
+      subsets.size(),
+      new Comparator<ColumnCombinationBitset>() {
+        @Override public int compare(final ColumnCombinationBitset o1, final ColumnCombinationBitset o2) {
+          return plis.get(o1).getRawKeyError() - plis.get(o2).getRawKeyError();
+        }
+      });
+
+    pq.addAll(subsets);
+
+    long beforeIntersect = System.nanoTime();
+
+    ColumnCombinationBitset unionSoFar = pq.poll();
+    PositionListIndex intersect = plis.get(unionSoFar);
+    while (!unionSoFar.equals(columnCombination)) {
+      ColumnCombinationBitset currentSubset = pq.poll();
+
+      if (currentSubset.isSubsetOf(unionSoFar)) {
+        continue;
+      }
+
+      unionSoFar = unionSoFar.union(currentSubset);
+      intersect = intersect.intersect(plis.get(currentSubset));
+    }
+
+    long intersectTime = System.nanoTime() - beforeIntersect;
+    this.intersectTimes += intersectTime;
+    System.out.println(String.format("%fs intersect time", intersectTimes / 1000000000d));
+    System.out.println(String.format("%d intersects", numberOfIntersects++));
+
+
+    /*System.out.println(subsets.size());
 
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
     ColumnCombinationBitset bestSubset = new ColumnCombinationBitset();
@@ -109,7 +141,7 @@ public class PLIManager {
     long intersectTime = System.nanoTime() - beforeIntersect;
     this.intersectTimes += intersectTime;
     System.out.println(String.format("%fs intersect time", intersectTimes / 1000000000d));
-    System.out.println(String.format("%d intersects", numberOfIntersects++));
+    System.out.println(String.format("%d intersects", numberOfIntersects++));*/
 
 
 /*
