@@ -92,6 +92,7 @@ public class SubSetGraph {
    * @param columnCombinationToQuery given superset to search for subsets
    * @return a list containing all found subsets
    */
+  // TODO(zwiener): Does this include equivalent sets?
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
     ColumnCombinationBitset columnCombinationToQuery)
   {
