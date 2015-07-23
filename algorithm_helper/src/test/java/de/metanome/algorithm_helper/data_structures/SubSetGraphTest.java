@@ -202,16 +202,32 @@ public class SubSetGraphTest {
    */
   @Test
   public void testGetMinimalSubsets() {
-    //Setup
+    // Setup
     SubSetGraphFixture fixture = new SubSetGraphFixture();
     SubSetGraph graph = fixture.getGraph();
 
-    //Execute functionality
+    // Execute functionality
     Set<ColumnCombinationBitset> actualMinimalSubsets = graph.getMinimalSubsets();
 
     // Check result
     assertThat(actualMinimalSubsets,
       IsIterableContainingInAnyOrder
         .containsInAnyOrder(fixture.getExpectedMinimalSubsets()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#toString()}
+   */
+  @Test
+  public void testToString() {
+    // Setup
+    SubSetGraphFixture fixture = new SubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+
+    // Execute functionality
+    String actualStringRepresentation = graph.toString();
+
+    // Check result
+    assertEquals(fixture.getExpectedStringRepresentation(), actualStringRepresentation);
   }
 }

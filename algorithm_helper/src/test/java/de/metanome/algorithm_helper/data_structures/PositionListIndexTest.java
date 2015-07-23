@@ -31,7 +31,6 @@ import org.junit.Test;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}
@@ -102,35 +101,6 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {{@link PositionListIndex#addOrExtendList(IntList, int, int)}}
-   * <p>
-   * When adding a value beyond the size of the list, the list should be extended and padded with the SINGLETON_VALUE constant.
-   */
-  @Test
-  public void testAddOrExtendList() {
-    // Setup
-    IntList list = new IntArrayList();
-    PositionListIndex pli = fixture.getFirstPLI();
-    int index1 = 23;
-    int index2 = 11;
-    // Expected values
-    int expectedValue = 42;
-
-    // Execute functionality
-    pli.addOrExtendList(list, expectedValue, index1);
-    pli.addOrExtendList(list, expectedValue, index2);
-
-    // Check result
-    assertEquals(expectedValue, (int) list.get(index1));
-    for (int i = 0; i < index2; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
-    }
-    for (int i = index2 + 1; i < index1; i++) {
-      assertEquals(PositionListIndex.SINGLETON_VALUE, (int) list.get(i));
-    }
-  }
-
-  /**
    * Test method for {@link PositionListIndex#hashCode()}, and {@link PositionListIndex#equals(Object)}
    */
   @Test
@@ -170,20 +140,6 @@ public class PositionListIndexTest {
     Int2IntOpenHashMap expectedHashMap = fixture.getFirstPLIAsHashMap();
 
     assertEquals(expectedHashMap, firstPLI.asHashMap());
-  }
-
-  /**
-   * Test method for {@link PositionListIndex#asArray()}
-   */
-  @Test
-  public void testAsList() {
-    // Setup
-    PositionListIndex firstPLI = fixture.getFirstPLI();
-
-    //expected Values
-    int[] expectedList = fixture.getFirstPLIAsArray();
-
-    assertArrayEquals(expectedList, firstPLI.asArray());
   }
 
   /**

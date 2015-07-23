@@ -32,7 +32,11 @@ public class PositionListIndexFixture {
     int[] cluster2 = {5, 6, 7};
     clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters, 9);
+    return new PositionListIndex(clusters, getExpectedFirstNumberOfRows());
+  }
+
+  public int getExpectedFirstNumberOfRows() {
+    return 9;
   }
 
   public String getExpectedFirstPliToString() {
@@ -55,7 +59,7 @@ public class PositionListIndexFixture {
     int[] cluster2 = {4, 2, 2, 8};
     clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters, 9);
+    return new PositionListIndex(clusters, getExpectedFirstNumberOfRows());
   }
 
   protected PositionListIndex getSupersetOfFirstPLI() {
@@ -87,10 +91,10 @@ public class PositionListIndexFixture {
 
   public int[] getFirstPLIAsArray() {
     return new int[] {
-        PositionListIndex.SINGLETON_VALUE,
-        PositionListIndex.SINGLETON_VALUE,
+      Partition.SINGLETON_VALUE,
+      Partition.SINGLETON_VALUE,
         1,
-        PositionListIndex.SINGLETON_VALUE,
+      Partition.SINGLETON_VALUE,
         1,
         2,
         2,
@@ -107,7 +111,7 @@ public class PositionListIndexFixture {
     int[] cluster2 = {4, 6, 7};
     clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters, 9);
+    return new PositionListIndex(clusters, getExpectedFirstNumberOfRows());
   }
 
   public String getExpectedSecondPliToString() {
@@ -126,7 +130,7 @@ public class PositionListIndexFixture {
     int[] cluster2 = {6, 7};
     clusters.add(new IntArrayList(cluster2));
 
-    return new PositionListIndex(clusters, 9);
+    return new PositionListIndex(clusters, getExpectedFirstNumberOfRows());
   }
 
   public int getExpectedIntersectedPLIRawKeyError() {

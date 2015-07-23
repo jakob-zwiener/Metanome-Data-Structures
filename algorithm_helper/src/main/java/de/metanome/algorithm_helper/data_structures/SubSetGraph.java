@@ -18,10 +18,15 @@ package de.metanome.algorithm_helper.data_structures;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.TreeSet;
+
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -245,6 +250,50 @@ public class SubSetGraph {
   @Override
   public int hashCode() {
     return subGraphs != null ? subGraphs.hashCode() : 0;
+  }
+
+  @Override public String toString() {
+    List<String> rows = new ArrayList<>();
+
+    stringRepresentation(rows, 0, 0);
+
+    return Joiner.on('\n').join(rows.subList(0, rows.size() - 1));
+  }
+
+  /**
+   * Recursive generation of a string representation of the graph.
+   * @param rows the rows of the representation
+   * @param level the current row level to write to
+   * @param leftMargin how many spaces to leave at the left
+   * @return the number of columns written to in the current row
+   */
+  protected int stringRepresentation(List<String> rows, int level, int leftMargin) {
+    List<Integer> sortedKeySet = new ArrayList<>(subGraphs.keySet());
+    Collections.sort(sortedKeySet);
+
+    int numberOfColumnsWritten;
+    if (level >= rows.size()) {
+      rows.add("");
+    }
+    StringBuilder row = new StringBuilder(rows.get(level));
+    for (int columnIndex : sortedKeySet) {
+      while (row.length() < leftMargin) {
+        row.append(" ");
+      }
+      int newLeftMargin = row.length();
+      row.append(columnIndex);
+      if (subGraphs.get(columnIndex).subSetEnds) {
+        row.append("X");
+      }
+      row.append(" ");
+      numberOfColumnsWritten = subGraphs.get(columnIndex).stringRepresentation(rows, level + 1, newLeftMargin);
+      while (row.length() < numberOfColumnsWritten) {
+        row.append(" ");
+      }
+    }
+    rows.set(level, CharMatcher.WHITESPACE.trimTrailingFrom(row));
+
+    return row.length();
   }
 }
 
