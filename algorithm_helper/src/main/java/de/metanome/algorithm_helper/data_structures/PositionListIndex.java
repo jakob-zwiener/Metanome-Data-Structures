@@ -20,10 +20,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -37,9 +35,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  * position list index ((0, 1), (2, 4), (3, 5)). Clusters of size 1 are discarded. A position list
  * index should be created using the {@link PLIBuilder}.
  */
-public class PositionListIndex implements Serializable {
+public class PositionListIndex implements Partition, Serializable {
 
-  public static final transient int SINGLETON_VALUE = 0;
+  // TODO(zwiener): Remove unused methods.
+
   private static final long serialVersionUID = 2;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
@@ -62,21 +61,21 @@ public class PositionListIndex implements Serializable {
    * Intersects the given PositionListIndex with this PositionListIndex returning a new
    * PositionListIndex. For the intersection the smaller PositionListIndex is converted into a
    * HashMap.
-   * @param otherPLI the other {@link PositionListIndex} to intersect
+   * @param otherPli the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  public PositionListIndex intersect(PositionListIndex otherPLI) {
+  public PositionListIndex intersect(PositionListIndex otherPli) {
     // TODO(zwiener): Check that aborting operation on unique plis actually lowers execution times.
-    if ((this.isUnique()) || (otherPLI.isUnique())) {
+    if ((this.isUnique()) || (otherPli.isUnique())) {
       return new PositionListIndex(new ArrayList<IntArrayList>(), getNumberOfRows());
     }
 
     // In most cases probing is harder than materialization. The smaller pli should be iterated for probing.
-    if (this.getRawKeyError() > otherPLI.getRawKeyError()) {
-      return calculateIntersection(otherPLI);
+    if (this.getRawKeyError() > otherPli.getRawKeyError()) {
+      return new MaterializedPLI(this).intersect(otherPli);
     }
     else {
-      return otherPLI.calculateIntersection(this);
+      return new MaterializedPLI(otherPli).intersect(this);
     }
   }
 
@@ -84,6 +83,7 @@ public class PositionListIndex implements Serializable {
     return clusters;
   }
 
+  @Override
   public int getNumberOfRows() {
     return numberOfRows;
   }
@@ -170,62 +170,13 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * Intersects the two given {@link PositionListIndex} and returns the outcome as new
-   * PositionListIndex.
-   * @param otherPLI the other {@link PositionListIndex} to intersect
-   * @return the intersected {@link PositionListIndex}
-   */
-  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    int[] materializedPLI = this.asArray();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(otherPLI, materializedPLI, map);
-
-    List<IntArrayList> clusters = new ArrayList<>();
-    for (IntArrayList cluster : map.values()) {
-      if (cluster.size() < 2) {
-        continue;
-      }
-      clusters.add(cluster);
-    }
-    return new PositionListIndex(clusters, numberOfRows);
-  }
-
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
-                          Map<IntPair, IntArrayList> map)
-  {
-    int uniqueValueCount = 0;
-    for (IntArrayList sameValues : otherPLI.clusters) {
-      for (int rowCount : sameValues) {
-        if ((materializedPLI.length > rowCount) &&
-          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
-          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
-          updateMap(map, rowCount, pair);
-        }
-      }
-      uniqueValueCount++;
-    }
-  }
-
-  protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount, IntPair pair) {
-    if (map.containsKey(pair)) {
-      IntArrayList currentList = map.get(pair);
-      currentList.add(rowCount);
-    }
-    else {
-      IntArrayList newList = new IntArrayList();
-      newList.add(rowCount);
-      map.put(pair, newList);
-    }
-  }
-
-  /**
    * Returns the position list index in a map representation. Every row index maps to a value
    * reconstruction. As the original values are unknown they are represented by a counter. The
    * position list index ((0, 1), (2, 4), (3, 5)) would be represented by {0=0, 1=0, 2=1, 3=2, 4=1,
    * 5=2}.
    * @return the pli as hash map
    */
-  public Int2IntOpenHashMap asHashMap() {
+  protected Int2IntOpenHashMap asHashMap() {
     Int2IntOpenHashMap hashedPLI = new Int2IntOpenHashMap(clusters.size());
     int uniqueValueCount = 0;
     for (IntArrayList sameValues : clusters) {
@@ -235,32 +186,6 @@ public class PositionListIndex implements Serializable {
       uniqueValueCount++;
     }
     return hashedPLI;
-  }
-
-  /**
-   * Materializes the PLI to an int array of row value representatives. The position list index ((0, 1),
-   * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
-   * @return the pli as list
-   */
-  public int[] asArray() {
-    int[] materializedPli = new int[getNumberOfRows()];
-    int uniqueValueCount = SINGLETON_VALUE + 1;
-    for (IntArrayList sameValues : clusters) {
-      for (int rowIndex : sameValues) {
-        materializedPli[rowIndex] = uniqueValueCount;
-      }
-      uniqueValueCount++;
-    }
-
-    return materializedPli;
-  }
-
-  protected void addOrExtendList(IntList list, int value, int index) {
-    if (list.size() <= index) {
-      list.size(index + 1);
-    }
-
-    list.set(index, value);
   }
 
   /**
