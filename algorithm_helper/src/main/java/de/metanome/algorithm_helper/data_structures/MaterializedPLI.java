@@ -33,9 +33,11 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 public class MaterializedPLI implements Partition {
 
   protected int[] dataRepresentatives;
+  protected int rawKeyError;
 
   public MaterializedPLI(PositionListIndex pli) {
     dataRepresentatives = asArray(pli);
+    rawKeyError = pli.getRawKeyError();
   }
 
   /**
@@ -56,12 +58,17 @@ public class MaterializedPLI implements Partition {
     return materializedPli;
   }
 
-  @Override public PositionListIndex intersect(final PositionListIndex otherPli) {
+  @Override
+  public PositionListIndex intersect(final PositionListIndex otherPli) {
     return calculateIntersection(otherPli);
   }
 
   @Override public int getNumberOfRows() {
     return dataRepresentatives.length;
+  }
+
+  @Override public int getRawKeyError() {
+    return rawKeyError;
   }
 
   /**

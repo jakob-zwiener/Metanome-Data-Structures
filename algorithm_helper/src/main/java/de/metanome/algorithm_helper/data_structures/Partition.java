@@ -30,4 +30,6 @@ public interface Partition {
 
   int getNumberOfRows();
 
+  int getRawKeyError();
+
 }
