@@ -60,7 +60,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link Partition#intersect(Partition)}
    * <p>
    * Two {@link PositionListIndex} should be correctly intersected.
    */
@@ -80,7 +80,7 @@ public class PositionListIndexTest {
   }
 
   /**
-   * Test method for {@link PositionListIndex#intersect(PositionListIndex)}
+   * Test method for {@link Partition#intersect(Partition)}
    * <p>
    * The intersection with a unique PLI should be unique.
    * <p>

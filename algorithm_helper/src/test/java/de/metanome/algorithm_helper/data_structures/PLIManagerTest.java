@@ -33,7 +33,7 @@ public class PLIManagerTest {
   @Before
   public void setUp() {
     fixture = new PLIManagerFixture();
-    pliManager = new PLIManager(fixture.getPliList());
+    pliManager = new PLIManager(fixture.getPlis());
   }
 
   /**

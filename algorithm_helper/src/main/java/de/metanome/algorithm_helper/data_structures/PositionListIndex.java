@@ -64,6 +64,7 @@ public class PositionListIndex implements Partition, Serializable {
    * @param otherPli the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
+  @Override
   public PositionListIndex intersect(PositionListIndex otherPli) {
     // TODO(zwiener): Check that aborting operation on unique plis actually lowers execution times.
     if ((this.isUnique()) || (otherPli.isUnique())) {
@@ -72,11 +73,21 @@ public class PositionListIndex implements Partition, Serializable {
 
     // In most cases probing is harder than materialization. The smaller pli should be iterated for probing.
     if (this.getRawKeyError() > otherPli.getRawKeyError()) {
-      return new MaterializedPLI(this).intersect(otherPli);
+      long beforeMaterialization = System.nanoTime();
+      MaterializedPLI materializedPLI = new MaterializedPLI(this);
+      // System.out.println(String.format("materialization took: %fs", (System.nanoTime() - beforeMaterialization) / 1000000000d));
+      return materializedPLI.intersect(otherPli);
     }
     else {
-      return new MaterializedPLI(otherPli).intersect(this);
+      long beforeMaterialization = System.nanoTime();
+      final MaterializedPLI materializedPLI = new MaterializedPLI(otherPli);
+      // System.out.println(String.format("materialization took: %fs", (System.nanoTime() - beforeMaterialization) / 1000000000d));
+      return materializedPLI.intersect(this);
     }
+  }
+
+  public PositionListIndex intersect(Partition otherPli) {
+    return otherPli.intersect(this);
   }
 
   public List<IntArrayList> getClusters() {
@@ -214,6 +225,7 @@ public class PositionListIndex implements Partition, Serializable {
    * Returns the number of columns to remove in order to make column unique. (raw key error)
    * @return raw key error
    */
+  @Override
   public int getRawKeyError() {
     if (rawKeyError == -1) {
       rawKeyError = calculateRawKeyError();

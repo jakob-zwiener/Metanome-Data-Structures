@@ -16,7 +16,8 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Manages plis and performs intersect operations.
@@ -25,11 +26,13 @@ import java.util.List;
  */
 public class PLIManager {
 
-  protected List<PositionListIndex> plis;
+  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
+  protected Map<ColumnCombinationBitset, MaterializedPLI> materializedPlis;
   protected ColumnCombinationBitset allColumnCombination;
 
-  public PLIManager(final List<PositionListIndex> pliList) {
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> pliList) {
     plis = pliList;
+    materializedPlis = new HashMap<>();
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -37,22 +40,138 @@ public class PLIManager {
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
   }
 
+  public void pinPlis(ColumnCombinationBitset... columnCombinations) {
+    // TODO(zwiener): test
+    for (ColumnCombinationBitset columnCombination : columnCombinations) {
+      materializedPlis.put(columnCombination, new MaterializedPLI(plis.get(columnCombination)));
+    }
+  }
+
+  public void unpinPlis(ColumnCombinationBitset... columnCombinations) {
+    // TODO(zwiener): test
+    for (ColumnCombinationBitset columnCombination : columnCombinations) {
+      materializedPlis.remove(columnCombination);
+    }
+  }
+
   public PositionListIndex buildPli(final ColumnCombinationBitset columnCombination) throws PLIBuildingException {
     if (!columnCombination.isSubsetOf(allColumnCombination)) {
       throw new PLIBuildingException(
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
+
+    PositionListIndex pli = plis.get(columnCombination);
+
+    if (pli != null) {
+      return pli;
+    }
+
+
     PositionListIndex intersect = null;
-    for (int columnIndex : columnCombination.getSetBits()) {
+    Partition firstPartition = null;
+    ColumnCombinationBitset unionColumnCombination = null;
+    for (ColumnCombinationBitset oneColumnCombination : columnCombination.getContainedOneColumnCombinations()) {
       if (intersect == null) {
-        intersect = plis.get(columnIndex);
+        if (firstPartition == null) {
+          firstPartition = getPartition(oneColumnCombination);
+          unionColumnCombination = oneColumnCombination;
+          continue;
+        }
+        intersect = firstPartition.intersect(plis.get(oneColumnCombination));
+        unionColumnCombination = unionColumnCombination.union(oneColumnCombination);
+        plis.put(unionColumnCombination, intersect);
         continue;
       }
-      intersect = intersect.intersect(plis.get(columnIndex));
+      intersect = intersect.intersect(getPartition(oneColumnCombination));
+      unionColumnCombination = unionColumnCombination.union(oneColumnCombination);
+      plis.put(unionColumnCombination, intersect);
     }
 
     return intersect;
 
+  }
+
+  public PositionListIndex buildPli(ColumnCombinationBitset left, ColumnCombinationBitset right)
+    throws PLIBuildingException
+  {
+    Partition leftPartition = getPartition(left);
+    Partition rightPartition = getPartition(right);
+
+    if (leftPartition == null) {
+      leftPartition = buildPli(left);
+    }
+
+    if (rightPartition == null) {
+      rightPartition = buildPli(right);
+    }
+
+    if (leftPartition.getRawKeyError() > rightPartition.getRawKeyError()) {
+      return leftPartition.intersect(plis.get(right));
+    }
+    else {
+      return rightPartition.intersect(plis.get(left));
+    }
+
+
+    /*MaterializedPLI leftMaterialized = materializedPlis.get(left);
+    MaterializedPLI rightMaterialized = materializedPlis.get(right);
+    PositionListIndex leftPli = plis.get(left);
+    PositionListIndex rightPli = plis.get(right);
+
+    if ((leftMaterialized == null) && (rightMaterialized == null)) {
+      if ((leftPli == null) && (rightPli == null)) {
+        return buildPli(left.union(right));
+      }
+      else if ((leftPli != null) && (rightPli == null)) {
+        return leftPli.intersect(buildPli(right));
+      }
+      else if ((leftPli == null) && (rightPli != null)) {
+        return buildPli(left).intersect(rightPli);
+      }
+      else {
+        return leftPli.intersect(rightPli);
+      }
+    }
+    else if ((leftMaterialized != null) && (rightMaterialized == null)) {
+      System.out.println("materialization saved");
+      if (rightPli == null) {
+        return leftMaterialized.intersect(buildPli(right));
+      }
+      else {
+        return leftMaterialized.intersect(rightPli);
+      }
+    }
+    else if ((leftMaterialized == null) && (rightMaterialized != null)) {
+      System.out.println("materialization saved");
+      if (leftPli == null) {
+        return rightMaterialized.intersect(buildPli(left));
+      }
+      else {
+        return rightMaterialized.intersect(leftPli);
+      }
+    }
+    else {
+      // TODO(zwiener): Choose materialized pli depending on key error.
+      System.out.println("materialization saved");
+      if (leftPli == null) {
+        return rightMaterialized.intersect(buildPli(left));
+      }
+      else {
+        return rightMaterialized.intersect(leftPli);
+      }
+    }*/
+  }
+
+  protected Partition getPartition(ColumnCombinationBitset columnCombination) {
+    // TODO(zwiener): test
+    // TODO(zwiener): check that this is always used
+    Partition partition = materializedPlis.get(columnCombination);
+
+    if (partition == null) {
+      partition = plis.get(columnCombination);
+    }
+
+    return partition;
   }
 
 
