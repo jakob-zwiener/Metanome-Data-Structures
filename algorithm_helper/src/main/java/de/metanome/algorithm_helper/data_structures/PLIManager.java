@@ -16,7 +16,7 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.util.List;
+import java.util.Map;
 
 /**
  * Manages plis and performs intersect operations.
@@ -25,11 +25,11 @@ import java.util.List;
  */
 public class PLIManager {
 
-  protected List<PositionListIndex> plis;
+  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
 
-  public PLIManager(final List<PositionListIndex> pliList) {
-    plis = pliList;
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
+    this.plis = plis;
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -42,13 +42,23 @@ public class PLIManager {
       throw new PLIBuildingException(
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
+
+    PositionListIndex result = plis.get(columnCombination);
+    if (result != null) {
+      return result;
+    }
+
     PositionListIndex intersect = null;
-    for (int columnIndex : columnCombination.getSetBits()) {
+    ColumnCombinationBitset unionColumnCombination = null;
+    for (ColumnCombinationBitset oneColumnCombination : columnCombination.getContainedOneColumnCombinations()) {
       if (intersect == null) {
-        intersect = plis.get(columnIndex);
+        intersect = plis.get(oneColumnCombination);
+        unionColumnCombination = oneColumnCombination;
         continue;
       }
-      intersect = intersect.intersect(plis.get(columnIndex));
+      intersect = intersect.intersect(plis.get(oneColumnCombination));
+      unionColumnCombination = unionColumnCombination.union(oneColumnCombination);
+      plis.put(unionColumnCombination, intersect);
     }
 
     return intersect;
