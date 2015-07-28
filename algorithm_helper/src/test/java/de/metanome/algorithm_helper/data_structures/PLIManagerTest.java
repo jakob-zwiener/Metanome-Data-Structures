@@ -18,6 +18,8 @@ package de.metanome.algorithm_helper.data_structures;
 
 import static org.junit.Assert.*;
 
+import java.util.concurrent.ExecutionException;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,7 +42,7 @@ public class PLIManagerTest {
    * Test method for {@link PLIManager#buildPli(ColumnCombinationBitset)}
    */
   @Test
-  public void testBuildPli() throws PLIBuildingException {
+  public void testBuildPli() throws PLIBuildingException, ExecutionException {
     // Execute functionality
     PositionListIndex actualPli = pliManager.buildPli(new ColumnCombinationBitset(0, 1, 2));
 
@@ -54,7 +56,7 @@ public class PLIManagerTest {
    * When column indices are out of bounds an exception should be thrown by the pli manager.
    */
   @Test
-  public void testBuildPliIndexOutOfRange() {
+  public void testBuildPliIndexOutOfRange() throws ExecutionException {
     // Setup
     ColumnCombinationBitset invalidColumnCombination = new ColumnCombinationBitset(0, 1, 2,
       3);  // Column index 3 should not be known.
