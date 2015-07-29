@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 
 import com.google.common.base.CharMatcher;
@@ -72,6 +73,38 @@ public class SubSetGraph {
   }
 
   /**
+   * Removes a column combination from the graph. Returns, whether an element was removed.
+   * @param columnCombination a column combination to remove
+   * @return whether the column combination was removed
+   */
+  public boolean remove(ColumnCombinationBitset columnCombination) {
+    Stack<SubSetGraph> previousSubGraphs = new Stack<>();
+    Stack<Integer> previousSubGraphIndices = new Stack<>();
+
+    // Find correct graph.
+    SubSetGraph subGraph = this;
+    previousSubGraphs.push(this);
+    for (int columnIndex : columnCombination.getSetBits()) {
+      subGraph = subGraph.subGraphs.get(columnIndex);
+      if (subGraph == null) {
+        return false;
+      }
+      previousSubGraphs.push(subGraph);
+      previousSubGraphIndices.push(columnIndex);
+    }
+
+    // Prune empty subgraphs.
+    subGraph = previousSubGraphs.pop();
+    subGraph.subSetEnds = false;
+    while ((!subGraph.subSetEnds) && (subGraph.subGraphs.isEmpty())) {
+      subGraph = previousSubGraphs.pop();
+      subGraph.subGraphs.remove(previousSubGraphIndices.pop());
+    }
+
+    return true;
+  }
+
+  /**
    * Looks for the subgraph or builds and adds a new one.
    * @param setColumnIndex the column index to perform the lookup on
    * @return the subgraph behind the column index
@@ -92,6 +125,7 @@ public class SubSetGraph {
    * @param columnCombinationToQuery given superset to search for subsets
    * @return a list containing all found subsets
    */
+  // TODO(zwiener): Does this include equivalent sets?
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
     ColumnCombinationBitset columnCombinationToQuery)
   {
