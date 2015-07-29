@@ -27,9 +27,6 @@ import java.util.Map;
  */
 public class PLIManager {
 
-  public long searchTimes;
-  public long intersectTimes;
-  public int numberOfIntersects;
   protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
   protected SubSetGraph pliGraph;
@@ -58,8 +55,7 @@ public class PLIManager {
 
     List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
 
-    // System.out.println(subsets.size());
-
+    // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
     ColumnCombinationBitset bestSubset = new ColumnCombinationBitset();
     ColumnCombinationBitset bestUnion = new ColumnCombinationBitset();
@@ -74,9 +70,7 @@ public class PLIManager {
           bestUnion = currentUnion;
         }
         else if (currentUnion.size() == bestUnion.size()) {
-          // System.out.println("equal--------");
-          // System.out.println(String.format("best: %d current: %d", plis.get(bestSubset).getRawKeyError(), plis.get(
-          //   subset).getRawKeyError()));
+          // If multiple subsets add the same number of columns use key error as tiebreaker.
           if (plis.get(bestSubset).getRawKeyError() > plis.get(subset).getRawKeyError()) {
             bestSubset = subset;
             bestUnion = currentUnion;
@@ -87,10 +81,7 @@ public class PLIManager {
       unionSoFar = unionSoFar.union(bestSubset);
     }
 
-    // System.out.println(solution.size());
-
-    // long beforeIntersect = System.nanoTime();
-
+    // Perform the necessary intersections.
     PositionListIndex intersect = null;
     ColumnCombinationBitset unionCombination = null;
     for (ColumnCombinationBitset subsetCombination : solution) {
@@ -105,61 +96,6 @@ public class PLIManager {
       plis.put(unionCombination, intersect);
       pliGraph.add(unionCombination);
     }
-
-    // long intersectTime = System.nanoTime() - beforeIntersect;
-    // this.intersectTimes += intersectTime;
-    // System.out.println(String.format("%fs intersect time", intersectTimes / 1000000000d));
-    // System.out.println(String.format("%d intersects", numberOfIntersects++));
-
-
-/*
-      ColumnCombinationBitset difference = columnCombination.minus(subset);
-      PositionListIndex differencePli = plis.get(difference);
-      if (differencePli != null) {
-        System.out.println("found--------");
-        return differencePli.intersect(plis.get(subset));
-      }
-    }*/
-
-
-    /*long startSearch = System.nanoTime();
-
-    PositionListIndex minPli = null;
-    int minKeyError = Integer.MAX_VALUE;
-    // FIXME(zwiener): A null pointer exception could originate here. Add test for the case that no subsets are found.
-    ColumnCombinationBitset minKeyErrorSubset = null;
-    for (ColumnCombinationBitset subset : subsets) {
-      PositionListIndex pli = plis.get(subset);
-      if (pli.getRawKeyError() < minKeyError) {
-        minPli = pli;
-        minKeyErrorSubset = subset;
-        minKeyError = pli.getRawKeyError();
-      }
-    }
-    searchTimes += (System.nanoTime() - startSearch);
-
-    long beforeIntersect = System.nanoTime();
-
-    ColumnCombinationBitset missingColumns = columnCombination.minus(minKeyErrorSubset);
-
-    PositionListIndex intersect = minPli;
-    ColumnCombinationBitset currentColumnCombination = minKeyErrorSubset;
-    System.out.println(missingColumns);
-    int intersects = 0;
-    for (ColumnCombinationBitset oneColumnCombination : missingColumns.getContainedOneColumnCombinations()) {
-      intersect = intersect.intersect(plis.get(oneColumnCombination));
-      intersects++;
-      // TODO(zwiener): Whether plis get cached or not is currently not tested.
-      currentColumnCombination = currentColumnCombination.union(oneColumnCombination);
-      plis.put(currentColumnCombination, intersect);
-      pliGraph.add(currentColumnCombination);
-    }
-
-    long intersectTime = System.nanoTime() - beforeIntersect;
-    this.intersectTimes += intersectTime;
-    System.out.println(String.format("%d intra intersects", intersects));
-    System.out.println(String.format("%fs intersect time", intersectTimes / 1000000000d));
-    System.out.println(String.format("%d intersects", numberOfIntersects++));*/
 
     return intersect;
   }
