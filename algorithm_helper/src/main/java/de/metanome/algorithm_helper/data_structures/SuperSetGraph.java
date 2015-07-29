@@ -62,6 +62,10 @@ public class SuperSetGraph {
     return this;
   }
 
+  public boolean remove(ColumnCombinationBitset columnCombination) {
+    return graph.remove(columnCombination.invert(numberOfColumns));
+  }
+
   /**
    * Returns all supersets of the given {@link de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset}
    * that are in the graph
