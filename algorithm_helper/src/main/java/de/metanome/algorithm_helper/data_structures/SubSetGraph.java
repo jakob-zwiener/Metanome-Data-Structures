@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
 
 import com.google.common.base.CharMatcher;
@@ -69,6 +70,38 @@ public class SubSetGraph {
     }
 
     return this;
+  }
+
+  /**
+   * Removes a column combination from the graph. Returns, whether an element was removed.
+   * @param columnCombination a column combination to remove
+   * @return whether the column combination was removed
+   */
+  public boolean remove(ColumnCombinationBitset columnCombination) {
+    Stack<SubSetGraph> previousSubGraphs = new Stack<>();
+    Stack<Integer> previousSubGraphIndices = new Stack<>();
+
+    // Find correct graph.
+    SubSetGraph subGraph = this;
+    previousSubGraphs.push(this);
+    for (int columnIndex : columnCombination.getSetBits()) {
+      subGraph = subGraph.subGraphs.get(columnIndex);
+      if (subGraph == null) {
+        return false;
+      }
+      previousSubGraphs.push(subGraph);
+      previousSubGraphIndices.push(columnIndex);
+    }
+
+    // Prune empty subgraphs.
+    subGraph = previousSubGraphs.pop();
+    subGraph.subSetEnds = false;
+    while ((!subGraph.subSetEnds) && (subGraph.subGraphs.isEmpty())) {
+      subGraph = previousSubGraphs.pop();
+      subGraph.subGraphs.remove(previousSubGraphIndices.pop());
+    }
+
+    return true;
   }
 
   /**
