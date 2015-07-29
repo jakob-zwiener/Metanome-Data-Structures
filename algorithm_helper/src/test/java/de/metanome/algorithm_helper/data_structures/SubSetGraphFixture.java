@@ -38,8 +38,8 @@ public class SubSetGraphFixture {
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3, 4, 6));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 2, 4, 7));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3));
-    includedColumnCombinations.add(new ColumnCombinationBitset(2, 3, 4, 7, 11));
     includedColumnCombinations.add(new ColumnCombinationBitset(5, 6, 11));
+    includedColumnCombinations.add(columnCombinationToRemove());
 
     return includedColumnCombinations;
   }
@@ -53,7 +53,7 @@ public class SubSetGraphFixture {
       getExpectedIncludedColumnCombinations().get(0),
       getExpectedIncludedColumnCombinations().get(1),
       getExpectedIncludedColumnCombinations().get(3),
-      getExpectedIncludedColumnCombinations().get(5)
+      getExpectedIncludedColumnCombinations().get(4)
     };
   }
 
@@ -73,5 +73,23 @@ public class SubSetGraphFixture {
         + "4  4  6   4   11X\n"
         + "7X 6X 11X 7\n"
         + "          11X";
+  }
+
+  public ColumnCombinationBitset columnCombinationToRemove() {
+    return new ColumnCombinationBitset(2, 3, 4, 7, 11);
+  }
+
+  public SubSetGraph expectedGraphAfterRemoval() {
+    SubSetGraph graph = new SubSetGraph();
+
+    List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();
+
+    columnCombinations.remove(columnCombinationToRemove());
+
+    for (ColumnCombinationBitset columnCombination : columnCombinations) {
+      graph.add(columnCombination);
+    }
+
+    return graph;
   }
 }
