@@ -68,6 +68,24 @@ public class SuperSetGraphTest {
   }
 
   /**
+   * Test method for {@link SuperSetGraph#add(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testAddEmptyColumnCombination() {
+    // Setup
+    SuperSetGraph actualGraph = new SuperSetGraph(42);
+
+    // CHeck precondition
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+
+    // Execute functionality
+    actualGraph.add(new ColumnCombinationBitset());
+
+    // Check result
+    assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+  }
+
+  /**
    * Test method for {@link de.metanome.algorithm_helper.data_structures.SuperSetGraph#addAll(java.util.Collection)}
    * <p/> After inserting all column combinations the graph should be equal to the expected graph
    * from the fixture. AddAll should return the graph after addition.
@@ -88,6 +106,57 @@ public class SuperSetGraphTest {
     // Check result
     assertEquals(expectedGraph, graph);
     assertSame(graph, graphAfterAddAll);
+  }
+
+  /**
+   * Test method for {@link SuperSetGraph#remove(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testRemove() {
+    // Setup
+    SuperSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    assertTrue(actualGraph.remove(fixture.getColumnCombinationToRemove()));
+
+    assertEquals(fixture.getExpectedGraphAfterRemove(), actualGraph);
+  }
+
+  /**
+   * Test method for {@link SuperSetGraph#remove(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testRemoveEmptyColumnCombination() {
+    // Setup
+    SuperSetGraph actualGraph = fixture.getGraph();
+    actualGraph.add(new ColumnCombinationBitset());
+
+    // Check precondition
+    assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+
+    // Execute functionality
+    // Check result
+    assertTrue(actualGraph.remove(new ColumnCombinationBitset()));
+
+    assertEquals(fixture.getGraph(), actualGraph);
+  }
+
+  /**
+   * Test method for {@link SuperSetGraph#remove(ColumnCombinationBitset)}
+   * <p>
+   * Trying to remove a column combination that is in fact not in the graph should not alter the graph and return false.
+   */
+  @Test
+  public void testRemoveColumnCombinationNotInGraph() {
+    // Setup
+    SuperSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    assertFalse(actualGraph.remove(new ColumnCombinationBitset(1, 2, 5, 7)));
+
+    assertEquals(fixture.getGraph(), actualGraph);
   }
 
   /**
