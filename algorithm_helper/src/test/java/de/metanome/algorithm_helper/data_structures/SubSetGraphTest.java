@@ -202,16 +202,85 @@ public class SubSetGraphTest {
    */
   @Test
   public void testGetMinimalSubsets() {
-    //Setup
+    // Setup
     SubSetGraphFixture fixture = new SubSetGraphFixture();
     SubSetGraph graph = fixture.getGraph();
 
-    //Execute functionality
+    // Execute functionality
     Set<ColumnCombinationBitset> actualMinimalSubsets = graph.getMinimalSubsets();
 
     // Check result
     assertThat(actualMinimalSubsets,
       IsIterableContainingInAnyOrder
         .containsInAnyOrder(fixture.getExpectedMinimalSubsets()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#toString()}
+   */
+  @Test
+  public void testToString() {
+    // Setup
+    SubSetGraphFixture fixture = new SubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+
+    // Execute functionality
+    String actualStringRepresentation = graph.toString();
+
+    // Check result
+    assertEquals(fixture.getExpectedStringRepresentation(), actualStringRepresentation);
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testRemove() {
+    // Setup
+    SubSetGraphFixture fixture = new SubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    assertTrue(actualGraph.remove(fixture.columnCombinationToRemove()));
+
+    assertEquals(fixture.expectedGraphAfterRemoval(), actualGraph);
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   * <p>
+   * The empty column should be successfully removed from any graph.
+   */
+  @Test
+  public void testRemoveEmptyColumnCombination() {
+    // Setup
+    SubSetGraphFixture fixture = new SubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    assertTrue(actualGraph.remove(new ColumnCombinationBitset()));
+
+    assertEquals(fixture.getGraph(), actualGraph);
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   * <p>
+   * Trying to remove a column combination from a graph that does not contain the column combination should not alter
+   * the graph and return false.
+   */
+  @Test
+  public void testRemoveNotInTheGraph() {
+    // Setup
+    SubSetGraphFixture fixture = new SubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    assertFalse(actualGraph.remove(new ColumnCombinationBitset(2, 3, 5, 8)));
+
+    assertEquals(fixture.getGraph(), actualGraph);
   }
 }

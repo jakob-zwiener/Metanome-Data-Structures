@@ -39,7 +39,7 @@ public class SuperSetGraphFixture {
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3, 4, 6));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 2, 4, 7));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3));
-    includedColumnCombinations.add(new ColumnCombinationBitset(1, 2, 3, 4, 7, 8));
+    includedColumnCombinations.add(getColumnCombinationToRemove());
     includedColumnCombinations.add(new ColumnCombinationBitset(5, 6, 8));
 
     return includedColumnCombinations;
@@ -59,6 +59,21 @@ public class SuperSetGraphFixture {
       getExpectedIncludedColumnCombinations().get(3),
       getExpectedIncludedColumnCombinations().get(4)
     };
+  }
+
+  public ColumnCombinationBitset getColumnCombinationToRemove() {
+    return new ColumnCombinationBitset(1, 2, 3, 4, 7, 8);
+  }
+
+  public SuperSetGraph getExpectedGraphAfterRemove() {
+    SuperSetGraph graph = new SuperSetGraph(getNumberOfColumns());
+
+    List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();
+    columnCombinations.remove(getColumnCombinationToRemove());
+
+    graph.addAll(columnCombinations);
+
+    return graph;
   }
 
 }

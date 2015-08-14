@@ -34,18 +34,18 @@ public class SubSetGraphFixture {
   public List<ColumnCombinationBitset> getExpectedIncludedColumnCombinations() {
     List<ColumnCombinationBitset> includedColumnCombinations = new ArrayList<>();
 
-    includedColumnCombinations.add(new ColumnCombinationBitset(1, 5, 6, 8));
+    includedColumnCombinations.add(new ColumnCombinationBitset(1, 5, 6, 11));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3, 4, 6));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 2, 4, 7));
     includedColumnCombinations.add(new ColumnCombinationBitset(1, 3));
-    includedColumnCombinations.add(new ColumnCombinationBitset(2, 3, 4, 7, 8));
-    includedColumnCombinations.add(new ColumnCombinationBitset(5, 6, 8));
+    includedColumnCombinations.add(new ColumnCombinationBitset(5, 6, 11));
+    includedColumnCombinations.add(columnCombinationToRemove());
 
     return includedColumnCombinations;
   }
 
   public ColumnCombinationBitset getColumnCombinationForSubsetQuery() {
-    return new ColumnCombinationBitset(1, 2, 3, 4, 5, 6, 8);
+    return new ColumnCombinationBitset(1, 2, 3, 4, 5, 6, 11);
   }
 
   public ColumnCombinationBitset[] getExpectedSubsetsFromQuery() {
@@ -53,7 +53,7 @@ public class SubSetGraphFixture {
       getExpectedIncludedColumnCombinations().get(0),
       getExpectedIncludedColumnCombinations().get(1),
       getExpectedIncludedColumnCombinations().get(3),
-      getExpectedIncludedColumnCombinations().get(5)
+      getExpectedIncludedColumnCombinations().get(4)
     };
   }
 
@@ -64,5 +64,32 @@ public class SubSetGraphFixture {
       getExpectedIncludedColumnCombinations().get(4),
       getExpectedIncludedColumnCombinations().get(5)
     };
+  }
+
+  public String getExpectedStringRepresentation() {
+    return
+      "1         2   5\n"
+        + "2  3X 5   3   6\n"
+        + "4  4  6   4   11X\n"
+        + "7X 6X 11X 7\n"
+        + "          11X";
+  }
+
+  public ColumnCombinationBitset columnCombinationToRemove() {
+    return new ColumnCombinationBitset(2, 3, 4, 7, 11);
+  }
+
+  public SubSetGraph expectedGraphAfterRemoval() {
+    SubSetGraph graph = new SubSetGraph();
+
+    List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();
+
+    columnCombinations.remove(columnCombinationToRemove());
+
+    for (ColumnCombinationBitset columnCombination : columnCombinations) {
+      graph.add(columnCombination);
+    }
+
+    return graph;
   }
 }
