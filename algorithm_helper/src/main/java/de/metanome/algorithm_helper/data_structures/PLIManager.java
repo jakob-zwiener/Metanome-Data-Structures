@@ -27,14 +27,18 @@ import java.util.Map;
  */
 public class PLIManager {
 
-  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
+  // FIXME(zwiener): Make this protected.
+  public Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
-  protected SubSetGraph pliGraph;
+  protected SubSetGraph pliSubSetGraph;
+  protected SuperSetGraph pliSuperSetGraph;
 
   public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
     this.plis = plis;
-    pliGraph = new SubSetGraph();
-    pliGraph.addAll(plis.keySet());
+    pliSubSetGraph = new SubSetGraph();
+    pliSubSetGraph.addAll(plis.keySet());
+    pliSuperSetGraph = new SuperSetGraph(plis.size());
+    pliSuperSetGraph.addAll(plis.keySet());
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -53,7 +57,7 @@ public class PLIManager {
       return exactPli;
     }
 
-    List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
+    List<ColumnCombinationBitset> subsets = pliSubSetGraph.getExistingSubsets(columnCombination);
 
     // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
@@ -93,11 +97,36 @@ public class PLIManager {
 
       intersect = intersect.intersect(plis.get(subsetCombination));
       unionCombination = unionCombination.union(subsetCombination);
-      plis.put(unionCombination, intersect);
-      pliGraph.add(unionCombination);
+      addPli(unionCombination, intersect);
     }
 
     return intersect;
+  }
+
+  protected void addPli(final ColumnCombinationBitset columnCombination,
+                        final PositionListIndex intersect)
+  {
+    plis.put(columnCombination, intersect);
+    pliSubSetGraph.add(columnCombination);
+    pliSuperSetGraph.add(columnCombination);
+
+    // System.out.println(pliSubSetGraph);
+
+    List<ColumnCombinationBitset> supersets = pliSuperSetGraph.getExistingSupersets(columnCombination);
+
+    for (ColumnCombinationBitset superset : supersets) {
+      if (!superset.equals(columnCombination)) {
+        removePli(superset);
+      }
+    }
+
+    // System.out.println(pliSubSetGraph);
+  }
+
+  protected void removePli(final ColumnCombinationBitset columnCombination) {
+    plis.remove(columnCombination);
+    pliSubSetGraph.remove(columnCombination);
+    pliSuperSetGraph.remove(columnCombination);
   }
 
 
