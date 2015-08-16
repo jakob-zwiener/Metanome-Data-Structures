@@ -44,7 +44,7 @@ public class PLIManagerTest {
   @Test
   public void testBuildPli() throws PLIBuildingException, ExecutionException {
     // Execute functionality
-    PositionListIndex actualPli = pliManager.buildPli(new ColumnCombinationBitset(0, 1, 2));
+    PositionListIndex actualPli = pliManager.getPli(new ColumnCombinationBitset(0, 1, 2));
 
     // Check result
     assertEquals(fixture.getExpectedIntersect012(), actualPli);
