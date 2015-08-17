@@ -28,6 +28,9 @@ import com.google.common.cache.RemovalCause;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 
+import org.mapdb.DBMaker;
+import org.mapdb.HTreeMap;
+
 /**
  * Manages plis and performs intersect operations.
  * @author Jakob Zwiener
@@ -35,6 +38,7 @@ import com.google.common.cache.RemovalNotification;
  */
 public class PLIManager {
 
+  public static int CACHE_SIZE = 20;
   public LoadingCache<ColumnCombinationBitset, PositionListIndex> plis;
   protected Map<ColumnCombinationBitset, PositionListIndex> basePlis;
   protected ColumnCombinationBitset allColumnCombination;
@@ -42,8 +46,10 @@ public class PLIManager {
 
   public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> basePlis) {
 
+    final HTreeMap<ColumnCombinationBitset, PositionListIndex> serializedPlis = DBMaker.newTempHashMap();
+
     this.plis = CacheBuilder.newBuilder()
-      .maximumSize(20)
+      .maximumSize(CACHE_SIZE)
       .removalListener(new RemovalListener<ColumnCombinationBitset, PositionListIndex>() {
         @Override
         public void onRemoval(final RemovalNotification<ColumnCombinationBitset, PositionListIndex> notification) {
@@ -52,13 +58,24 @@ public class PLIManager {
             // Do not remove the one column combinations.
             if (notification.getKey().size() > 1) {
               pliGraph.remove(notification.getKey());
+              long beforeSerialization = System.nanoTime();
+              serializedPlis.put(notification.getKey(), notification.getValue());
+              System.out.println(String.format("serialization took %fs",
+                (System.nanoTime() - beforeSerialization) / 1000000000d));
             }
+
           }
         }
       })
       .build(new CacheLoader<ColumnCombinationBitset, PositionListIndex>() {
         @Override public PositionListIndex load(final ColumnCombinationBitset key) throws Exception {
-          return buildPli(key);
+          PositionListIndex pli = serializedPlis.get(key);
+
+          if (pli == null) {
+            pli = buildPli(key);
+          }
+
+          return pli;
         }
       });
 
