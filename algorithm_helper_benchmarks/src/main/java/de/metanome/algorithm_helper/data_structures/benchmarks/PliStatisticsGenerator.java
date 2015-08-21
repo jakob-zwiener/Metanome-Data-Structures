@@ -23,6 +23,7 @@ import java.util.List;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.input.InputGenerationException;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
@@ -31,8 +32,9 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 public class PliStatisticsGenerator {
 
   public static void main(String[] args)
-      throws PLIBuildingException, IOException, AlgorithmConfigurationException,
-             ClassNotFoundException {
+    throws PLIBuildingException, IOException, AlgorithmConfigurationException,
+    ClassNotFoundException, InputGenerationException
+  {
 
     List<PositionListIndex> plis = PLIBenchmarkRunner.getPlis("ncvoter.plis", "ncvoter.csv");
 

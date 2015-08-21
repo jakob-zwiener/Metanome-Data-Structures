@@ -16,16 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
-import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
-import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
-import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-import de.metanome.algorithm_integration.AlgorithmConfigurationException;
-import de.metanome.algorithm_integration.configuration.ConfigurationSettingFileInput;
-import de.metanome.algorithm_integration.input.InputGenerationException;
-import de.metanome.backend.input.file.DefaultFileInputGenerator;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,6 +28,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
+import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuilder;
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.configuration.ConfigurationSettingFileInput;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+import de.metanome.backend.input.file.DefaultFileInputGenerator;
+
 /**
  * @author Jakob Zwiener
  */
@@ -47,14 +47,14 @@ public class PLIBenchmarkRunner {
       throws IOException, PLIBuildingException, InputGenerationException,
              AlgorithmConfigurationException, ClassNotFoundException {
 
-    List<PositionListIndex> plis = getPlis("ncvoter1m.plis", "ncvoter1m.csv");
+    List<PositionListIndex> plis = getPlis("ncvoter.plis", "ncvoter.csv");
 
     Map<ColumnCombinationBitset, PositionListIndex> pliStore = new HashMap<>();
     for (int i = 0; i < plis.size(); i++) {
       pliStore.put(new ColumnCombinationBitset(i), plis.get(i));
     }
 
-    BufferedReader input = new BufferedReader(new FileReader("ncvoter10k_incomplete.csv"));
+    BufferedReader input = new BufferedReader(new FileReader("ncvoter100k_incomplete.csv"));
 
     long numberOfIntersects = 0;
     long secondsOfBenchmark = 30;
@@ -95,8 +95,9 @@ public class PLIBenchmarkRunner {
   }
 
   public static List<PositionListIndex> getPlis(String plisFileName, String inputFileName)
-      throws IOException, AlgorithmConfigurationException, PLIBuildingException,
-             ClassNotFoundException {
+    throws IOException, AlgorithmConfigurationException, PLIBuildingException,
+    ClassNotFoundException, InputGenerationException
+  {
     long beforePLIBuild = System.nanoTime();
 
     List<PositionListIndex> plis;
@@ -107,9 +108,9 @@ public class PLIBenchmarkRunner {
     } else {
       GenericPLIBuilder
           pliBuilder =
-          new PLIBuilderSequential(new DefaultFileInputGenerator(
+        new PLIBuilder(new DefaultFileInputGenerator(
               new ConfigurationSettingFileInput(inputFileName).setSkipDifferingLines(true)
-                  .setHeader(false)));
+                .setHeader(false)).generateNewCopy());
 
       plis = pliBuilder.getPLIList();
 

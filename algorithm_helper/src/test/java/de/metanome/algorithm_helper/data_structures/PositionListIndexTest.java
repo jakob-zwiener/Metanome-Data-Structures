@@ -56,7 +56,7 @@ public class PositionListIndexTest {
     PositionListIndex pli = new PositionListIndex();
 
     // Check result
-    assertTrue(pli.clusters.isEmpty());
+    assertEquals(0, pli.clusters.length);
     assertTrue(pli.isEmpty());
   }
 
