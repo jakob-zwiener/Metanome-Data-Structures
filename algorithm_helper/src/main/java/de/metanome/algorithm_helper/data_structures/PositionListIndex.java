@@ -16,22 +16,23 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.xerial.snappy.Snappy;
+import org.xerial.snappy.SnappyInputStream;
+import org.xerial.snappy.SnappyOutputStream;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -48,12 +49,13 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
-  private static final long serialVersionUID = 5;
+  private static final long serialVersionUID = 6;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(4);
-  protected byte[][] clusters;
+  protected byte[] clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
+  protected int[] sizes;
 
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = compress(clusters);
@@ -64,47 +66,40 @@ public class PositionListIndex implements Serializable {
    * Constructs an empty {@link PositionListIndex}.
    */
   public PositionListIndex() {
-    clusters = new byte[0][];
+    clusters = new byte[0];
+    sizes = new int[0];
     this.numberOfRows = 0;
   }
 
-  protected byte[][] compress(List<IntArrayList> clusters) {
+  protected byte[] compress(List<IntArrayList> clusters) {
+    final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    SnappyOutputStream snappyOutStream = new SnappyOutputStream(outStream);
 
-    final byte[][] compressedClusters = new byte[clusters.size()][];
+    sizes = new int[clusters.size()];
 
-    List<Future<?>> tasks = new LinkedList<>();
-    int clusterNumber = 0;
-    for (final IntArrayList cluster : clusters) {
-      final int finalClusterNumber = clusterNumber;
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
-          compressedClusters[finalClusterNumber] = compressCluster(cluster);
-        }
-      }));
-      clusterNumber++;
-    }
-
-    for (Future<?> task : tasks) {
+    int clusterIndex = 0;
+    for (IntArrayList cluster : clusters) {
       try {
-        task.get();
+        snappyOutStream.write(deltaEncode(cluster));
       }
-      catch (InterruptedException | ExecutionException e) {
+      catch (IOException e) {
         e.printStackTrace();
       }
+      sizes[clusterIndex++] = cluster.size();
     }
 
-    return compressedClusters;
+    try {
+      snappyOutStream.close();
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return outStream.toByteArray();
   }
 
   private byte[] compressCluster(final IntArrayList cluster) {
-    int[] deltaEncoded = new int[cluster.size()];
-
-    int last = 0;
-    int count = 0;
-    for (int current : cluster) {
-      deltaEncoded[count++] = current - last;
-      last = current;
-    }
+    int[] deltaEncoded = deltaEncode(cluster);
 
     byte[] compressedCluster = new byte[0];
     try {
@@ -116,34 +111,44 @@ public class PositionListIndex implements Serializable {
     return compressedCluster;
   }
 
-  protected List<IntArrayList> uncompress(byte[][] compressedClusters) {
+  private int[] deltaEncode(final IntArrayList cluster) {
+    int[] deltaEncoded = new int[cluster.size()];
 
-    final IntArrayList[] clusters = new IntArrayList[compressedClusters.length];
+    int last = 0;
+    int count = 0;
+    for (int current : cluster) {
+      deltaEncoded[count++] = current - last;
+      last = current;
+    }
+    return deltaEncoded;
+  }
 
-    List<Future<?>> tasks = new LinkedList<>();
-    int clusterIndex = 0;
-    for (final byte[] compressedCluster : compressedClusters) {
-      final int finalClusterIndex = clusterIndex;
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
-          int[] deltaEncoded = uncompressCluster(compressedCluster);
+  protected List<IntArrayList> uncompress(byte[] compressedClusters) {
 
-          clusters[finalClusterIndex] = new IntArrayList(deltaEncoded);
-        }
-      }));
-      clusterIndex++;
+    List<IntArrayList> clusters = new ArrayList<>(sizes.length);
+
+    SnappyInputStream snappyInStream = null;
+    try {
+      snappyInStream = new SnappyInputStream(new ByteArrayInputStream(compressedClusters));
+    }
+    catch (IOException e) {
+      e.printStackTrace();
     }
 
-    for (Future<?> task : tasks) {
+    for (int clusterSize : sizes) {
+      int[] rawCluster = new int[clusterSize];
+
       try {
-        task.get();
+        snappyInStream.read(rawCluster);
       }
-      catch (InterruptedException | ExecutionException e) {
+      catch (IOException e) {
         e.printStackTrace();
       }
+
+      clusters.add(new IntArrayList(deltaDecode(rawCluster)));
     }
 
-    return new ArrayList<>(Arrays.asList(clusters));
+    return clusters;
   }
 
   protected int[] uncompressCluster(final byte[] compressedCluster) {
@@ -155,6 +160,10 @@ public class PositionListIndex implements Serializable {
       e.printStackTrace();
     }
 
+    return deltaDecode(deltaEncoded);
+  }
+
+  private int[] deltaDecode(final int[] deltaEncoded) {
     int last = 0;
     for (int i = 0; i < deltaEncoded.length; i++) {
       int delta = deltaEncoded[i];
@@ -203,9 +212,11 @@ public class PositionListIndex implements Serializable {
   public PositionListIndex clone() {
     PositionListIndex clone = new PositionListIndex();
     clone.numberOfRows = numberOfRows;
-    clone.clusters = new byte[this.clusters.length][];
+    clone.clusters = new byte[this.clusters.length];
     System.arraycopy(this.clusters, 0, clone.clusters, 0, this.clusters.length);
     clone.rawKeyError = this.rawKeyError;
+    clone.sizes = new int[this.sizes.length];
+    System.arraycopy(this.sizes, 0, clone.sizes, 0, this.sizes.length);
     return clone;
   }
 
@@ -299,7 +310,7 @@ public class PositionListIndex implements Serializable {
                           Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : uncompress(otherPLI.clusters)) {
+    for (IntArrayList sameValues : otherPLI.uncompress(otherPLI.clusters)) {
       for (int rowCount : sameValues) {
         if ((materializedPLI.length > rowCount) &&
           (materializedPLI[rowCount] != SINGLETON_VALUE)) {
@@ -350,8 +361,8 @@ public class PositionListIndex implements Serializable {
   public int[] asArray() {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
-    for (byte[] sameValuesCompressed : clusters) {
-      for (int rowIndex : uncompressCluster(sameValuesCompressed)) {
+    for (IntArrayList sameValuesCompressed : uncompress(clusters)) {
+      for (int rowIndex : sameValuesCompressed) {
         materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
@@ -373,7 +384,7 @@ public class PositionListIndex implements Serializable {
    * @return the number of clusters in the {@link PositionListIndex}
    */
   public int size() {
-    return clusters.length;
+    return sizes.length;
   }
 
   /**
@@ -405,12 +416,12 @@ public class PositionListIndex implements Serializable {
   protected int calculateRawKeyError() {
     int sumClusterSize = 0;
 
-    // FIXME(zwiener): Make this uncompression oboslete:
+    // FIXME(zwiener): Make this uncompression obsolete:
     for (IntArrayList cluster : uncompress(clusters)) {
       sumClusterSize += cluster.size();
     }
 
-    return sumClusterSize - clusters.length;
+    return sumClusterSize - sizes.length;
   }
 
   @Override

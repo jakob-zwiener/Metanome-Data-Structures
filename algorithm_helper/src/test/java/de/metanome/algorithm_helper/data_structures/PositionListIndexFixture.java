@@ -44,7 +44,7 @@ public class PositionListIndexFixture {
   }
 
   public int getFirstPLISize() {
-    return getFirstPLI().clusters.length;
+    return 2;
   }
 
   protected PositionListIndex getPermutatedFirstPLI() {
