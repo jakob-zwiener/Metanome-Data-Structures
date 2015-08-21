@@ -27,10 +27,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
-import org.xerial.snappy.Snappy;
 import org.xerial.snappy.SnappyInputStream;
 import org.xerial.snappy.SnappyOutputStream;
 
@@ -49,10 +50,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
-  private static final long serialVersionUID = 6;
+  private static final long serialVersionUID = 7;
   // TODO(zwiener): Make thread pool size accessible from the outside.
-  public static transient ExecutorService exec = Executors.newFixedThreadPool(4);
-  protected byte[] clusters;
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
+  protected byte[][] clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
   protected int[] sizes;
@@ -66,29 +67,47 @@ public class PositionListIndex implements Serializable {
    * Constructs an empty {@link PositionListIndex}.
    */
   public PositionListIndex() {
-    clusters = new byte[0];
+    clusters = new byte[0][];
     sizes = new int[0];
     this.numberOfRows = 0;
   }
 
-  protected byte[] compress(List<IntArrayList> clusters) {
-    final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-    SnappyOutputStream snappyOutStream = new SnappyOutputStream(outStream);
+  protected byte[][] compress(final List<IntArrayList> uncompressedClusters) {
 
-    sizes = new int[clusters.size()];
+    sizes = new int[uncompressedClusters.size()];
+    clusters = new byte[uncompressedClusters.size()][];
+    List<Future<?>> tasks = new LinkedList<>();
 
     int clusterIndex = 0;
-    for (IntArrayList cluster : clusters) {
-      try {
-        snappyOutStream.write(deltaEncode(cluster));
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
+    for (final IntArrayList cluster : uncompressedClusters) {
+
+      final int finalClusterIndex = clusterIndex;
+      tasks.add(exec.submit(new Runnable() {
+        @Override public void run() {
+          clusters[finalClusterIndex] = compressCluster(cluster);
+        }
+      }));
       sizes[clusterIndex++] = cluster.size();
     }
 
+    for (Future<?> task : tasks) {
+      try {
+        task.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return clusters;
+  }
+
+  private byte[] compressCluster(final IntArrayList cluster) {
+    final ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    SnappyOutputStream snappyOutStream = new SnappyOutputStream(outStream);
+
     try {
+      snappyOutStream.write(deltaEncode(cluster));
       snappyOutStream.close();
     }
     catch (IOException e) {
@@ -96,19 +115,6 @@ public class PositionListIndex implements Serializable {
     }
 
     return outStream.toByteArray();
-  }
-
-  private byte[] compressCluster(final IntArrayList cluster) {
-    int[] deltaEncoded = deltaEncode(cluster);
-
-    byte[] compressedCluster = new byte[0];
-    try {
-      compressedCluster = Snappy.compress(deltaEncoded);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    return compressedCluster;
   }
 
   private int[] deltaEncode(final IntArrayList cluster) {
@@ -123,44 +129,37 @@ public class PositionListIndex implements Serializable {
     return deltaEncoded;
   }
 
-  protected List<IntArrayList> uncompress(byte[] compressedClusters) {
+  protected List<IntArrayList> uncompress(byte[][] compressedClusters) {
 
     List<IntArrayList> clusters = new ArrayList<>(sizes.length);
 
-    SnappyInputStream snappyInStream = null;
-    try {
-      snappyInStream = new SnappyInputStream(new ByteArrayInputStream(compressedClusters));
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-
-    for (int clusterSize : sizes) {
-      int[] rawCluster = new int[clusterSize];
-
-      try {
-        snappyInStream.read(rawCluster);
-      }
-      catch (IOException e) {
-        e.printStackTrace();
-      }
-
-      clusters.add(new IntArrayList(deltaDecode(rawCluster)));
+    for (int i = 0; i < compressedClusters.length; i++) {
+      clusters.add(new IntArrayList(uncompressCluster(compressedClusters[i], sizes[i])));
     }
 
     return clusters;
   }
 
-  protected int[] uncompressCluster(final byte[] compressedCluster) {
-    int[] deltaEncoded = new int[0];
+  protected int[] uncompressCluster(final byte[] compressedCluster, int size) {
+
+    SnappyInputStream snappyInStream = null;
     try {
-      deltaEncoded = Snappy.uncompressIntArray(compressedCluster);
+      snappyInStream = new SnappyInputStream(new ByteArrayInputStream(compressedCluster));
     }
     catch (IOException e) {
       e.printStackTrace();
     }
 
-    return deltaDecode(deltaEncoded);
+    int[] cluster = new int[size];
+
+    try {
+      snappyInStream.read(cluster);
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return deltaDecode(cluster);
   }
 
   private int[] deltaDecode(final int[] deltaEncoded) {
@@ -212,7 +211,7 @@ public class PositionListIndex implements Serializable {
   public PositionListIndex clone() {
     PositionListIndex clone = new PositionListIndex();
     clone.numberOfRows = numberOfRows;
-    clone.clusters = new byte[this.clusters.length];
+    clone.clusters = new byte[this.clusters.length][];
     System.arraycopy(this.clusters, 0, clone.clusters, 0, this.clusters.length);
     clone.rawKeyError = this.rawKeyError;
     clone.sizes = new int[this.sizes.length];
