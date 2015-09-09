@@ -16,14 +16,11 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 
 /**
  * Tests for {@link PLIGenerator}
@@ -49,9 +46,9 @@ public class PLIGeneratorTest {
       PLIGenerator.generatePli(expectedClusterSize, expectedNumberOfClusters);
 
     // Check result
-    assertEquals(expectedNumberOfClusters, actualPli.getClusters().size());
-    for (IntArrayList cluster : actualPli.getClusters()) {
-      assertEquals(expectedClusterSize, cluster.size());
+    assertEquals(expectedNumberOfClusters, actualPli.getClusters().length);
+    for (int[] cluster : actualPli.getClusters()) {
+      assertEquals(expectedClusterSize, cluster.length);
     }
   }
 

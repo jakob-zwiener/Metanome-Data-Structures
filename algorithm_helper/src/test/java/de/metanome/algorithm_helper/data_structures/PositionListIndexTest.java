@@ -267,9 +267,9 @@ public class PositionListIndexTest {
     // Check result
     assertEquals(pli, copy);
     assertNotSame(pli, copy);
-    for (int i = 0; i < pli.getClusters().size(); i++) {
-      assertNotSame(pli.getClusters().get(i), copy.getClusters().get(i));
-      assertEquals(pli.getClusters().get(i), copy.getClusters().get(i));
+    for (int i = 0; i < pli.getClusters().length; i++) {
+      assertNotSame(pli.getClusters()[i], copy.getClusters()[i]);
+      assertEquals(pli.getClusters()[i], copy.getClusters()[i]);
     }
   }
 

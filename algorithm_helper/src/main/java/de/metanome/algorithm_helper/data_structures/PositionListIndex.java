@@ -16,7 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,13 +30,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.xerial.snappy.Snappy;
-
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import me.lemire.integercompression.IntWrapper;
+import me.lemire.integercompression.differential.IntegratedBinaryPacking;
+import me.lemire.integercompression.differential.IntegratedComposition;
+import me.lemire.integercompression.differential.IntegratedVariableByte;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -48,15 +49,24 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
-  private static final long serialVersionUID = 5;
+  private static final long serialVersionUID = 6;
   // TODO(zwiener): Make thread pool size accessible from the outside.
-  public static transient ExecutorService exec = Executors.newFixedThreadPool(4);
-  protected byte[][] clusters;
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
+  protected static transient IntegratedComposition codec =
+    new IntegratedComposition(new IntegratedBinaryPacking(), new IntegratedVariableByte());
+  protected int[][] clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
+  protected int[] sizes;
 
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
-    this.clusters = compress(clusters);
+    int[][] arrayClusters = new int[clusters.size()][];
+
+    int i = 0;
+    for (IntArrayList cluster : clusters) {
+      arrayClusters[i++] = cluster.toIntArray(new int[cluster.size()]);
+    }
+    this.clusters = compress(arrayClusters);
     this.numberOfRows = numberOfRows;
   }
 
@@ -64,23 +74,25 @@ public class PositionListIndex implements Serializable {
    * Constructs an empty {@link PositionListIndex}.
    */
   public PositionListIndex() {
-    clusters = new byte[0][];
+    clusters = new int[0][];
     this.numberOfRows = 0;
   }
 
-  protected byte[][] compress(List<IntArrayList> clusters) {
+  protected int[][] compress(int[][] clusters) {
 
-    final byte[][] compressedClusters = new byte[clusters.size()][];
+    final int[][] compressedClusters = new int[clusters.length][];
+    sizes = new int[clusters.length];
 
     List<Future<?>> tasks = new LinkedList<>();
     int clusterNumber = 0;
-    for (final IntArrayList cluster : clusters) {
+    for (final int[] cluster : clusters) {
       final int finalClusterNumber = clusterNumber;
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
+      /*tasks.add(exec.submit(new Runnable() {
+        @Override public void run() {*/
           compressedClusters[finalClusterNumber] = compressCluster(cluster);
-        }
-      }));
+       /*}
+      }));*/
+      sizes[clusterNumber] = cluster.length;
       clusterNumber++;
     }
 
@@ -96,41 +108,32 @@ public class PositionListIndex implements Serializable {
     return compressedClusters;
   }
 
-  private byte[] compressCluster(final IntArrayList cluster) {
-    int[] deltaEncoded = new int[cluster.size()];
+  private int[] compressCluster(final int[] cluster) {
+    int[] compressed = new int[cluster.length + 1024];
 
-    int last = 0;
-    int count = 0;
-    for (int current : cluster) {
-      deltaEncoded[count++] = current - last;
-      last = current;
-    }
+    final IntWrapper outputOffset = new IntWrapper(0);
+    codec.compress(cluster, new IntWrapper(0), cluster.length, compressed,
+      outputOffset);
 
-    byte[] compressedCluster = new byte[0];
-    try {
-      compressedCluster = Snappy.compress(deltaEncoded);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    return compressedCluster;
+    return Arrays.copyOf(compressed, outputOffset.intValue());
   }
 
-  protected List<IntArrayList> uncompress(byte[][] compressedClusters) {
+  protected int[][] uncompress(int[][] compressedClusters) {
 
-    final IntArrayList[] clusters = new IntArrayList[compressedClusters.length];
+    final int[][] clusters = new int[compressedClusters.length][];
 
     List<Future<?>> tasks = new LinkedList<>();
     int clusterIndex = 0;
-    for (final byte[] compressedCluster : compressedClusters) {
+    for (final int[] compressedCluster : compressedClusters) {
       final int finalClusterIndex = clusterIndex;
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
-          int[] deltaEncoded = uncompressCluster(compressedCluster);
+      final int size = sizes[clusterIndex];
+      /*tasks.add(exec.submit(new Runnable() {
+        @Override public void run() {*/
+      int[] deltaEncoded = uncompressCluster(compressedCluster, size);
 
-          clusters[finalClusterIndex] = new IntArrayList(deltaEncoded);
-        }
-      }));
+      clusters[finalClusterIndex] = deltaEncoded;
+      /*}
+  }));*/
       clusterIndex++;
     }
 
@@ -143,25 +146,16 @@ public class PositionListIndex implements Serializable {
       }
     }
 
-    return new ArrayList<>(Arrays.asList(clusters));
+    return clusters;
   }
 
-  protected int[] uncompressCluster(final byte[] compressedCluster) {
-    int[] deltaEncoded = new int[0];
-    try {
-      deltaEncoded = Snappy.uncompressIntArray(compressedCluster);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
+  protected int[] uncompressCluster(final int[] compressedCluster, int size) {
 
-    int last = 0;
-    for (int i = 0; i < deltaEncoded.length; i++) {
-      int delta = deltaEncoded[i];
-      deltaEncoded[i] = last + delta;
-      last = deltaEncoded[i];
-    }
-    return deltaEncoded;
+    int[] uncompressed = new int[size];
+
+    codec.uncompress(compressedCluster, new IntWrapper(0), compressedCluster.length, uncompressed, new IntWrapper(0));
+
+    return uncompressed;
   }
 
 
@@ -187,7 +181,7 @@ public class PositionListIndex implements Serializable {
     }
   }
 
-  public List<IntArrayList> getClusters() {
+  public int[][] getClusters() {
     return uncompress(clusters);
   }
 
@@ -203,9 +197,11 @@ public class PositionListIndex implements Serializable {
   public PositionListIndex clone() {
     PositionListIndex clone = new PositionListIndex();
     clone.numberOfRows = numberOfRows;
-    clone.clusters = new byte[this.clusters.length][];
+    clone.clusters = new int[this.clusters.length][];
     System.arraycopy(this.clusters, 0, clone.clusters, 0, this.clusters.length);
     clone.rawKeyError = this.rawKeyError;
+    clone.sizes = new int[this.sizes.length];
+    System.arraycopy(this.sizes, 0, clone.sizes, 0, this.sizes.length);
     return clone;
   }
 
@@ -265,9 +261,9 @@ public class PositionListIndex implements Serializable {
     return true;
   }
 
-  protected List<IntOpenHashSet> convertClustersToSets(List<IntArrayList> listCluster) {
+  protected List<IntOpenHashSet> convertClustersToSets(int[][] listCluster) {
     List<IntOpenHashSet> setClusters = new LinkedList<>();
-    for (IntList cluster : listCluster) {
+    for (int[] cluster : listCluster) {
       setClusters.add(new IntOpenHashSet(cluster));
     }
 
@@ -299,7 +295,7 @@ public class PositionListIndex implements Serializable {
                           Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
-    for (IntArrayList sameValues : uncompress(otherPLI.clusters)) {
+    for (int[] sameValues : otherPLI.uncompress(otherPLI.clusters)) {
       for (int rowCount : sameValues) {
         if ((materializedPLI.length > rowCount) &&
           (materializedPLI[rowCount] != SINGLETON_VALUE)) {
@@ -333,7 +329,7 @@ public class PositionListIndex implements Serializable {
   public Int2IntOpenHashMap asHashMap() {
     Int2IntOpenHashMap hashedPLI = new Int2IntOpenHashMap(clusters.length);
     int uniqueValueCount = 0;
-    for (IntArrayList sameValuesCompressed : uncompress(clusters)) {
+    for (int[] sameValuesCompressed : uncompress(clusters)) {
       for (int rowIndex : sameValuesCompressed) {
         hashedPLI.put(rowIndex, uniqueValueCount);
       }
@@ -350,8 +346,8 @@ public class PositionListIndex implements Serializable {
   public int[] asArray() {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
-    for (byte[] sameValuesCompressed : clusters) {
-      for (int rowIndex : uncompressCluster(sameValuesCompressed)) {
+    for (int[] sameValues : uncompress(clusters)) {
+      for (int rowIndex : sameValues) {
         materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
@@ -406,8 +402,8 @@ public class PositionListIndex implements Serializable {
     int sumClusterSize = 0;
 
     // FIXME(zwiener): Make this uncompression oboslete:
-    for (IntArrayList cluster : uncompress(clusters)) {
-      sumClusterSize += cluster.size();
+    for (int[] cluster : uncompress(clusters)) {
+      sumClusterSize += cluster.length;
     }
 
     return sumClusterSize - clusters.length;
