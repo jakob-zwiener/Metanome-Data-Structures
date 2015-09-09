@@ -16,16 +16,15 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import de.metanome.test_helper.CompareToTester;
-import de.metanome.test_helper.EqualsAndHashCodeTester;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import de.metanome.test_helper.CompareToTester;
+import de.metanome.test_helper.EqualsAndHashCodeTester;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.IntPair}
- *
  * @author Jakob Zwiener
  */
 public class IntPairTest {
@@ -46,8 +45,8 @@ public class IntPairTest {
     // Execute functionality
     // Check result
     new EqualsAndHashCodeTester<IntPair>()
-        .performBasicEqualsAndHashCodeChecks(intPair, equalIntPair, notEqualIntPair1,
-                                             notEqualIntPair2);
+      .performBasicEqualsAndHashCodeChecks(intPair, equalIntPair, notEqualIntPair1,
+        notEqualIntPair2);
   }
 
   /**

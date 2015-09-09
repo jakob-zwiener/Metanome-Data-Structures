@@ -16,14 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * Tests for {@link PLIGenerator}

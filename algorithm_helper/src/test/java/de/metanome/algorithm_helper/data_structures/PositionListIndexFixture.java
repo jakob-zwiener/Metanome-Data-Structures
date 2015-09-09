@@ -16,20 +16,21 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PositionListIndexFixture {
 
   public PositionListIndex getFirstPLI() {
     List<IntArrayList> clusters = new ArrayList<>();
 
-    int[] cluster1 = {2, 4, 8};
+    int[] cluster1 = { 2, 4, 8 };
     clusters.add(new IntArrayList(cluster1));
-    int[] cluster2 = {5, 6, 7};
+    int[] cluster2 = { 5, 6, 7 };
     clusters.add(new IntArrayList(cluster2));
 
     return new PositionListIndex(clusters, 9);
@@ -50,9 +51,9 @@ public class PositionListIndexFixture {
   protected PositionListIndex getPermutatedFirstPLI() {
     List<IntArrayList> clusters = new ArrayList<>();
 
-    int[] cluster1 = {7, 6, 5};
+    int[] cluster1 = { 7, 6, 5 };
     clusters.add(new IntArrayList(cluster1));
-    int[] cluster2 = {4, 2, 2, 8};
+    int[] cluster2 = { 4, 2, 2, 8 };
     clusters.add(new IntArrayList(cluster2));
 
     return new PositionListIndex(clusters, 9);
@@ -61,11 +62,11 @@ public class PositionListIndexFixture {
   protected PositionListIndex getSupersetOfFirstPLI() {
     List<IntArrayList> clusters = new ArrayList<>();
 
-    int[] cluster1 = {7, 6, 5};
+    int[] cluster1 = { 7, 6, 5 };
     clusters.add(new IntArrayList(cluster1));
-    int[] cluster2 = {4, 2, 2, 8};
+    int[] cluster2 = { 4, 2, 2, 8 };
     clusters.add(new IntArrayList(cluster2));
-    int[] cluster3 = {10, 11};
+    int[] cluster3 = { 10, 11 };
     clusters.add(new IntArrayList(cluster3));
 
     return new PositionListIndex(clusters, 12);
@@ -102,9 +103,9 @@ public class PositionListIndexFixture {
   protected PositionListIndex getSecondPLI() {
     List<IntArrayList> clusters = new ArrayList<>();
 
-    int[] cluster1 = {1, 2, 5, 8};
+    int[] cluster1 = { 1, 2, 5, 8 };
     clusters.add(new IntArrayList(cluster1));
-    int[] cluster2 = {4, 6, 7};
+    int[] cluster2 = { 4, 6, 7 };
     clusters.add(new IntArrayList(cluster2));
 
     return new PositionListIndex(clusters, 9);
@@ -121,9 +122,9 @@ public class PositionListIndexFixture {
   protected PositionListIndex getExpectedIntersectedPLI() {
     List<IntArrayList> clusters = new ArrayList<>();
 
-    int[] cluster1 = {2, 8};
+    int[] cluster1 = { 2, 8 };
     clusters.add(new IntArrayList(cluster1));
-    int[] cluster2 = {6, 7};
+    int[] cluster2 = { 6, 7 };
     clusters.add(new IntArrayList(cluster2));
 
     return new PositionListIndex(clusters, 9);
