@@ -16,10 +16,11 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import static org.junit.Assert.*;
-
 import org.junit.Before;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 /**
  * Tests for {@link PLIManager}
@@ -37,24 +38,24 @@ public class PLIManagerTest {
   }
 
   /**
-   * Test method for {@link PLIManager#buildPli(ColumnCombinationBitset)}
+   * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
    */
   @Test
-  public void testBuildPli() throws PLIBuildingException {
+  public void testGetPli() throws PLIBuildingException {
     // Execute functionality
-    PositionListIndex actualPli = pliManager.buildPli(new ColumnCombinationBitset(0, 1, 2));
+    PositionListIndex actualPli = pliManager.getPli(new ColumnCombinationBitset(0, 1, 2));
 
     // Check result
     assertEquals(fixture.getExpectedIntersect012(), actualPli);
   }
 
   /**
-   * Test method for {@link PLIManager#buildPli(ColumnCombinationBitset)}
+   * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)} )}
    * <p>
    * When column indices are out of bounds an exception should be thrown by the pli manager.
    */
   @Test
-  public void testBuildPliIndexOutOfRange() {
+  public void testGetPliIndexOutOfRange() {
     // Setup
     ColumnCombinationBitset invalidColumnCombination = new ColumnCombinationBitset(0, 1, 2,
       3);  // Column index 3 should not be known.
@@ -62,10 +63,42 @@ public class PLIManagerTest {
     // Execute functionality
     // Check result
     try {
-      pliManager.buildPli(invalidColumnCombination);
+      pliManager.getPli(invalidColumnCombination);
       fail("Exception should have been thrown.");
     }
     catch (PLIBuildingException e) {
+      // Intentionally left blank.
+    }
+  }
+
+  /**
+   * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
+   */
+  @Test
+  public void testGetPliMultiple() throws PLIBuildingException {
+    // Execute functionality
+    PositionListIndex
+        actualPli =
+        pliManager.getPli(new ColumnCombinationBitset(0, 1), new ColumnCombinationBitset(2));
+
+    // Check result
+    assertEquals(fixture.getExpectedIntersect012(), actualPli);
+  }
+
+  /**
+   * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
+   *
+   * When getPli is called with no {@link ColumnCombinationBitset}s as argument an {@link
+   * PLIBuildingException} should be thrown.
+   */
+  @Test
+  public void testGetPliZero() throws PLIBuildingException {
+    // Execute functionality
+    // Check result
+    try {
+      pliManager.getPli();
+      fail("Exception should have been thrown.");
+    } catch (PLIBuildingException e) {
       // Intentionally left blank.
     }
   }
