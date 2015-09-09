@@ -402,7 +402,7 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
    * @return the contained 1 column combinations
    */
   public List<ColumnCombinationBitset> getContainedOneColumnCombinations() {
-    List<ColumnCombinationBitset> oneColumnCombinations = new LinkedList<>();
+    List<ColumnCombinationBitset> oneColumnCombinations = new ArrayList<>(size());
 
     for (int columnIndex : getSetBits()) {
       oneColumnCombinations.add(new ColumnCombinationBitset(columnIndex));

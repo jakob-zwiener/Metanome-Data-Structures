@@ -66,8 +66,18 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   public PositionListIndex intersect(PositionListIndex otherPLI) {
-    //TODO Optimize Smaller PLI as Hashmap?
-    return calculateIntersection(otherPLI);
+    // TODO(zwiener): Check that aborting operation on unique plis actually lowers execution times.
+    if ((this.isUnique()) || (otherPLI.isUnique())) {
+      return new PositionListIndex(new ArrayList<IntArrayList>(), getNumberOfRows());
+    }
+
+    // In most cases probing is harder than materialization. The smaller pli should be iterated for probing.
+    if (this.getRawKeyError() > otherPLI.getRawKeyError()) {
+      return calculateIntersection(otherPLI);
+    }
+    else {
+      return otherPLI.calculateIntersection(this);
+    }
   }
 
   public List<IntArrayList> getClusters() {

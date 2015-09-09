@@ -18,10 +18,16 @@ package de.metanome.algorithm_helper.data_structures;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeSet;
+
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -67,6 +73,38 @@ public class SubSetGraph {
   }
 
   /**
+   * Removes a column combination from the graph. Returns, whether an element was removed.
+   * @param columnCombination a column combination to remove
+   * @return whether the column combination was removed
+   */
+  public boolean remove(ColumnCombinationBitset columnCombination) {
+    Stack<SubSetGraph> previousSubGraphs = new Stack<>();
+    Stack<Integer> previousSubGraphIndices = new Stack<>();
+
+    // Find correct graph.
+    SubSetGraph subGraph = this;
+    previousSubGraphs.push(this);
+    for (int columnIndex : columnCombination.getSetBits()) {
+      subGraph = subGraph.subGraphs.get(columnIndex);
+      if (subGraph == null) {
+        return false;
+      }
+      previousSubGraphs.push(subGraph);
+      previousSubGraphIndices.push(columnIndex);
+    }
+
+    // Prune empty subgraphs.
+    subGraph = previousSubGraphs.pop();
+    subGraph.subSetEnds = false;
+    while ((!subGraph.subSetEnds) && (subGraph.subGraphs.isEmpty())) {
+      subGraph = previousSubGraphs.pop();
+      subGraph.subGraphs.remove(previousSubGraphIndices.pop());
+    }
+
+    return true;
+  }
+
+  /**
    * Looks for the subgraph or builds and adds a new one.
    * @param setColumnIndex the column index to perform the lookup on
    * @return the subgraph behind the column index
@@ -87,6 +125,7 @@ public class SubSetGraph {
    * @param columnCombinationToQuery given superset to search for subsets
    * @return a list containing all found subsets
    */
+  // TODO(zwiener): Does this include equivalent sets?
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
     ColumnCombinationBitset columnCombinationToQuery)
   {
@@ -245,6 +284,50 @@ public class SubSetGraph {
   @Override
   public int hashCode() {
     return subGraphs != null ? subGraphs.hashCode() : 0;
+  }
+
+  @Override public String toString() {
+    List<String> rows = new ArrayList<>();
+
+    stringRepresentation(rows, 0, 0);
+
+    return Joiner.on('\n').join(rows.subList(0, rows.size() - 1));
+  }
+
+  /**
+   * Recursive generation of a string representation of the graph.
+   * @param rows the rows of the representation
+   * @param level the current row level to write to
+   * @param leftMargin how many spaces to leave at the left
+   * @return the number of columns written to in the current row
+   */
+  protected int stringRepresentation(List<String> rows, int level, int leftMargin) {
+    List<Integer> sortedKeySet = new ArrayList<>(subGraphs.keySet());
+    Collections.sort(sortedKeySet);
+
+    int numberOfColumnsWritten;
+    if (level >= rows.size()) {
+      rows.add("");
+    }
+    StringBuilder row = new StringBuilder(rows.get(level));
+    for (int columnIndex : sortedKeySet) {
+      while (row.length() < leftMargin) {
+        row.append(" ");
+      }
+      int newLeftMargin = row.length();
+      row.append(columnIndex);
+      if (subGraphs.get(columnIndex).subSetEnds) {
+        row.append("X");
+      }
+      row.append(" ");
+      numberOfColumnsWritten = subGraphs.get(columnIndex).stringRepresentation(rows, level + 1, newLeftMargin);
+      while (row.length() < numberOfColumnsWritten) {
+        row.append(" ");
+      }
+    }
+    rows.set(level, CharMatcher.WHITESPACE.trimTrailingFrom(row));
+
+    return row.length();
   }
 }
 
