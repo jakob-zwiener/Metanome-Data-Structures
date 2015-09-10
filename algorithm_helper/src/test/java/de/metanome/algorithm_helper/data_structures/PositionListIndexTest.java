@@ -19,6 +19,11 @@ package de.metanome.algorithm_helper.data_structures;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotSame;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +42,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
+
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}
@@ -181,7 +190,7 @@ public class PositionListIndexTest {
    * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
-  public void testAsList() {
+  public void testAsArray() {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
 

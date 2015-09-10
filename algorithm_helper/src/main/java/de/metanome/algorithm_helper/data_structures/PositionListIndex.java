@@ -36,6 +36,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -198,7 +202,7 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, final int[] materializedPLI,
+  protected void buildMap(final PositionListIndex otherPLI, final int[] materializedPLI,
                           final ConcurrentMap<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
@@ -283,13 +287,34 @@ public class PositionListIndex implements Serializable {
    * @return the pli as list
    */
   public int[] asArray() {
-    int[] materializedPli = new int[getNumberOfRows()];
+    final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
-    for (IntArrayList sameValues : clusters) {
-      for (int rowIndex : sameValues) {
-        materializedPli[rowIndex] = uniqueValueCount;
+
+    List<Future<?>> tasks = new LinkedList<>();
+
+    try {
+      for (final IntArrayList sameValues : clusters) {
+
+        final int finalUniqueValueCount = uniqueValueCount;
+        tasks.add(exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (int rowIndex : sameValues) {
+              materializedPli[rowIndex] = finalUniqueValueCount;
+            }
+          }
+        }));
+        uniqueValueCount++;
       }
-      uniqueValueCount++;
+    } finally {
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        } catch (InterruptedException | ExecutionException e) {
+          // FIXME(zwiener): Rethrow exception.
+          e.printStackTrace();
+        }
+      }
     }
 
     return materializedPli;
