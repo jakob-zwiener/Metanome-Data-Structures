@@ -18,7 +18,10 @@ package de.metanome.algorithm_helper.data_structures;
 
 import java.util.Map;
 import java.util.LinkedList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 
 /**
  * Manages plis and performs intersect operations.
@@ -117,21 +120,31 @@ public class PLIManager {
     }
 
     // Perform the necessary intersections.
-    PositionListIndex intersect = null;
-    ColumnCombinationBitset unionCombination = null;
-    for (ColumnCombinationBitset subsetCombination : solution) {
-      if (intersect == null) {
-        intersect = plis.get(subsetCombination);
-        unionCombination = subsetCombination;
+    PriorityQueue<ColumnCombinationBitset> pq = new PriorityQueue<ColumnCombinationBitset>(
+        subsets.size(),
+        new Comparator<ColumnCombinationBitset>() {
+          @Override public int compare(final ColumnCombinationBitset o1, final ColumnCombinationBitset o2) {
+            return plis.get(o1).getRawKeyError() - plis.get(o2).getRawKeyError();
+          }
+        });
+    
+    pq.addAll(solution);
+
+    ColumnCombinationBitset unionCombination = pq.poll();
+    PositionListIndex intersect = plis.get(unionCombination);
+    while (!unionSoFar.equals(columnCombination)) {
+      ColumnCombinationBitset currentSubset = pq.poll();
+
+      if (currentSubset.isSubsetOf(unionSoFar)) {
         continue;
       }
 
-      intersect = intersect.intersect(plis.get(subsetCombination));
-      unionCombination = unionCombination.union(subsetCombination);
+      unionCombination = unionCombination.union(currentSubset);
+      intersect = intersect.intersect(plis.get(currentSubset));
       plis.put(unionCombination, intersect);
       pliGraph.add(unionCombination);
     }
-
+    
     return intersect;
   }
     
