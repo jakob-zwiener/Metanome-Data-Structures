@@ -17,6 +17,8 @@
 package de.metanome.algorithm_helper.data_structures;
 
 import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Manages plis and performs intersect operations.
@@ -30,12 +32,15 @@ public class PLIManager {
 
   protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
+  protected SubSetGraph pliGraph;
 
   /**
    * TODO docs
    */
   public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
     this.plis = plis;
+    pliGraph = new SubSetGraph();
+    pliGraph.addAll(plis.keySet());
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -78,26 +83,57 @@ public class PLIManager {
           "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
 
-    PositionListIndex result = plis.get(columnCombination);
-    if (result != null) {
-      return result;
+    PositionListIndex exactPli = plis.get(columnCombination);
+    if (exactPli != null) {
+      return exactPli;
     }
 
+    List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
+
+    // Calculate set cover.
+    ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
+    ColumnCombinationBitset bestSubset = new ColumnCombinationBitset();
+    ColumnCombinationBitset bestUnion = new ColumnCombinationBitset();
+    List<ColumnCombinationBitset> solution = new LinkedList<>();
+    while (!unionSoFar.equals(columnCombination)) {
+      for (ColumnCombinationBitset subset : subsets) {
+
+        ColumnCombinationBitset currentUnion = unionSoFar.union(subset);
+
+        if (currentUnion.size() > bestUnion.size()) {
+          bestSubset = subset;
+          bestUnion = currentUnion;
+        }
+        else if (currentUnion.size() == bestUnion.size()) {
+          // If multiple subsets add the same number of columns use key error as tiebreaker.
+          if (plis.get(bestSubset).getRawKeyError() > plis.get(subset).getRawKeyError()) {
+            bestSubset = subset;
+            bestUnion = currentUnion;
+          }
+        }
+      }
+      solution.add(bestSubset);
+      unionSoFar = unionSoFar.union(bestSubset);
+    }
+
+    // Perform the necessary intersections.
     PositionListIndex intersect = null;
-    ColumnCombinationBitset unionColumnCombination = null;
-    for (ColumnCombinationBitset oneColumnCombination : columnCombination
-        .getContainedOneColumnCombinations()) {
+    ColumnCombinationBitset unionCombination = null;
+    for (ColumnCombinationBitset subsetCombination : solution) {
       if (intersect == null) {
-        intersect = plis.get(oneColumnCombination);
-        unionColumnCombination = oneColumnCombination;
+        intersect = plis.get(subsetCombination);
+        unionCombination = subsetCombination;
         continue;
       }
-      intersect = intersect.intersect(plis.get(oneColumnCombination));
-      unionColumnCombination = unionColumnCombination.union(oneColumnCombination);
-      plis.put(unionColumnCombination, intersect);
+
+      intersect = intersect.intersect(plis.get(subsetCombination));
+      unionCombination = unionCombination.union(subsetCombination);
+      plis.put(unionCombination, intersect);
+      pliGraph.add(unionCombination);
     }
 
     return intersect;
   }
+    
 
 }
