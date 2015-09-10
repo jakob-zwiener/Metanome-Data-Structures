@@ -34,12 +34,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -51,12 +49,12 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
-  // TODO(zwiener): Make thread pool size accessible from the outside.
-  public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
+  public static transient ExecutorService
+      exec =
+      getThreadPoolExecutor();
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
-
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
     this.numberOfRows = numberOfRows;
@@ -68,6 +66,24 @@ public class PositionListIndex implements Serializable {
   public PositionListIndex() {
     this.clusters = new ArrayList<>();
     this.numberOfRows = 0;
+  }
+
+  protected static ThreadPoolExecutor getThreadPoolExecutor() {
+    final int corePoolSize = Runtime.getRuntime()
+        .availableProcessors();
+    final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize,
+                                                                         corePoolSize,
+                                                                         10L, TimeUnit.SECONDS,
+                                                                         new LinkedBlockingQueue<Runnable>());
+    threadPoolExecutor.allowCoreThreadTimeOut(true);
+    return threadPoolExecutor;
+  }
+
+  /**
+   * Shuts the thread pool down.
+   */
+  public static void shutdownThreadPool() {
+    exec.shutdown();
   }
 
   /**
