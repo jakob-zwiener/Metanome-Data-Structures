@@ -16,6 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,12 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -198,8 +198,8 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
-                          ConcurrentMap<IntPair, IntArrayList> map)
+  protected void buildMap(PositionListIndex otherPLI, final int[] materializedPLI,
+                          final ConcurrentMap<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
 
@@ -217,9 +217,9 @@ public class PositionListIndex implements Serializable {
             // System.out.println(sameValues.size());
             for (int rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
-              if ((materializedPLI.size() > rowCount) &&
-                (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI.get(rowCount));
+              if ((materializedPLI.length > rowCount) &&
+                  (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
 
                 updateMap(internalMap, rowCount, pair);
               }
