@@ -16,12 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * @author Jakob Zwiener
@@ -34,7 +34,7 @@ public class PLIManagerFixture {
     { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 } },
   };
 
-  public Map<ColumnCombinationBitset, PositionListIndex> getPliList() {
+  public Map<ColumnCombinationBitset, PositionListIndex> getPlis() {
     Map<ColumnCombinationBitset, PositionListIndex> plis = new HashMap<>();
 
     int columnIndex = 0;
