@@ -63,4 +63,16 @@ public class PLIManagerFixture {
 
     return buildPliFromClusters(clusters);
   }
+
+  public PositionListIndex getExpectedIntersect1() {
+    int[][] clusters = {{1, 9}, {0, 2, 3}, {8, 11}};
+
+    return buildPliFromClusters(clusters);
+  }
+
+  public PositionListIndex getExpectedIntersect12() {
+    int[][] clusters = {{2, 3}};
+
+    return buildPliFromClusters(clusters);
+  }
 }

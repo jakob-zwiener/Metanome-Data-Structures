@@ -19,6 +19,9 @@ package de.metanome.algorithm_helper.data_structures;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -101,6 +104,26 @@ public class PLIManagerTest {
     } catch (PLIBuildingException e) {
       // Intentionally left blank.
     }
+  }
+
+  /**
+   * Test method for {@link PLIManager#getPlis(ColumnCombinationBitset...)}
+   */
+  @Test
+  public void testGetPlis() throws PLIBuildingException {
+    // Setup
+    // Expected values
+    Map<ColumnCombinationBitset, PositionListIndex> expectedPlis = new HashMap<>();
+    expectedPlis.put(new ColumnCombinationBitset(1), fixture.getExpectedIntersect1());
+    expectedPlis.put(new ColumnCombinationBitset(1, 2), fixture.getExpectedIntersect12());
+
+    // Execute functionality
+    Map<ColumnCombinationBitset, PositionListIndex>
+        actualPlis = pliManager.getPlis(new ColumnCombinationBitset(1),
+                                        new ColumnCombinationBitset(1, 2));
+
+    // Check result
+    assertEquals(expectedPlis, actualPlis);
   }
 
 }

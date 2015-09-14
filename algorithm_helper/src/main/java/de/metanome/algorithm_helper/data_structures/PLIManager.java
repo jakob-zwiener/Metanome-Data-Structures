@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -157,7 +158,9 @@ public class PLIManager {
     return intersect;
   }
 
-  public Map<ColumnCombinationBitset, PositionListIndex> getPlis(ColumnCombinationBitset... columnCombinations) {
+  public Map<ColumnCombinationBitset, PositionListIndex> getPlis(
+      ColumnCombinationBitset... columnCombinations)
+      throws PLIBuildingException {
 
     final List<Future<?>> tasks = new LinkedList<>();
 
@@ -165,18 +168,15 @@ public class PLIManager {
 
     for (final ColumnCombinationBitset columnCombination : columnCombinations) {
 
-      tasks.add(exec.submit(new Runnable() {
+      tasks.add(exec.submit(new Callable<Void>() {
         @Override
-        public void run() {
+        public Void call() throws PLIBuildingException {
           PositionListIndex pli = null;
-          try {
-            pli = buildPli(columnCombination);
-          }
-          catch (PLIBuildingException e) {
-            e.printStackTrace();
-          }
+          pli = getPli(columnCombination);
 
           pliMap.put(columnCombination, pli);
+
+          return null;
         }
       }));
     }
@@ -184,9 +184,10 @@ public class PLIManager {
     for (Future<?> task : tasks) {
       try {
         task.get();
-      }
-      catch (InterruptedException | ExecutionException e) {
-        e.printStackTrace();
+      } catch (InterruptedException e) {
+        throw new PLIBuildingException("PLI generation was interrupted.", e);
+      } catch (ExecutionException e) {
+        throw (PLIBuildingException) e.getCause();
       }
     }
 
