@@ -16,6 +16,10 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,9 +42,10 @@ import de.metanome.algorithm_integration.ColumnIdentifier;
  * @author Lukas Schulze
  * @author Mandy Roick
  */
-public class ColumnCombinationBitset implements Comparable<ColumnCombinationBitset> {
+public class ColumnCombinationBitset implements Comparable<ColumnCombinationBitset>, Serializable {
 
-  public static final String CLASS_IDENTIFIER = "ColumnCombinationBitset ";
+  public static final transient String CLASS_IDENTIFIER = "ColumnCombinationBitset ";
+  private static final long serialVersionUID = 1;
   protected OpenBitSet bitset;
   protected long size = 0;
 
@@ -619,6 +624,29 @@ public class ColumnCombinationBitset implements Comparable<ColumnCombinationBits
       }
     }
     return 0;
+  }
+
+  private synchronized void writeObject(ObjectOutputStream outputStream) throws IOException {
+    long[] bits = bitset.getBits();
+    outputStream.writeInt(bits.length);
+    for (final long bit : bits) {
+      outputStream.writeLong(bit);
+    }
+    outputStream.writeInt(bitset.getNumWords());
+
+    outputStream.writeLong(size);
+  }
+
+  private synchronized void readObject(ObjectInputStream inputStream) throws IOException, ClassNotFoundException {
+    int length = inputStream.readInt();
+    long[] bits = new long[length];
+    for (int i = 0; i < length; i++) {
+      bits[i] = inputStream.readLong();
+    }
+    int wlen = inputStream.readInt();
+    bitset = new OpenBitSet(bits, wlen);
+
+    size = inputStream.readLong();
   }
 }
 
