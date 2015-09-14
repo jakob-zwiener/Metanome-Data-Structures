@@ -21,6 +21,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * Manages plis and performs intersect operations.
@@ -31,6 +37,9 @@ import java.util.PriorityQueue;
  * @see PositionListIndex
  */
 public class PLIManager {
+
+  // TODO(zwiener): Make thread pool size accessible from the outside.
+  public static transient ExecutorService exec = Executors.newFixedThreadPool(3);
 
   protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
@@ -146,6 +155,42 @@ public class PLIManager {
     }
     
     return intersect;
+  }
+
+  public Map<ColumnCombinationBitset, PositionListIndex> getPlis(ColumnCombinationBitset... columnCombinations) {
+
+    final List<Future<?>> tasks = new LinkedList<>();
+
+    final ConcurrentMap<ColumnCombinationBitset, PositionListIndex> pliMap = new ConcurrentHashMap<>();
+
+    for (final ColumnCombinationBitset columnCombination : columnCombinations) {
+
+      tasks.add(exec.submit(new Runnable() {
+        @Override
+        public void run() {
+          PositionListIndex pli = null;
+          try {
+            pli = buildPli(columnCombination);
+          }
+          catch (PLIBuildingException e) {
+            e.printStackTrace();
+          }
+
+          pliMap.put(columnCombination, pli);
+        }
+      }));
+    }
+
+    for (Future<?> task : tasks) {
+      try {
+        task.get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        e.printStackTrace();
+      }
+    }
+
+    return pliMap;
   }
     
 
