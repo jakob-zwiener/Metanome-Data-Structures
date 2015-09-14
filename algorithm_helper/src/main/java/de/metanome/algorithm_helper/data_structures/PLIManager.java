@@ -119,10 +119,11 @@ public class PLIManager {
     }
 
     // Perform the necessary intersections.
-    PriorityQueue<ColumnCombinationBitset> pq = new PriorityQueue<ColumnCombinationBitset>(
+    PriorityQueue<ColumnCombinationBitset> pq = new PriorityQueue<>(
         solution.size(),
         new Comparator<ColumnCombinationBitset>() {
-          @Override public int compare(final ColumnCombinationBitset o1, final ColumnCombinationBitset o2) {
+          @Override
+          public int compare(final ColumnCombinationBitset o1, final ColumnCombinationBitset o2) {
             return plis.get(o1).getRawKeyError() - plis.get(o2).getRawKeyError();
           }
         });
