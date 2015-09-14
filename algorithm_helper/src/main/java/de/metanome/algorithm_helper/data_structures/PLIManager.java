@@ -16,9 +16,8 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import java.util.Map;
-import java.util.LinkedList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -121,7 +120,7 @@ public class PLIManager {
 
     // Perform the necessary intersections.
     PriorityQueue<ColumnCombinationBitset> pq = new PriorityQueue<ColumnCombinationBitset>(
-        subsets.size(),
+        solution.size(),
         new Comparator<ColumnCombinationBitset>() {
           @Override public int compare(final ColumnCombinationBitset o1, final ColumnCombinationBitset o2) {
             return plis.get(o1).getRawKeyError() - plis.get(o2).getRawKeyError();
@@ -132,10 +131,10 @@ public class PLIManager {
 
     ColumnCombinationBitset unionCombination = pq.poll();
     PositionListIndex intersect = plis.get(unionCombination);
-    while (!unionSoFar.equals(columnCombination)) {
+    while (!unionCombination.equals(columnCombination)) {
       ColumnCombinationBitset currentSubset = pq.poll();
 
-      if (currentSubset.isSubsetOf(unionSoFar)) {
+      if (currentSubset.isSubsetOf(unionCombination)) {
         continue;
       }
 
