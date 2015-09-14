@@ -30,8 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -49,6 +48,7 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  // FIXME(zwiener): Consider using the same executor in Manager and PLI.
   public static transient ExecutorService
       exec =
       getThreadPoolExecutor();
@@ -93,7 +93,7 @@ public class PositionListIndex implements Serializable {
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  public PositionListIndex intersect(PositionListIndex otherPLI) {
+  public PositionListIndex intersect(PositionListIndex otherPLI) throws PLIBuildingException {
     // TODO(zwiener): Check that aborting operation on unique plis actually lowers execution times.
     if ((this.isUnique()) || (otherPLI.isUnique())) {
       return new PositionListIndex(new ArrayList<IntArrayList>(), getNumberOfRows());
@@ -203,9 +203,10 @@ public class PositionListIndex implements Serializable {
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
+  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI)
+      throws PLIBuildingException {
     int[] materializedPLI = this.asArray();
-    ConcurrentMap<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
+    Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
@@ -219,47 +220,42 @@ public class PositionListIndex implements Serializable {
   }
 
   protected void buildMap(final PositionListIndex otherPLI, final int[] materializedPLI,
-                          final ConcurrentMap<IntPair, IntArrayList> map)
+                          final Map<IntPair, IntArrayList> map)
+      throws PLIBuildingException
   {
     int uniqueValueCount = 0;
 
-    List<Future<?>> tasks = new LinkedList<>();
+    List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
 
-    try {
-      // System.out.println(otherPLI.clusters.size());
-      for (final IntArrayList sameValues : otherPLI.clusters) {
-        final int finalUniqueValueCount = uniqueValueCount;
-        tasks.add(exec.submit(new Runnable() {
-          @Override
-          public void run() {
-            final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
-            long start = System.nanoTime();
-            // System.out.println(sameValues.size());
-            for (int rowCount : sameValues) {
-              // TODO(zwiener): Get is called twice.
-              if ((materializedPLI.length > rowCount) &&
-                  (materializedPLI[rowCount] != SINGLETON_VALUE)) {
-                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
+    // System.out.println(otherPLI.clusters.size());
+    for (final IntArrayList sameValues : otherPLI.clusters) {
+      final int finalUniqueValueCount = uniqueValueCount;
+      tasks.add(exec.submit(new Callable<Map<IntPair, IntArrayList>>() {
+        @Override
+        public Map<IntPair, IntArrayList> call() {
+          final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
+          // System.out.println(sameValues.size());
+          for (int rowCount : sameValues) {
+            if ((materializedPLI.length > rowCount) &&
+                (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+              IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
 
-                updateMap(internalMap, rowCount, pair);
-              }
+              updateMap(internalMap, rowCount, pair);
             }
-            map.putAll(internalMap);
-            // System.out.println((System.nanoTime() - start) / 1000000000d);
           }
-        }));
-        uniqueValueCount++;
-      }
+
+          return internalMap;
+        }
+      }));
+      uniqueValueCount++;
     }
-    finally {
-      for (Future<?> task : tasks) {
-        try {
-          task.get();
-        }
-        catch (InterruptedException | ExecutionException e) {
-          // FIXME(zwiener): Rethrow exception.
-          e.printStackTrace();
-        }
+    for (Future<Map<IntPair, IntArrayList>> task : tasks) {
+      try {
+        map.putAll(task.get());
+      } catch (InterruptedException e) {
+        throw new PLIBuildingException("PLI generation was interrupted.", e);
+      } catch (ExecutionException e) {
+        throw (PLIBuildingException) e.getCause();
       }
     }
   }
@@ -302,34 +298,33 @@ public class PositionListIndex implements Serializable {
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public int[] asArray() {
+  public int[] asArray() throws PLIBuildingException {
     final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
 
     List<Future<?>> tasks = new LinkedList<>();
 
-    try {
-      for (final IntArrayList sameValues : clusters) {
-
-        final int finalUniqueValueCount = uniqueValueCount;
-        tasks.add(exec.submit(new Runnable() {
-          @Override
-          public void run() {
-            for (int rowIndex : sameValues) {
-              materializedPli[rowIndex] = finalUniqueValueCount;
-            }
+    for (final IntArrayList sameValues : clusters) {
+      final int finalUniqueValueCount = uniqueValueCount;
+      tasks.add(exec.submit(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          for (int rowIndex : sameValues) {
+            materializedPli[rowIndex] = finalUniqueValueCount;
           }
-        }));
-        uniqueValueCount++;
-      }
-    } finally {
-      for (Future<?> task : tasks) {
-        try {
-          task.get();
-        } catch (InterruptedException | ExecutionException e) {
-          // FIXME(zwiener): Rethrow exception.
-          e.printStackTrace();
+
+          return null;
         }
+      }));
+      uniqueValueCount++;
+    }
+    for (Future<?> task : tasks) {
+      try {
+        task.get();
+      } catch (InterruptedException e) {
+        throw new PLIBuildingException("PLI materialization was interrupted.", e);
+      } catch (ExecutionException e) {
+        throw (PLIBuildingException) e.getCause();
       }
     }
 

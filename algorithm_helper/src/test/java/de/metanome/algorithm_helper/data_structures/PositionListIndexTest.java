@@ -71,7 +71,7 @@ public class PositionListIndexTest {
    * Two {@link PositionListIndex} should be correctly intersected.
    */
   @Test
-  public void testIntersect() {
+  public void testIntersect() throws PLIBuildingException {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
     PositionListIndex secondPLI = fixture.getSecondPLI();
@@ -94,7 +94,7 @@ public class PositionListIndexTest {
    * array out of bounds access in buildMap.
    */
   @Test
-  public void testIntersectUnique() {
+  public void testIntersectUnique() throws PLIBuildingException {
     // Setup
     PositionListIndex uniquePLI = new PositionListIndex();
     PositionListIndex secondPLI = fixture.getSecondPLI();
@@ -181,7 +181,7 @@ public class PositionListIndexTest {
    * Test method for {@link PositionListIndex#asArray()}
    */
   @Test
-  public void testAsArray() {
+  public void testAsArray() throws PLIBuildingException {
     // Setup
     PositionListIndex firstPLI = fixture.getFirstPLI();
 
@@ -229,7 +229,7 @@ public class PositionListIndexTest {
    * calculated and updated correctly.
    */
   @Test
-  public void testGetRawKeyError() {
+  public void testGetRawKeyError() throws PLIBuildingException {
     // Setup
     PositionListIndex firstPli = fixture.getFirstPLI();
     PositionListIndex secondPli = fixture.getSecondPLI();
