@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -124,6 +126,21 @@ public class PLIManagerTest {
 
     // Check result
     assertEquals(expectedPlis, actualPlis);
+  }
+
+  /**
+   * Test method for {@link PLIManager#close()}
+   */
+  @Test
+  public void testClose() {
+    // Check preconditions
+    assertFalse(pliManager.exec.isShutdown());
+
+    // Execute functionality
+    pliManager.close();
+
+    // Check result
+    assertTrue(pliManager.exec.isShutdown());
   }
 
 }

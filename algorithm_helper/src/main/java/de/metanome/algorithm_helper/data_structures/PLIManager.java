@@ -26,8 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Manages plis and performs intersect operations.
@@ -37,11 +39,9 @@ import java.util.concurrent.Future;
  * @author Jakob Zwiener
  * @see PositionListIndex
  */
-public class PLIManager {
+public class PLIManager implements AutoCloseable {
 
-  // TODO(zwiener): Make thread pool size accessible from the outside.
-  public static transient ExecutorService exec = Executors.newFixedThreadPool(3);
-
+  protected transient ExecutorService exec;
   protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
   protected SubSetGraph pliGraph;
@@ -58,6 +58,19 @@ public class PLIManager {
       allColumnIndices[i] = i;
     }
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
+
+    exec = getThreadPoolExecutor();
+  }
+
+  protected static ThreadPoolExecutor getThreadPoolExecutor() {
+    final int corePoolSize = Runtime.getRuntime()
+        .availableProcessors();
+    final ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize,
+                                                                         corePoolSize,
+                                                                         10L, TimeUnit.SECONDS,
+                                                                         new LinkedBlockingQueue<Runnable>());
+    threadPoolExecutor.allowCoreThreadTimeOut(true);
+    return threadPoolExecutor;
   }
 
   /**
@@ -171,7 +184,7 @@ public class PLIManager {
       tasks.add(exec.submit(new Callable<Void>() {
         @Override
         public Void call() throws PLIBuildingException {
-          PositionListIndex pli = null;
+          PositionListIndex pli;
           pli = getPli(columnCombination);
 
           pliMap.put(columnCombination, pli);
@@ -193,6 +206,9 @@ public class PLIManager {
 
     return pliMap;
   }
-    
 
+  @Override
+  public void close() {
+    exec.shutdown();
+  }
 }

@@ -48,7 +48,6 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
-  // FIXME(zwiener): Consider using the same executor in Manager and PLI.
   public static transient ExecutorService
       exec =
       getThreadPoolExecutor();
