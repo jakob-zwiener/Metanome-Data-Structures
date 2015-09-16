@@ -79,8 +79,8 @@ public class SuperSetGraphTest {
     // Setup
     SuperSetGraph actualGraph = new SuperSetGraph(42);
 
-    // CHeck precondition
-    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+    // Check precondition
+    assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
 
     // Execute functionality
     actualGraph.add(new ColumnCombinationBitset());
@@ -210,15 +210,15 @@ public class SuperSetGraphTest {
    */
   @Test
   public void testContainsSuperset() {
-    //Setup
+    // Setup
     SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
-    //Execute functionality
+    // Execute functionality
     assertTrue(
       actualGraph.containsSuperset(fixture.getExpectedIncludedColumnCombinations().get(0)));
     assertTrue(actualGraph.containsSuperset(fixture.getColumnCombinationForSupersetQuery()));
     assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset(1, 2, 3, 5, 8, 9)));
-    //Check Result
+    // Check Result
   }
 
   /**
@@ -228,12 +228,13 @@ public class SuperSetGraphTest {
    */
   @Test
   public void testContainsSupersetOnEmptyGraph() {
-    //Setup
+    // Setup
     SuperSetGraph actualGraph = new SuperSetGraph(fixture.getNumberOfColumns());
 
-    //Execute functionality
+    // Execute functionality
+    // Check Result
     assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset(1, 3)));
-    //Check Result
+    assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
   }
 
   /**
