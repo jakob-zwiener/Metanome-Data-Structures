@@ -92,7 +92,7 @@ public class SuperSetGraphTest {
   /**
    * Test method for {@link de.metanome.algorithm_helper.data_structures.SuperSetGraph#addAll(java.util.Collection)}
    * <p/> After inserting all column combinations the graph should be equal to the expected graph
-   * from the fixture. AddAll should return the graph after addition.
+   * from the superSetFixture. AddAll should return the graph after addition.
    */
   @Test
   public void testAddAll() {
@@ -102,7 +102,7 @@ public class SuperSetGraphTest {
     Collection<ColumnCombinationBitset>
       expectedColumnCombinations =
       fixture.getExpectedIncludedColumnCombinations();
-    SuperSetGraph expectedGraph = fixture.getGraph();
+    SuperSetGraph expectedGraph = fixture.getSuperSetGraph();
 
     // Execute functionality
     SuperSetGraph graphAfterAddAll = graph.addAll(expectedColumnCombinations);
@@ -118,7 +118,7 @@ public class SuperSetGraphTest {
   @Test
   public void testRemove() {
     // Setup
-    SuperSetGraph actualGraph = fixture.getGraph();
+    SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
     // Execute functionality
     // Check result
@@ -133,7 +133,7 @@ public class SuperSetGraphTest {
   @Test
   public void testRemoveEmptyColumnCombination() {
     // Setup
-    SuperSetGraph actualGraph = fixture.getGraph();
+    SuperSetGraph actualGraph = fixture.getSuperSetGraph();
     actualGraph.add(new ColumnCombinationBitset());
 
     // Check precondition
@@ -143,7 +143,7 @@ public class SuperSetGraphTest {
     // Check result
     assertTrue(actualGraph.remove(new ColumnCombinationBitset()));
 
-    assertEquals(fixture.getGraph(), actualGraph);
+    assertEquals(fixture.getSuperSetGraph(), actualGraph);
   }
 
   /**
@@ -154,13 +154,13 @@ public class SuperSetGraphTest {
   @Test
   public void testRemoveColumnCombinationNotInGraph() {
     // Setup
-    SuperSetGraph actualGraph = fixture.getGraph();
+    SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
     // Execute functionality
     // Check result
     assertFalse(actualGraph.remove(new ColumnCombinationBitset(1, 2, 5, 7)));
 
-    assertEquals(fixture.getGraph(), actualGraph);
+    assertEquals(fixture.getSuperSetGraph(), actualGraph);
   }
 
   /**
@@ -169,7 +169,7 @@ public class SuperSetGraphTest {
   @Test
   public void testGetExistingSupersets() {
     // Setup
-    SuperSetGraph graph = fixture.getGraph();
+    SuperSetGraph graph = fixture.getSuperSetGraph();
     ColumnCombinationBitset
       columnCombinationToQuery =
       fixture.getColumnCombinationForSupersetQuery();
@@ -211,7 +211,7 @@ public class SuperSetGraphTest {
   @Test
   public void testContainsSuperset() {
     //Setup
-    SuperSetGraph actualGraph = fixture.getGraph();
+    SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
     //Execute functionality
     assertTrue(
