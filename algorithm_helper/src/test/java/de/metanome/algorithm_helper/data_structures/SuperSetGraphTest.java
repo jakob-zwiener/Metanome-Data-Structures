@@ -16,16 +16,20 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import static org.junit.Assert.*;
-
-import java.util.Collection;
-import java.util.List;
+import de.metanome.test_helper.EqualsAndHashCodeTester;
 
 import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.metanome.test_helper.EqualsAndHashCodeTester;
+import java.util.Collection;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.SuperSetGraph}
@@ -205,7 +209,7 @@ public class SuperSetGraphTest {
    * )}
    */
   @Test
-  public void testContainsSubset() {
+  public void testContainsSuperset() {
     //Setup
     SuperSetGraph actualGraph = fixture.getGraph();
 
