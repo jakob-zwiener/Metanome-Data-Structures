@@ -22,6 +22,7 @@ import org.hamcrest.collection.IsIterableContainingInAnyOrder;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -187,8 +188,85 @@ public class SubSetGraphTest {
   }
 
   /**
+   * Test method for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersets() {
+    // Setup
+    SubSetGraph graph = superSetFixture.getSubSetGraph();
+    ColumnCombinationBitset
+        columnCombinationToQuery =
+        superSetFixture.getColumnCombinationForSupersetQuery();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualSubsets =
+        graph.getExistingSupersets(columnCombinationToQuery);
+
+    // Check result
+    assertThat(actualSubsets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(superSetFixture.getExpectedSupersetsFromQuery()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)} <p> This
+   * tests a special case of an empty graph. An empty list should be returned
+   */
+  @Test
+  public void testGetExistingSupersetsOnEmptyGraph() {
+    // Setup
+    SubSetGraph graph = new SubSetGraph();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualSubsets =
+        graph.getExistingSupersets(new ColumnCombinationBitset(1, 3, 5));
+
+    // Check result
+    assertTrue(actualSubsets.isEmpty());
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersetsAdditionalCase1() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    ArrayList<ColumnCombinationBitset>
+        actualSupersets = actualGraph.getExistingSupersets(fixture.getSubsetCase1());
+
+    // Check result
+    assertThat(actualSupersets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedSupersetsFromQueryCase1()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersetsAdditionalCase2() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    ArrayList<ColumnCombinationBitset>
+        actualSupersets = actualGraph.getExistingSupersets(fixture.getSubsetCase2());
+
+    // Check result
+    assertThat(actualSupersets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedSupersetsFromQueryCase2()));
+  }
+
+  /**
    * Test for the method {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#containsSuperset(ColumnCombinationBitset)}
-   * )}
    */
   @Test
   public void testContainsSuperset() {

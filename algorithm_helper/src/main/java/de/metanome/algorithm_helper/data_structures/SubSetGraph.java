@@ -126,13 +126,13 @@ public class SubSetGraph {
   }
 
   /**
-   * Returns all Subsets of the given ColumnCombination that are in the graph.
-   * @param columnCombinationToQuery given superset to search for subsets
+   * Returns all subsets of the given column combination that are in the graph.
+   * @param superset given superset to search for subsets
    * @return a list containing all found subsets
    */
   // TODO(zwiener): Does this include equivalent sets?
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
-    ColumnCombinationBitset columnCombinationToQuery)
+      ColumnCombinationBitset superset)
   {
     ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
     if (this.isEmpty()) {
@@ -155,8 +155,8 @@ public class SubSetGraph {
       }
 
       // Iterate over the remaining column indices
-      for (int i = currentTask.numberOfCheckedColumns; i < columnCombinationToQuery.size(); i++) {
-        int currentColumnIndex = columnCombinationToQuery.getSetBits().get(i);
+      for (int i = currentTask.numberOfCheckedColumns; i < superset.size(); i++) {
+        int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
           currentTask.subGraph.subGraphs.get(currentColumnIndex);
@@ -265,6 +265,74 @@ public class SubSetGraph {
       }
     }
     return result;
+  }
+
+  /**
+   * Returns all supersets of the given column combination that are in the graph.
+   *
+   * @param subset given subset to search for supersets
+   * @return a list containing all found supersets
+   */
+  public ArrayList<ColumnCombinationBitset> getExistingSupersets(ColumnCombinationBitset subset) {
+    ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
+
+    if (this.isEmpty()) {
+      return subsets;
+    }
+
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
+
+    while (!openTasks.isEmpty()) {
+      SearchTask currentTask = openTasks.remove();
+
+      List<Integer> setBits = subset.getSetBits();
+      if (setBits.size() <= currentTask.numberOfCheckedColumns) {
+        if (currentTask.subGraph.subSetEnds) {
+          subsets.add(new ColumnCombinationBitset(currentTask.path));
+        }
+        // TODO(zwiener): Extract this into a method returning all sets in a (sub)trie.
+        for (Map.Entry<Integer, SubSetGraph> entry : currentTask.subGraph.subGraphs.entrySet()) {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns,
+              new ColumnCombinationBitset(currentTask.path).addColumn(entry.getKey())
+          ));
+        }
+        continue;
+      }
+      int from;
+      if (currentTask.numberOfCheckedColumns == 0) {
+        from = 0;
+      } else {
+        from = setBits.get(currentTask.numberOfCheckedColumns - 1);
+      }
+
+      ObjectSortedSet<Map.Entry<Integer, SubSetGraph>> slice;
+      if (currentTask.numberOfCheckedColumns < setBits.size()) {
+        int upto = setBits.get(currentTask.numberOfCheckedColumns) + 1;
+        slice = currentTask.subGraph.subGraphs.subMap(from, upto).entrySet();
+      } else {
+        slice = currentTask.subGraph.subGraphs.tailMap(from).entrySet();
+      }
+
+      for (Map.Entry<Integer, SubSetGraph> entry : slice) {
+        int columnIndex = entry.getKey();
+        if (columnIndex == setBits.get(currentTask.numberOfCheckedColumns)) {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns + 1,
+              new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
+        } else {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns,
+              new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
+        }
+      }
+    }
+
+    return subsets;
   }
 
   /**
