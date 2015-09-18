@@ -41,6 +41,8 @@ public class AdditionalSubSetGraphFixture {
     includedColumnCombinations.add(new ColumnCombinationBitset(7));
     includedColumnCombinations.add(new ColumnCombinationBitset(11));
     includedColumnCombinations.add(new ColumnCombinationBitset(15, 18));
+    includedColumnCombinations.add(new ColumnCombinationBitset(27, 28, 29, 30, 31));
+    includedColumnCombinations.add(new ColumnCombinationBitset(28, 30));
 
     return includedColumnCombinations;
   }
@@ -86,6 +88,28 @@ public class AdditionalSubSetGraphFixture {
         new ColumnCombinationBitset(11, 17, 18),
         new ColumnCombinationBitset(1, 7, 15)
     };
+  }
+
+  public ColumnCombinationBitset getSubsetCase1() {
+    return new ColumnCombinationBitset(1);
+  }
+
+  public ColumnCombinationBitset[] getExpectedSupersetsFromQueryCase1() {
+    final List<ColumnCombinationBitset>
+        expectedSupersets =
+        getExpectedIncludedColumnCombinations().subList(0, 5);
+    return expectedSupersets.toArray(new ColumnCombinationBitset[expectedSupersets.size()]);
+  }
+
+  public ColumnCombinationBitset getSubsetCase2() {
+    return new ColumnCombinationBitset(28, 30);
+  }
+
+  public ColumnCombinationBitset[] getExpectedSupersetsFromQueryCase2() {
+    final List<ColumnCombinationBitset>
+        expectedSupersets =
+        getExpectedIncludedColumnCombinations().subList(8, 10);
+    return expectedSupersets.toArray(new ColumnCombinationBitset[expectedSupersets.size()]);
   }
 
 }
