@@ -100,6 +100,58 @@ public class SubSetGraphTest {
   }
 
   /**
+   * Test method for {@link SubSetGraph#getContainedSets()}
+   */
+  @Test
+  public void testGetContainedSets() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+    // Expected values
+    final List<ColumnCombinationBitset>
+        expectedContainedSets =
+        fixture.getExpectedIncludedColumnCombinations();
+
+    // Execute functionality
+    List<ColumnCombinationBitset> actualContainedSets = graph.getContainedSets();
+
+    // Check result
+    assertThat(actualContainedSets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(expectedContainedSets.toArray(
+                       new ColumnCombinationBitset[expectedContainedSets
+                           .size()])));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getContainedSets()}
+   *
+   * For sub graph queries results can be augmented by a result prefix (which represents the path in
+   * the super graph).
+   */
+  @Test
+  public void testGetContainedSetsSubGraph() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+    // Expected values
+    final List<ColumnCombinationBitset>
+        expectedContainedSets =
+        fixture.getExpectedIncludedColumnCombinations();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualContainedSets =
+        graph.subGraphs.get(fixture.getContainedSetSubGraphQuery()).getContainedSets(
+            new ColumnCombinationBitset(fixture.getContainedSetSubGraphQuery()));
+
+    // Check result
+    assertThat(actualContainedSets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedContainedSetsSubGraphQuery()));
+  }
+
+  /**
    * Test method for {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}
    */
   @Test

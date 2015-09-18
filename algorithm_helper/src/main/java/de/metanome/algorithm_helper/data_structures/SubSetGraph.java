@@ -78,6 +78,47 @@ public class SubSetGraph {
   }
 
   /**
+   * @return an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}
+   */
+  public ArrayList<ColumnCombinationBitset> getContainedSets() {
+    return getContainedSets(new ColumnCombinationBitset());
+  }
+
+  /**
+   * Returns an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}. All results are prefixed with the result prefix (for sub
+   * graph queries).
+   *
+   * @param resultPrefix the prefix to add to all result sets
+   * @return an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}
+   */
+  public ArrayList<ColumnCombinationBitset> getContainedSets(ColumnCombinationBitset resultPrefix) {
+    ArrayList<ColumnCombinationBitset> containedSets = new ArrayList<>();
+
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, -1, resultPrefix));
+
+    while (!openTasks.isEmpty()) {
+      SearchTask currentTask = openTasks.remove();
+
+      if (currentTask.subGraph.subSetEnds) {
+        containedSets.add(new ColumnCombinationBitset(currentTask.path));
+      }
+
+      for (Map.Entry<Integer, SubSetGraph> entry : currentTask.subGraph.subGraphs.entrySet()) {
+        openTasks.add(new SearchTask(
+            entry.getValue(),
+            -1,
+            new ColumnCombinationBitset(currentTask.path).addColumn(entry.getKey())));
+      }
+    }
+
+    return containedSets;
+  }
+
+  /**
    * Removes a column combination from the graph. Returns, whether an element was removed.
    * @param columnCombination a column combination to remove
    * @return whether the column combination was removed
