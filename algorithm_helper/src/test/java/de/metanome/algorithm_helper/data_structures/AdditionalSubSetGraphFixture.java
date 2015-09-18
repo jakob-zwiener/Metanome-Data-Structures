@@ -112,4 +112,15 @@ public class AdditionalSubSetGraphFixture {
     return expectedSupersets.toArray(new ColumnCombinationBitset[expectedSupersets.size()]);
   }
 
+  public int getContainedSetSubGraphQuery() {
+    return 1;
+  }
+
+  public ColumnCombinationBitset[] getExpectedContainedSetsSubGraphQuery() {
+    final List<ColumnCombinationBitset>
+        expectedContainedSets =
+        getExpectedIncludedColumnCombinations().subList(0, 5);
+    return expectedContainedSets.toArray(new ColumnCombinationBitset[expectedContainedSets.size()]);
+  }
+
 }
