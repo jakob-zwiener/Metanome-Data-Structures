@@ -329,17 +329,7 @@ public class SubSetGraph {
 
       List<Integer> setBits = subset.getSetBits();
       if (setBits.size() <= currentTask.numberOfCheckedColumns) {
-        if (currentTask.subGraph.subSetEnds) {
-          subsets.add(new ColumnCombinationBitset(currentTask.path));
-        }
-        // TODO(zwiener): Extract this into a method returning all sets in a (sub)trie.
-        for (Map.Entry<Integer, SubSetGraph> entry : currentTask.subGraph.subGraphs.entrySet()) {
-          openTasks.add(new SearchTask(
-              entry.getValue(),
-              currentTask.numberOfCheckedColumns,
-              new ColumnCombinationBitset(currentTask.path).addColumn(entry.getKey())
-          ));
-        }
+        subsets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
         continue;
       }
       int from;
