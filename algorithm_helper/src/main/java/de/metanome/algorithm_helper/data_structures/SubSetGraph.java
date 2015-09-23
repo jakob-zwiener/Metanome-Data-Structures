@@ -82,7 +82,7 @@ public class SubSetGraph {
   }
 
   /**
-   * @return an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
    * contained in the {@link SubSetGraph}
    */
   public ArrayList<ColumnCombinationBitset> getContainedSets() {
@@ -90,12 +90,12 @@ public class SubSetGraph {
   }
 
   /**
-   * Returns an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * Returns an {@link ArrayList} of all {@link ColumnCombinationBitset}s
    * contained in the {@link SubSetGraph}. All results are prefixed with the result prefix (for sub
    * graph queries).
    *
    * @param resultPrefix the prefix to add to all result sets
-   * @return an {@link ArrayList<ColumnCombinationBitset>} of all {@link ColumnCombinationBitset}s
+   * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
    * contained in the {@link SubSetGraph}
    */
   public ArrayList<ColumnCombinationBitset> getContainedSets(ColumnCombinationBitset resultPrefix) {
