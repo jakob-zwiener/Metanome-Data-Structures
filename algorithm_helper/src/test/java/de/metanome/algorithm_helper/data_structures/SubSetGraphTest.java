@@ -29,6 +29,7 @@ import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -58,7 +59,8 @@ public class SubSetGraphTest {
   @Test
   public void testAdd() {
     // Setup
-    SubSetGraph graph = new SubSetGraph();
+    // FIXME(zwiener): What happens if dimension is too low?
+    SubSetGraph graph = new SubSetGraph(8);
     ColumnCombinationBitset columnCombination = new ColumnCombinationBitset(2, 4, 7);
 
     // Execute functionality
@@ -68,8 +70,8 @@ public class SubSetGraphTest {
     // Check existence of column indices in subgraphs by iterating
     SubSetGraph actualSubGraph = graph;
     for (int setColumnIndex : columnCombination.getSetBits()) {
-      assertTrue(actualSubGraph.subGraphs.containsKey(setColumnIndex));
-      actualSubGraph = actualSubGraph.subGraphs.get(setColumnIndex);
+      assertNotNull(actualSubGraph.subGraphs[setColumnIndex]);
+      actualSubGraph = actualSubGraph.subGraphs[setColumnIndex];
     }
 
     // Check add return value
@@ -84,7 +86,7 @@ public class SubSetGraphTest {
   @Test
   public void testAddAll() {
     // Setup
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(subSetFixture.getDimension());
     // Expected values
     Collection<ColumnCombinationBitset>
       expectedColumnCombinations =
@@ -142,7 +144,7 @@ public class SubSetGraphTest {
     // Execute functionality
     List<ColumnCombinationBitset>
         actualContainedSets =
-        graph.subGraphs.get(fixture.getContainedSetSubGraphQuery()).getContainedSets(
+        graph.subGraphs[fixture.getContainedSetSubGraphQuery()].getContainedSets(
             new ColumnCombinationBitset(fixture.getContainedSetSubGraphQuery()));
 
     // Check result
@@ -181,7 +183,7 @@ public class SubSetGraphTest {
   @Test
   public void testGetExistingSubsetsOnEmptyGraph() {
     // Setup
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(6);
 
     // Execute functionality
     List<ColumnCombinationBitset>
@@ -197,16 +199,15 @@ public class SubSetGraphTest {
    */
   @Test
   public void testContainsSubset() {
-    //Setup
+    // Setup
     SubSetGraph actualGraph = subSetFixture.getGraph();
 
-    //Execute functionality
+    // Execute functionality
+    // Check Result
     assertTrue(
         actualGraph.containsSubset(subSetFixture.getExpectedIncludedColumnCombinations().get(0)));
     assertTrue(actualGraph.containsSubset(subSetFixture.getColumnCombinationForSubsetQuery()));
     assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset(1)));
-    //Check Result
-
   }
 
   /**
@@ -217,7 +218,7 @@ public class SubSetGraphTest {
   @Test
   public void testContainsSubsetOnEmptyGraph() {
     //Setup
-    SubSetGraph actualGraph = new SubSetGraph();
+    SubSetGraph actualGraph = new SubSetGraph(4);
 
     //Execute functionality
     //Check Result
@@ -268,7 +269,7 @@ public class SubSetGraphTest {
   @Test
   public void testGetExistingSupersetsOnEmptyGraph() {
     // Setup
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(6);
 
     // Execute functionality
     List<ColumnCombinationBitset>
@@ -366,7 +367,7 @@ public class SubSetGraphTest {
   @Test
   public void testContainsSupersetOnEmptyGraph() {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph();
+    SubSetGraph actualGraph = new SubSetGraph(4);
 
     // Execute functionality
     // Check Result
@@ -394,8 +395,8 @@ public class SubSetGraphTest {
   @Test
   public void testIsEmpty() {
     // Setup
-    SubSetGraph emptyGraph = new SubSetGraph();
-    SubSetGraph nonEmptyGraph = new SubSetGraph();
+    SubSetGraph emptyGraph = new SubSetGraph(11);
+    SubSetGraph nonEmptyGraph = new SubSetGraph(11);
     nonEmptyGraph.add(new ColumnCombinationBitset(10));
 
     // Execute functionality
@@ -410,9 +411,10 @@ public class SubSetGraphTest {
   @Test
   public void testEqualsAndHashCode() {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph();
-    SubSetGraph equalsGraph = new SubSetGraph();
-    SubSetGraph notEqualsGraph = new SubSetGraph();
+    // FIXME(zwiener): Check for dimension field.
+    SubSetGraph actualGraph = new SubSetGraph(21);
+    SubSetGraph equalsGraph = new SubSetGraph(21);
+    SubSetGraph notEqualsGraph = new SubSetGraph(21);
 
     actualGraph.add(new ColumnCombinationBitset(2, 5, 10, 20));
     actualGraph.add((new ColumnCombinationBitset(2, 5, 8, 15)));

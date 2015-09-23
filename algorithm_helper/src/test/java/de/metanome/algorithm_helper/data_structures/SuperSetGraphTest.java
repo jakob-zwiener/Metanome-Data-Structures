@@ -27,6 +27,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
@@ -63,8 +64,8 @@ public class SuperSetGraphTest {
     // Check existence of column indices in subgraphs by iterating
     SubSetGraph actualSubGraph = graph.graph;
     for (int setColumnIndex : columnCombination.invert(fixture.getNumberOfColumns()).getSetBits()) {
-      assertTrue(actualSubGraph.subGraphs.containsKey(setColumnIndex));
-      actualSubGraph = actualSubGraph.subGraphs.get(setColumnIndex);
+      assertNotNull(actualSubGraph.subGraphs[setColumnIndex]);
+      actualSubGraph = actualSubGraph.subGraphs[setColumnIndex];
     }
 
     // Check add return value

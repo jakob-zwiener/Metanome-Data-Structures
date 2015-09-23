@@ -31,10 +31,12 @@ import java.util.Collection;
 public class SuperSetGraph {
 
   protected int numberOfColumns = -1;
-  protected SubSetGraph graph = new SubSetGraph();
+  protected SubSetGraph graph;
 
   public SuperSetGraph(int numberOfColumns) {
+    // TODO(zwiener): Rename numberOfColumns to dimension.
     this.numberOfColumns = numberOfColumns;
+    graph = new SubSetGraph(numberOfColumns);
   }
 
   /**

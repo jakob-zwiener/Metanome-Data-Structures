@@ -22,7 +22,7 @@ import java.util.List;
 public class SubSetGraphFixture {
 
   public SubSetGraph getGraph() {
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(getDimension());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
@@ -38,6 +38,10 @@ public class SubSetGraphFixture {
     includedColumnCombinations.add(columnCombinationToRemove());
 
     return includedColumnCombinations;
+  }
+
+  public int getDimension() {
+    return 12;
   }
 
   public ColumnCombinationBitset getColumnCombinationForSubsetQuery() {
@@ -76,7 +80,7 @@ public class SubSetGraphFixture {
   }
 
   public SubSetGraph expectedGraphAfterRemoval() {
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(getDimension());
 
     List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();
 

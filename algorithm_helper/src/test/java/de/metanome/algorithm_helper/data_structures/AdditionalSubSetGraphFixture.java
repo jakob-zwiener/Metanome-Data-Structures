@@ -25,7 +25,7 @@ import java.util.List;
 public class AdditionalSubSetGraphFixture {
 
   public SubSetGraph getGraph() {
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(getDimension());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
@@ -45,6 +45,10 @@ public class AdditionalSubSetGraphFixture {
     includedColumnCombinations.add(new ColumnCombinationBitset(28, 30));
 
     return includedColumnCombinations;
+  }
+
+  public int getDimension() {
+    return 32;
   }
 
   public ColumnCombinationBitset[] getExpectedSubsetColumnCombinations() {

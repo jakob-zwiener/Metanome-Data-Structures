@@ -31,7 +31,7 @@ public class SuperSetGraphFixture {
   }
 
   public SubSetGraph getSubSetGraph() {
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(getNumberOfColumns());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
@@ -50,7 +50,7 @@ public class SuperSetGraphFixture {
   }
 
   public int getNumberOfColumns() {
-    return 10;
+    return 11;
   }
 
   public ColumnCombinationBitset getColumnCombinationForSupersetQuery() {
