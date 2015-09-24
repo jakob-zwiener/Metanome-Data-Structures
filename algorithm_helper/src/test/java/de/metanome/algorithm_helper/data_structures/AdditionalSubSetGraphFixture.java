@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class AdditionalSubSetGraphFixture {
 
-  public SubSetGraph getGraph() {
+  public SubSetGraph getGraph() throws ColumnIndexOutOfBoundsException {
     SubSetGraph graph = new SubSetGraph(getDimension());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;

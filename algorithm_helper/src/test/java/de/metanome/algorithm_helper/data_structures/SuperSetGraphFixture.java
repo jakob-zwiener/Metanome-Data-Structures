@@ -24,13 +24,13 @@ import java.util.List;
  */
 public class SuperSetGraphFixture {
 
-  public SuperSetGraph getSuperSetGraph() {
+  public SuperSetGraph getSuperSetGraph() throws ColumnIndexOutOfBoundsException {
     SuperSetGraph graph = new SuperSetGraph(getNumberOfColumns());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
 
-  public SubSetGraph getSubSetGraph() {
+  public SubSetGraph getSubSetGraph() throws ColumnIndexOutOfBoundsException {
     SubSetGraph graph = new SubSetGraph(getNumberOfColumns());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
@@ -69,7 +69,7 @@ public class SuperSetGraphFixture {
     return new ColumnCombinationBitset(1, 2, 3, 4, 7, 8);
   }
 
-  public SuperSetGraph getExpectedGraphAfterRemove() {
+  public SuperSetGraph getExpectedGraphAfterRemove() throws ColumnIndexOutOfBoundsException {
     SuperSetGraph graph = new SuperSetGraph(getNumberOfColumns());
 
     List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();

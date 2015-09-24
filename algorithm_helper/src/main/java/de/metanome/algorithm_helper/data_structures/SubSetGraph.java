@@ -56,11 +56,18 @@ public class SubSetGraph {
    * Adds a column combination to the graph. Returns the graph after adding.
    * @param columnCombination a column combination to add
    * @return the graph
+   * @throws ColumnIndexOutOfBoundsException when the columnCombination contains at least one column index that is larger or equal to the size of the alphabet
    */
-  public SubSetGraph add(ColumnCombinationBitset columnCombination) {
+  public SubSetGraph add(ColumnCombinationBitset columnCombination)
+      throws ColumnIndexOutOfBoundsException {
     SubSetGraph subGraph = this;
 
     for (int setColumnIndex : columnCombination.getSetBits()) {
+      if (setColumnIndex >= subGraphs.length) {
+        throw new ColumnIndexOutOfBoundsException(
+            String.format("Column index %d is larger than the size of the alphabet %d.",
+                          setColumnIndex, subGraphs.length));
+      }
       subGraph = subGraph.lazySubGraphGeneration(setColumnIndex);
     }
     subGraph.subSetEnds = true;
@@ -73,7 +80,8 @@ public class SubSetGraph {
    * to add to the graph
    * @return the graph
    */
-  public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations) {
+  public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations)
+      throws ColumnIndexOutOfBoundsException {
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       add(columnCombination);
     }
@@ -280,7 +288,7 @@ public class SubSetGraph {
    * pattern. Non minimal subsets are not traversed.
    * @return a list containing all minimal subsets
    */
-  public Set<ColumnCombinationBitset> getMinimalSubsets() {
+  public Set<ColumnCombinationBitset> getMinimalSubsets() throws ColumnIndexOutOfBoundsException {
     if (this.isEmpty()) {
       return new TreeSet<>();
     }

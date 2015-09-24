@@ -21,7 +21,7 @@ import java.util.List;
 
 public class SubSetGraphFixture {
 
-  public SubSetGraph getGraph() {
+  public SubSetGraph getGraph() throws ColumnIndexOutOfBoundsException {
     SubSetGraph graph = new SubSetGraph(getDimension());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
@@ -79,7 +79,7 @@ public class SubSetGraphFixture {
     return new ColumnCombinationBitset(2, 3, 4, 7, 11);
   }
 
-  public SubSetGraph expectedGraphAfterRemoval() {
+  public SubSetGraph expectedGraphAfterRemoval() throws ColumnIndexOutOfBoundsException {
     SubSetGraph graph = new SubSetGraph(getDimension());
 
     List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();

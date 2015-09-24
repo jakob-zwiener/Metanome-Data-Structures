@@ -52,7 +52,7 @@ public class SuperSetGraphTest {
    * return the graph after addition.
    */
   @Test
-  public void testAdd() {
+  public void testAdd() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph graph = new SuperSetGraph(fixture.getNumberOfColumns());
     ColumnCombinationBitset columnCombination = new ColumnCombinationBitset(2, 4, 7);
@@ -76,7 +76,7 @@ public class SuperSetGraphTest {
    * Test method for {@link SuperSetGraph#add(ColumnCombinationBitset)}
    */
   @Test
-  public void testAddEmptyColumnCombination() {
+  public void testAddEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = new SuperSetGraph(42);
 
@@ -96,7 +96,7 @@ public class SuperSetGraphTest {
    * from the superSetFixture. AddAll should return the graph after addition.
    */
   @Test
-  public void testAddAll() {
+  public void testAddAll() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph graph = new SuperSetGraph(fixture.getNumberOfColumns());
     // Expected values
@@ -117,7 +117,7 @@ public class SuperSetGraphTest {
    * Test method for {@link SuperSetGraph#remove(ColumnCombinationBitset)}
    */
   @Test
-  public void testRemove() {
+  public void testRemove() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
@@ -132,7 +132,7 @@ public class SuperSetGraphTest {
    * Test method for {@link SuperSetGraph#remove(ColumnCombinationBitset)}
    */
   @Test
-  public void testRemoveEmptyColumnCombination() {
+  public void testRemoveEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = fixture.getSuperSetGraph();
     actualGraph.add(new ColumnCombinationBitset());
@@ -153,7 +153,7 @@ public class SuperSetGraphTest {
    * Trying to remove a column combination that is in fact not in the graph should not alter the graph and return false.
    */
   @Test
-  public void testRemoveColumnCombinationNotInGraph() {
+  public void testRemoveColumnCombinationNotInGraph() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
@@ -168,7 +168,7 @@ public class SuperSetGraphTest {
    * Test method for {@link de.metanome.algorithm_helper.data_structures.SuperSetGraph#getExistingSupersets(ColumnCombinationBitset)}
    */
   @Test
-  public void testGetExistingSupersets() {
+  public void testGetExistingSupersets() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph graph = fixture.getSuperSetGraph();
     ColumnCombinationBitset
@@ -210,7 +210,7 @@ public class SuperSetGraphTest {
    * )}
    */
   @Test
-  public void testContainsSuperset() {
+  public void testContainsSuperset() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = fixture.getSuperSetGraph();
 
@@ -242,7 +242,7 @@ public class SuperSetGraphTest {
    * Test method for {@link SuperSetGraph#isEmpty()}
    */
   @Test
-  public void testIsEmpty() {
+  public void testIsEmpty() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph emptyGraph = new SuperSetGraph(fixture.getNumberOfColumns());
     SuperSetGraph nonEmptyGraph = new SuperSetGraph(fixture.getNumberOfColumns());
@@ -258,7 +258,7 @@ public class SuperSetGraphTest {
    * Test method  {@link SuperSetGraph#equals(Object)} and {@link de.metanome.algorithm_helper.data_structures.SuperSetGraph#hashCode()}
    */
   @Test
-  public void testEqualsAndHashCode() {
+  public void testEqualsAndHashCode() throws ColumnIndexOutOfBoundsException {
     // Setup
     SuperSetGraph actualGraph = new SuperSetGraph(fixture.getNumberOfColumns());
     SuperSetGraph equalsGraph = new SuperSetGraph(fixture.getNumberOfColumns());
