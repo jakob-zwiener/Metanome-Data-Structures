@@ -89,9 +89,9 @@ public class SubSetGraphTest {
    * The empty set is never returned as superset or subset.
    */
   @Test
-  public void testAddEmptyColumnCombination() {
+  public void testAddEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph();
+    SubSetGraph actualGraph = new SubSetGraph(12);
 
     // Check precondition
     assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
