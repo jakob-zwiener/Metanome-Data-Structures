@@ -31,10 +31,12 @@ import java.util.Collection;
 public class SuperSetGraph {
 
   protected int numberOfColumns = -1;
-  protected SubSetGraph graph = new SubSetGraph();
+  protected SubSetGraph graph;
 
   public SuperSetGraph(int numberOfColumns) {
+    // TODO(zwiener): Rename numberOfColumns to dimension.
     this.numberOfColumns = numberOfColumns;
+    graph = new SubSetGraph(numberOfColumns);
   }
 
   /**
@@ -44,7 +46,8 @@ public class SuperSetGraph {
    * to add
    * @return the graph
    */
-  public SuperSetGraph add(ColumnCombinationBitset columnCombination) {
+  public SuperSetGraph add(ColumnCombinationBitset columnCombination)
+      throws ColumnIndexOutOfBoundsException {
     graph.add(columnCombination.invert(numberOfColumns));
     return this;
   }
@@ -55,7 +58,8 @@ public class SuperSetGraph {
    * @param columnCombinations to be added to the graph
    * @return the graph
    */
-  public SuperSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations) {
+  public SuperSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations)
+      throws ColumnIndexOutOfBoundsException {
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       graph.add(columnCombination.invert(numberOfColumns));
     }

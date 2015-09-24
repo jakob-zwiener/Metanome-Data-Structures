@@ -19,15 +19,11 @@ package de.metanome.algorithm_helper.data_structures;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Joiner;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
@@ -44,19 +40,34 @@ import java.util.TreeSet;
  */
 public class SubSetGraph {
 
-  // TODO(zwiener): Consider using a fixed length array (alphabet needs to be of known size).
-  protected Int2ObjectRBTreeMap<SubSetGraph> subGraphs = new Int2ObjectRBTreeMap<>();
+  protected SubSetGraph[] subGraphs;
   protected boolean subSetEnds = false;
+
+  /**
+   * Creates a new {@link SubSetGraph} that is able to store sets with the given alphabet size.
+   *
+   * @param dimension the size of the alphabet of this graph
+   */
+  public SubSetGraph(int dimension) {
+    subGraphs = new SubSetGraph[dimension];
+  }
 
   /**
    * Adds a column combination to the graph. Returns the graph after adding.
    * @param columnCombination a column combination to add
    * @return the graph
+   * @throws ColumnIndexOutOfBoundsException when the columnCombination contains at least one column index that is larger or equal to the size of the alphabet
    */
-  public SubSetGraph add(ColumnCombinationBitset columnCombination) {
+  public SubSetGraph add(ColumnCombinationBitset columnCombination)
+      throws ColumnIndexOutOfBoundsException {
     SubSetGraph subGraph = this;
 
     for (int setColumnIndex : columnCombination.getSetBits()) {
+      if (setColumnIndex >= subGraphs.length) {
+        throw new ColumnIndexOutOfBoundsException(
+            String.format("Column index %d is larger than the size of the alphabet %d.",
+                          setColumnIndex, subGraphs.length));
+      }
       subGraph = subGraph.lazySubGraphGeneration(setColumnIndex);
     }
     subGraph.subSetEnds = true;
@@ -69,7 +80,8 @@ public class SubSetGraph {
    * to add to the graph
    * @return the graph
    */
-  public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations) {
+  public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations)
+      throws ColumnIndexOutOfBoundsException {
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       add(columnCombination);
     }
@@ -107,11 +119,18 @@ public class SubSetGraph {
         containedSets.add(new ColumnCombinationBitset(currentTask.path));
       }
 
-      for (Map.Entry<Integer, SubSetGraph> entry : currentTask.subGraph.subGraphs.entrySet()) {
+      for (int columnIndex = 0; columnIndex < currentTask.subGraph.subGraphs.length;
+           columnIndex++) {
+        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        if (subGraph == null) {
+          continue;
+        }
+
+
         openTasks.add(new SearchTask(
-            entry.getValue(),
+            subGraph,
             -1,
-            new ColumnCombinationBitset(currentTask.path).addColumn(entry.getKey())));
+            new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
       }
     }
 
@@ -131,7 +150,7 @@ public class SubSetGraph {
     SubSetGraph subGraph = this;
     previousSubGraphs.push(this);
     for (int columnIndex : columnCombination.getSetBits()) {
-      subGraph = subGraph.subGraphs.get(columnIndex);
+      subGraph = subGraph.subGraphs[columnIndex];
       if (subGraph == null) {
         return false;
       }
@@ -142,9 +161,9 @@ public class SubSetGraph {
     // Prune empty subgraphs.
     subGraph = previousSubGraphs.pop();
     subGraph.subSetEnds = false;
-    while ((!subGraph.subSetEnds) && (subGraph.subGraphs.isEmpty())) {
+    while ((!subGraph.subSetEnds) && (subGraph.isEmpty())) {
       subGraph = previousSubGraphs.pop();
-      subGraph.subGraphs.remove(previousSubGraphIndices.pop());
+      subGraph.subGraphs[previousSubGraphIndices.pop()] = null;
     }
 
     return true;
@@ -156,11 +175,11 @@ public class SubSetGraph {
    * @return the subgraph behind the column index
    */
   protected SubSetGraph lazySubGraphGeneration(int setColumnIndex) {
-    SubSetGraph subGraph = subGraphs.get(setColumnIndex);
+    SubSetGraph subGraph = subGraphs[setColumnIndex];
 
     if (subGraph == null) {
-      subGraph = new SubSetGraph();
-      subGraphs.put(setColumnIndex, subGraph);
+      subGraph = new SubSetGraph(subGraphs.length);
+      subGraphs[setColumnIndex] = subGraph;
     }
 
     return subGraph;
@@ -200,7 +219,7 @@ public class SubSetGraph {
         int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
-          currentTask.subGraph.subGraphs.get(currentColumnIndex);
+            currentTask.subGraph.subGraphs[currentColumnIndex];
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
           // Add the current column index to the path
@@ -247,7 +266,7 @@ public class SubSetGraph {
         int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
-          currentTask.subGraph.subGraphs.get(currentColumnIndex);
+            currentTask.subGraph.subGraphs[currentColumnIndex];
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
           // Add the current column index to the path
@@ -268,12 +287,12 @@ public class SubSetGraph {
    * pattern. Non minimal subsets are not traversed.
    * @return a list containing all minimal subsets
    */
-  public Set<ColumnCombinationBitset> getMinimalSubsets() {
+  public Set<ColumnCombinationBitset> getMinimalSubsets() throws ColumnIndexOutOfBoundsException {
     if (this.isEmpty()) {
       return new TreeSet<>();
     }
 
-    SubSetGraph graph = new SubSetGraph();
+    SubSetGraph graph = new SubSetGraph(this.subGraphs.length);
     TreeSet<ColumnCombinationBitset> result = new TreeSet<>();
     TreeSet<SearchTask> openTasks = new TreeSet<>();
     openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
@@ -288,19 +307,20 @@ public class SubSetGraph {
       }
       else {
         // Iterate over the remaining column indices
-        for (int bitNumber : currentTask.subGraph.subGraphs.keySet()) {
+        for (int columnIndex = 0; columnIndex < currentTask.subGraph.subGraphs.length;
+             columnIndex++) {
           // Get the subgraph behind the current index
           SubSetGraph subGraph =
-            currentTask.subGraph.subGraphs.get(bitNumber);
+              currentTask.subGraph.subGraphs[columnIndex];
           // column index is not set on any set --> check next column index
           if (subGraph != null) {
             // Add the current column index to the path
             ColumnCombinationBitset path =
               new ColumnCombinationBitset(currentTask.path)
-                .addColumn(bitNumber);
+                  .addColumn(columnIndex);
 
             openTasks
-                .add(new SearchTask(subGraph, bitNumber + 1, path));
+                .add(new SearchTask(subGraph, columnIndex + 1, path));
           }
         }
       }
@@ -339,24 +359,23 @@ public class SubSetGraph {
         from = setBits.get(currentTask.numberOfCheckedColumns - 1);
       }
 
-      ObjectSortedSet<Map.Entry<Integer, SubSetGraph>> slice;
-      if (currentTask.numberOfCheckedColumns < setBits.size()) {
-        int upto = setBits.get(currentTask.numberOfCheckedColumns) + 1;
-        slice = currentTask.subGraph.subGraphs.subMap(from, upto).entrySet();
-      } else {
-        slice = currentTask.subGraph.subGraphs.tailMap(from).entrySet();
-      }
+      // Only column identifiers coming after the current identifier are relevant, or all remaining.
+      int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
 
-      for (Map.Entry<Integer, SubSetGraph> entry : slice) {
-        int columnIndex = entry.getKey();
+      for (int columnIndex = from; columnIndex < upto; columnIndex++) {
+        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        if (subGraph == null) {
+          continue;
+        }
+
         if (columnIndex == setBits.get(currentTask.numberOfCheckedColumns)) {
           openTasks.add(new SearchTask(
-              entry.getValue(),
+              subGraph,
               currentTask.numberOfCheckedColumns + 1,
               new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
         } else {
           openTasks.add(new SearchTask(
-              entry.getValue(),
+              subGraph,
               currentTask.numberOfCheckedColumns,
               new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
         }
@@ -397,24 +416,23 @@ public class SubSetGraph {
         from = setBits.get(currentTask.numberOfCheckedColumns - 1);
       }
 
-      ObjectSortedSet<Map.Entry<Integer, SubSetGraph>> slice;
-      if (currentTask.numberOfCheckedColumns < setBits.size()) {
-        int upto = setBits.get(currentTask.numberOfCheckedColumns) + 1;
-        slice = currentTask.subGraph.subGraphs.subMap(from, upto).entrySet();
-      } else {
-        slice = currentTask.subGraph.subGraphs.tailMap(from).entrySet();
-      }
+      // Only column identifiers coming after the current identifier are relevant, or all remaining.
+      int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
 
-      for (Map.Entry<Integer, SubSetGraph> entry : slice) {
-        int columnIndex = entry.getKey();
+      for (int columnIndex = from; columnIndex < upto; columnIndex++) {
+        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        if (subGraph == null) {
+          continue;
+        }
+
         if (columnIndex == setBits.get(currentTask.numberOfCheckedColumns)) {
           openTasks.add(new SearchTask(
-              entry.getValue(),
+              subGraph,
               currentTask.numberOfCheckedColumns + 1,
               currentTask.path.addColumn(columnIndex)));
         } else {
           openTasks.add(new SearchTask(
-              entry.getValue(),
+              subGraph,
               currentTask.numberOfCheckedColumns,
               currentTask.path.addColumn(columnIndex)));
         }
@@ -428,7 +446,13 @@ public class SubSetGraph {
    * @return whether the graph is empty
    */
   public boolean isEmpty() {
-    return subGraphs.isEmpty();
+    for (SubSetGraph subGraph : subGraphs) {
+      if (subGraph != null) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   @Override
@@ -442,12 +466,19 @@ public class SubSetGraph {
 
     SubSetGraph that = (SubSetGraph) o;
 
-    return !(subGraphs != null ? !subGraphs.equals(that.subGraphs) : that.subGraphs != null);
+    if (subSetEnds != that.subSetEnds) {
+      return false;
+    }
+    // Probably incorrect - comparing Object[] arrays with Arrays.equals
+    return Arrays.equals(subGraphs, that.subGraphs);
+
   }
 
   @Override
   public int hashCode() {
-    return subGraphs != null ? subGraphs.hashCode() : 0;
+    int result = subGraphs != null ? Arrays.hashCode(subGraphs) : 0;
+    result = 31 * result + (subSetEnds ? 1 : 0);
+    return result;
   }
 
   @Override public String toString() {
@@ -466,25 +497,26 @@ public class SubSetGraph {
    * @return the number of columns written to in the current row
    */
   protected int stringRepresentation(List<String> rows, int level, int leftMargin) {
-    List<Integer> sortedKeySet = new ArrayList<>(subGraphs.keySet());
-    Collections.sort(sortedKeySet);
-
     int numberOfColumnsWritten;
     if (level >= rows.size()) {
       rows.add("");
     }
     StringBuilder row = new StringBuilder(rows.get(level));
-    for (int columnIndex : sortedKeySet) {
+    for (int columnIndex = 0; columnIndex < subGraphs.length; columnIndex++) {
+      SubSetGraph subGraph = subGraphs[columnIndex];
+      if (subGraph == null) {
+        continue;
+      }
       while (row.length() < leftMargin) {
         row.append(" ");
       }
       int newLeftMargin = row.length();
       row.append(columnIndex);
-      if (subGraphs.get(columnIndex).subSetEnds) {
+      if (subGraph.subSetEnds) {
         row.append("X");
       }
       row.append(" ");
-      numberOfColumnsWritten = subGraphs.get(columnIndex).stringRepresentation(rows, level + 1, newLeftMargin);
+      numberOfColumnsWritten = subGraph.stringRepresentation(rows, level + 1, newLeftMargin);
       while (row.length() < numberOfColumnsWritten) {
         row.append(" ");
       }
