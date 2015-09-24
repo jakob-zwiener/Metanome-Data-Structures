@@ -61,7 +61,10 @@ public class SubSetGraphTest {
   @Test
   public void testAdd() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = new SubSetGraph(8);
+    // Expected values
+
+    final int expectedDimension = 8;
+    SubSetGraph graph = new SubSetGraph(expectedDimension);
     ColumnCombinationBitset columnCombination = new ColumnCombinationBitset(2, 4, 7);
 
     // Execute functionality
@@ -71,6 +74,7 @@ public class SubSetGraphTest {
     // Check existence of column indices in subgraphs by iterating
     SubSetGraph actualSubGraph = graph;
     for (int setColumnIndex : columnCombination.getSetBits()) {
+      assertEquals(expectedDimension, actualSubGraph.subGraphs.length);
       assertNotNull(actualSubGraph.subGraphs[setColumnIndex]);
       actualSubGraph = actualSubGraph.subGraphs[setColumnIndex];
     }

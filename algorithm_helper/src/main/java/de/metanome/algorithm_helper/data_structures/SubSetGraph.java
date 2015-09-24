@@ -178,7 +178,6 @@ public class SubSetGraph {
     SubSetGraph subGraph = subGraphs[setColumnIndex];
 
     if (subGraph == null) {
-      // FIXME(zwiener): Test that dimension is forwarded.
       subGraph = new SubSetGraph(subGraphs.length);
       subGraphs[setColumnIndex] = subGraph;
     }
