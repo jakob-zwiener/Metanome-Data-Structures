@@ -23,11 +23,7 @@ public class SubSetGraphFixture {
 
   public SubSetGraph getGraph() {
     SubSetGraph graph = new SubSetGraph();
-
-    for (ColumnCombinationBitset columnCombination : getExpectedIncludedColumnCombinations()) {
-      graph.add(columnCombination);
-    }
-
+    graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
 

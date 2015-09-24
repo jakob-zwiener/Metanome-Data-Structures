@@ -24,11 +24,15 @@ import java.util.List;
  */
 public class SuperSetGraphFixture {
 
-  public SuperSetGraph getGraph() {
+  public SuperSetGraph getSuperSetGraph() {
     SuperSetGraph graph = new SuperSetGraph(getNumberOfColumns());
-    for (ColumnCombinationBitset columnCombination : this.getExpectedIncludedColumnCombinations()) {
-      graph.add(columnCombination);
-    }
+    graph.addAll(getExpectedIncludedColumnCombinations());
+    return graph;
+  }
+
+  public SubSetGraph getSubSetGraph() {
+    SubSetGraph graph = new SubSetGraph();
+    graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
 

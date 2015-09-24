@@ -91,7 +91,7 @@ public class SuperSetGraph {
    * @return whether at least a single superset is contained in the graph
    */
   public boolean containsSuperset(ColumnCombinationBitset subset) {
-    return graph.containsSubset(subset.invert(numberOfColumns));
+    return subset.isEmpty() || graph.containsSubset(subset.invert(numberOfColumns));
   }
 
   /**

@@ -16,31 +16,36 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Joiner;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
+import it.unimi.dsi.fastutil.objects.ObjectSortedSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Joiner;
-
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-
 /**
  * A graph that allows efficient lookup of all subsets in the graph for a given
  * ColumnCombinationBitset.
+ *
  * @author Jens Ehrlich
  * @author Jakob Zwiener
+ *
+ * TODO(zwiener): This class should be renamed as it also allows superset lookups.
  */
 public class SubSetGraph {
 
-  protected Int2ObjectMap<SubSetGraph> subGraphs = new Int2ObjectOpenHashMap<>();
+  // TODO(zwiener): Consider using a fixed length array (alphabet needs to be of known size).
+  protected Int2ObjectRBTreeMap<SubSetGraph> subGraphs = new Int2ObjectRBTreeMap<>();
   protected boolean subSetEnds = false;
 
   /**
@@ -70,6 +75,47 @@ public class SubSetGraph {
     }
 
     return this;
+  }
+
+  /**
+   * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}
+   */
+  public ArrayList<ColumnCombinationBitset> getContainedSets() {
+    return getContainedSets(new ColumnCombinationBitset());
+  }
+
+  /**
+   * Returns an {@link ArrayList} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}. All results are prefixed with the result prefix (for sub
+   * graph queries).
+   *
+   * @param resultPrefix the prefix to add to all result sets
+   * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
+   * contained in the {@link SubSetGraph}
+   */
+  public ArrayList<ColumnCombinationBitset> getContainedSets(ColumnCombinationBitset resultPrefix) {
+    ArrayList<ColumnCombinationBitset> containedSets = new ArrayList<>();
+
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, -1, resultPrefix));
+
+    while (!openTasks.isEmpty()) {
+      SearchTask currentTask = openTasks.remove();
+
+      if (currentTask.subGraph.subSetEnds) {
+        containedSets.add(new ColumnCombinationBitset(currentTask.path));
+      }
+
+      for (Map.Entry<Integer, SubSetGraph> entry : currentTask.subGraph.subGraphs.entrySet()) {
+        openTasks.add(new SearchTask(
+            entry.getValue(),
+            -1,
+            new ColumnCombinationBitset(currentTask.path).addColumn(entry.getKey())));
+      }
+    }
+
+    return containedSets;
   }
 
   /**
@@ -121,24 +167,24 @@ public class SubSetGraph {
   }
 
   /**
-   * Returns all Subsets of the given ColumnCombination that are in the graph.
-   * @param columnCombinationToQuery given superset to search for subsets
+   * Returns all subsets of the given column combination that are in the graph.
+   * @param superset given superset to search for subsets
    * @return a list containing all found subsets
    */
   // TODO(zwiener): Does this include equivalent sets?
   public ArrayList<ColumnCombinationBitset> getExistingSubsets(
-    ColumnCombinationBitset columnCombinationToQuery)
+      ColumnCombinationBitset superset)
   {
     ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
     if (this.isEmpty()) {
       return subsets;
     }
     // Create task queue and initial task.
-    Queue<SubSetFindTask> openTasks = new LinkedList<>();
-    openTasks.add(new SubSetFindTask(this, 0, new ColumnCombinationBitset()));
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
 
     while (!openTasks.isEmpty()) {
-      SubSetFindTask currentTask = openTasks.remove();
+      SearchTask currentTask = openTasks.remove();
       // If the current subgraph is empty a subset has been found
       if (currentTask.subGraph.isEmpty()) {
         subsets.add(new ColumnCombinationBitset(currentTask.path));
@@ -150,8 +196,8 @@ public class SubSetGraph {
       }
 
       // Iterate over the remaining column indices
-      for (int i = currentTask.numberOfCheckedColumns; i < columnCombinationToQuery.size(); i++) {
-        int currentColumnIndex = columnCombinationToQuery.getSetBits().get(i);
+      for (int i = currentTask.numberOfCheckedColumns; i < superset.size(); i++) {
+        int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
         SubSetGraph subGraph =
           currentTask.subGraph.subGraphs.get(currentColumnIndex);
@@ -162,7 +208,7 @@ public class SubSetGraph {
             new ColumnCombinationBitset(currentTask.path)
               .addColumn(currentColumnIndex);
 
-          openTasks.add(new SubSetFindTask(subGraph, i + 1, path));
+          openTasks.add(new SearchTask(subGraph, i + 1, path));
         }
       }
     }
@@ -171,20 +217,22 @@ public class SubSetGraph {
   }
 
   /**
-   * The method returns when the first subset is found in the graph. This is possibly faster than
+   * Returns whether at least one subset is contained in the graph. The method returns when the
+   * first subset is found in the graph. This is possibly faster than
    * {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}, because a smaller part of the
-   * graph must be traversed.
-   * @return whether at least a single subset is contained in the graph
+   * graph needs be traversed.
+   * @param superset the set for which the graph should be checked for subsets
+   * @return whether at least one subset is contained in the graph
    */
   public boolean containsSubset(ColumnCombinationBitset superset) {
     if (this.isEmpty()) {
       return false;
     }
-    Queue<SubSetFindTask> openTasks = new LinkedList<>();
-    openTasks.add(new SubSetFindTask(this, 0, new ColumnCombinationBitset()));
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
 
     while (!openTasks.isEmpty()) {
-      SubSetFindTask currentTask = openTasks.remove();
+      SearchTask currentTask = openTasks.remove();
       // If the current subgraph is empty a subset has been found
       if (currentTask.subGraph.isEmpty()) {
         return true;
@@ -207,7 +255,7 @@ public class SubSetGraph {
             new ColumnCombinationBitset(currentTask.path)
               .addColumn(currentColumnIndex);
 
-          openTasks.add(new SubSetFindTask(subGraph, i + 1, path));
+          openTasks.add(new SearchTask(subGraph, i + 1, path));
         }
       }
     }
@@ -227,11 +275,11 @@ public class SubSetGraph {
 
     SubSetGraph graph = new SubSetGraph();
     TreeSet<ColumnCombinationBitset> result = new TreeSet<>();
-    TreeSet<SubSetFindTask> openTasks = new TreeSet<>();
-    openTasks.add(new SubSetFindTask(this, 0, new ColumnCombinationBitset()));
+    TreeSet<SearchTask> openTasks = new TreeSet<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
 
     while (!openTasks.isEmpty()) {
-      SubSetFindTask currentTask = openTasks.pollFirst();
+      SearchTask currentTask = openTasks.pollFirst();
       if (currentTask.subGraph.subSetEnds) {
         if (!graph.containsSubset(currentTask.path)) {
           graph.add(currentTask.path);
@@ -252,12 +300,128 @@ public class SubSetGraph {
                 .addColumn(bitNumber);
 
             openTasks
-              .add(new SubSetFindTask(subGraph, bitNumber + 1, path));
+                .add(new SearchTask(subGraph, bitNumber + 1, path));
           }
         }
       }
     }
     return result;
+  }
+
+  /**
+   * Returns all supersets of the given column combination that are in the graph.
+   *
+   * @param subset given subset to search for supersets
+   * @return a list containing all found supersets
+   */
+  public ArrayList<ColumnCombinationBitset> getExistingSupersets(ColumnCombinationBitset subset) {
+    ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
+
+    if (this.isEmpty()) {
+      return subsets;
+    }
+
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
+
+    while (!openTasks.isEmpty()) {
+      SearchTask currentTask = openTasks.remove();
+
+      List<Integer> setBits = subset.getSetBits();
+      if (setBits.size() <= currentTask.numberOfCheckedColumns) {
+        subsets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
+        continue;
+      }
+      int from;
+      if (currentTask.numberOfCheckedColumns == 0) {
+        from = 0;
+      } else {
+        from = setBits.get(currentTask.numberOfCheckedColumns - 1);
+      }
+
+      ObjectSortedSet<Map.Entry<Integer, SubSetGraph>> slice;
+      if (currentTask.numberOfCheckedColumns < setBits.size()) {
+        int upto = setBits.get(currentTask.numberOfCheckedColumns) + 1;
+        slice = currentTask.subGraph.subGraphs.subMap(from, upto).entrySet();
+      } else {
+        slice = currentTask.subGraph.subGraphs.tailMap(from).entrySet();
+      }
+
+      for (Map.Entry<Integer, SubSetGraph> entry : slice) {
+        int columnIndex = entry.getKey();
+        if (columnIndex == setBits.get(currentTask.numberOfCheckedColumns)) {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns + 1,
+              new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
+        } else {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns,
+              new ColumnCombinationBitset(currentTask.path).addColumn(columnIndex)));
+        }
+      }
+    }
+
+    return subsets;
+  }
+
+  /**
+   * Returns whether at least one superset is contained in the graph.The method returns when the
+   * first superset is found in the graph. This is possibly faster than
+   * {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}, because a smaller part of
+   * the graph needs to be traversed.
+   *
+   * @param subset the set for which the graph should be checked for supersets
+   * @return whether at least one superset is contained in the graph
+   */
+  public boolean containsSuperset(ColumnCombinationBitset subset) {
+    if (this.isEmpty()) {
+      return false;
+    }
+
+    Queue<SearchTask> openTasks = new LinkedList<>();
+    openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
+
+    while (!openTasks.isEmpty()) {
+      SearchTask currentTask = openTasks.remove();
+
+      List<Integer> setBits = subset.getSetBits();
+      if (setBits.size() <= currentTask.numberOfCheckedColumns) {
+        return true;
+      }
+      int from;
+      if (currentTask.numberOfCheckedColumns == 0) {
+        from = 0;
+      } else {
+        from = setBits.get(currentTask.numberOfCheckedColumns - 1);
+      }
+
+      ObjectSortedSet<Map.Entry<Integer, SubSetGraph>> slice;
+      if (currentTask.numberOfCheckedColumns < setBits.size()) {
+        int upto = setBits.get(currentTask.numberOfCheckedColumns) + 1;
+        slice = currentTask.subGraph.subGraphs.subMap(from, upto).entrySet();
+      } else {
+        slice = currentTask.subGraph.subGraphs.tailMap(from).entrySet();
+      }
+
+      for (Map.Entry<Integer, SubSetGraph> entry : slice) {
+        int columnIndex = entry.getKey();
+        if (columnIndex == setBits.get(currentTask.numberOfCheckedColumns)) {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns + 1,
+              currentTask.path.addColumn(columnIndex)));
+        } else {
+          openTasks.add(new SearchTask(
+              entry.getValue(),
+              currentTask.numberOfCheckedColumns,
+              currentTask.path.addColumn(columnIndex)));
+        }
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -334,16 +498,16 @@ public class SubSetGraph {
 /**
  * Task used to find subsets (avoiding recursion).
  */
-class SubSetFindTask implements Comparable<SubSetFindTask> {
+class SearchTask implements Comparable<SearchTask> {
 
   public SubSetGraph subGraph;
   public int numberOfCheckedColumns;
   public ColumnCombinationBitset path;
 
-  public SubSetFindTask(
-    SubSetGraph subGraph,
-    int numberOfCheckedColumns,
-    ColumnCombinationBitset path)
+  public SearchTask(
+      SubSetGraph subGraph,
+      int numberOfCheckedColumns,
+      ColumnCombinationBitset path)
   {
     this.subGraph = subGraph;
     this.numberOfCheckedColumns = numberOfCheckedColumns;
@@ -351,7 +515,7 @@ class SubSetFindTask implements Comparable<SubSetFindTask> {
   }
 
   @Override
-  public int compareTo(SubSetFindTask o) {
+  public int compareTo(SearchTask o) {
     return this.path.compareTo(o.path);
   }
 }

@@ -16,16 +16,22 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import static org.junit.Assert.*;
+import de.metanome.test_helper.EqualsAndHashCodeTester;
 
+import org.hamcrest.collection.IsIterableContainingInAnyOrder;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-import org.hamcrest.collection.IsIterableContainingInAnyOrder;
-import org.junit.Test;
-
-import de.metanome.test_helper.EqualsAndHashCodeTester;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph}
@@ -33,6 +39,16 @@ import de.metanome.test_helper.EqualsAndHashCodeTester;
  * @author Jakob Zwiener
  */
 public class SubSetGraphTest {
+
+  protected SuperSetGraphFixture superSetFixture;
+  protected SubSetGraphFixture subSetFixture;
+
+  @Before
+  public void setup() {
+    superSetFixture = new SuperSetGraphFixture();
+    subSetFixture = new SubSetGraphFixture();
+  }
+
 
   /**
    * Test method for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#add(ColumnCombinationBitset)}
@@ -62,19 +78,18 @@ public class SubSetGraphTest {
 
   /**
    * Test method for {@link SubSetGraph#addAll(java.util.Collection)} <p/> After inserting all
-   * column combinations the graph should be equal to the expected graph from the fixture. AddAll
+   * column combinations the graph should be equal to the expected graph from the superSetFixture. AddAll
    * should return the graph after addition.
    */
   @Test
   public void testAddAll() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
     SubSetGraph graph = new SubSetGraph();
     // Expected values
     Collection<ColumnCombinationBitset>
       expectedColumnCombinations =
-      fixture.getExpectedIncludedColumnCombinations();
-    SubSetGraph expectedGraph = fixture.getGraph();
+        subSetFixture.getExpectedIncludedColumnCombinations();
+    SubSetGraph expectedGraph = subSetFixture.getGraph();
 
     // Execute functionality
     SubSetGraph graphAfterAddAll = graph.addAll(expectedColumnCombinations);
@@ -85,14 +100,67 @@ public class SubSetGraphTest {
   }
 
   /**
+   * Test method for {@link SubSetGraph#getContainedSets()}
+   */
+  @Test
+  public void testGetContainedSets() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+    // Expected values
+    final List<ColumnCombinationBitset>
+        expectedContainedSets =
+        fixture.getExpectedIncludedColumnCombinations();
+
+    // Execute functionality
+    List<ColumnCombinationBitset> actualContainedSets = graph.getContainedSets();
+
+    // Check result
+    assertThat(actualContainedSets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(expectedContainedSets.toArray(
+                       new ColumnCombinationBitset[expectedContainedSets
+                           .size()])));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getContainedSets()}
+   *
+   * For sub graph queries results can be augmented by a result prefix (which represents the path in
+   * the super graph).
+   */
+  @Test
+  public void testGetContainedSetsSubGraph() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph graph = fixture.getGraph();
+    // Expected values
+    final List<ColumnCombinationBitset>
+        expectedContainedSets =
+        fixture.getExpectedIncludedColumnCombinations();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualContainedSets =
+        graph.subGraphs.get(fixture.getContainedSetSubGraphQuery()).getContainedSets(
+            new ColumnCombinationBitset(fixture.getContainedSetSubGraphQuery()));
+
+    // Check result
+    assertThat(actualContainedSets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedContainedSetsSubGraphQuery()));
+  }
+
+  /**
    * Test method for {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}
    */
   @Test
   public void testGetExistingSubsets() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph graph = fixture.getGraph();
-    ColumnCombinationBitset columnCombinationToQuery = fixture.getColumnCombinationForSubsetQuery();
+    SubSetGraph graph = subSetFixture.getGraph();
+    ColumnCombinationBitset
+        columnCombinationToQuery =
+        subSetFixture.getColumnCombinationForSubsetQuery();
 
     // Execute functionality
     List<ColumnCombinationBitset>
@@ -101,8 +169,8 @@ public class SubSetGraphTest {
 
     // Check result
     assertThat(actualSubsets,
-      IsIterableContainingInAnyOrder
-        .containsInAnyOrder(fixture.getExpectedSubsetsFromQuery()));
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(subSetFixture.getExpectedSubsetsFromQuery()));
   }
 
   /**
@@ -130,19 +198,19 @@ public class SubSetGraphTest {
   @Test
   public void testContainsSubset() {
     //Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    SubSetGraph actualGraph = subSetFixture.getGraph();
 
     //Execute functionality
-    assertTrue(actualGraph.containsSubset(fixture.getExpectedIncludedColumnCombinations().get(0)));
-    assertTrue(actualGraph.containsSubset(fixture.getColumnCombinationForSubsetQuery()));
+    assertTrue(
+        actualGraph.containsSubset(subSetFixture.getExpectedIncludedColumnCombinations().get(0)));
+    assertTrue(actualGraph.containsSubset(subSetFixture.getColumnCombinationForSubsetQuery()));
     assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset(1)));
     //Check Result
 
   }
 
   /**
-   * Test for the method {@link SubSetGraph#containsSubset(ColumnCombinationBitset)}
+   * Test method for {@link SubSetGraph#containsSubset(ColumnCombinationBitset)}
    * <p>
    * Tests a special case with an empty graph. False should be returned if the graph is empty.
    */
@@ -152,8 +220,172 @@ public class SubSetGraphTest {
     SubSetGraph actualGraph = new SubSetGraph();
 
     //Execute functionality
-    assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset(1, 3)));
     //Check Result
+    assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset(1, 3)));
+    assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#containsSubset(ColumnCombinationBitset)}
+   *
+   * The empty set cannot be added to the graph so it will not be returned as subset of the empty set.
+   */
+  @Test
+  public void testContainsSubsetOnEmptySubset() {
+    // Setup
+    SubSetGraph actualGraph = subSetFixture.getGraph();
+
+    // Execute functionality
+    assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset()));
+  }
+
+  /**
+   * Test method for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersets() {
+    // Setup
+    SubSetGraph graph = superSetFixture.getSubSetGraph();
+    ColumnCombinationBitset
+        columnCombinationToQuery =
+        superSetFixture.getColumnCombinationForSupersetQuery();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualSubsets =
+        graph.getExistingSupersets(columnCombinationToQuery);
+
+    // Check result
+    assertThat(actualSubsets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(superSetFixture.getExpectedSupersetsFromQuery()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)} <p> This
+   * tests a special case of an empty graph. An empty list should be returned
+   */
+  @Test
+  public void testGetExistingSupersetsOnEmptyGraph() {
+    // Setup
+    SubSetGraph graph = new SubSetGraph();
+
+    // Execute functionality
+    List<ColumnCombinationBitset>
+        actualSubsets =
+        graph.getExistingSupersets(new ColumnCombinationBitset(1, 3, 5));
+
+    // Check result
+    assertTrue(actualSubsets.isEmpty());
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersetsAdditionalCase1() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    ArrayList<ColumnCombinationBitset>
+        actualSupersets = actualGraph.getExistingSupersets(fixture.getSubsetCase1());
+
+    // Check result
+    assertThat(actualSupersets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedSupersetsFromQueryCase1()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testGetExistingSupersetsAdditionalCase2() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    ArrayList<ColumnCombinationBitset>
+        actualSupersets = actualGraph.getExistingSupersets(fixture.getSubsetCase2());
+
+    // Check result
+    assertThat(actualSupersets,
+               IsIterableContainingInAnyOrder
+                   .containsInAnyOrder(fixture.getExpectedSupersetsFromQueryCase2()));
+  }
+
+  /**
+   * Test for the method {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testContainsSuperset() {
+    // Setup
+    SubSetGraph actualGraph = superSetFixture.getSubSetGraph();
+
+    // Execute functionality
+    // Check Result
+    assertTrue(
+        actualGraph
+            .containsSuperset(superSetFixture.getExpectedIncludedColumnCombinations().get(0)));
+    assertTrue(
+        actualGraph.containsSuperset(superSetFixture.getColumnCombinationForSupersetQuery()));
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset(1, 2, 3, 5, 8, 9)));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testContainsSupersetAdditionalCase() {
+    // Setup
+    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
+    SubSetGraph actualGraph = fixture.getGraph();
+
+    // Execute functionality
+    // Check result
+    // All contained columns should also be subsets.
+    for (ColumnCombinationBitset expectedSubset : fixture.getExpectedIncludedColumnCombinations()) {
+      assertTrue(actualGraph.containsSuperset(expectedSubset));
+    }
+    for (ColumnCombinationBitset expectedSubset : fixture.getExpectedSubsetColumnCombinations()) {
+      assertTrue(actualGraph.containsSuperset(expectedSubset));
+    }
+    for (ColumnCombinationBitset expectedNonSubsets : fixture
+        .getExpectedNonSubsetColumnCombinations()) {
+      assertFalse(actualGraph.containsSuperset(expectedNonSubsets));
+    }
+  }
+
+  /**
+   * Test for the method {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)} <p> This test
+   * tests a special case of a empty graph. False should be returned.
+   */
+  @Test
+  public void testContainsSupersetOnEmptyGraph() {
+    // Setup
+    SubSetGraph actualGraph = new SubSetGraph();
+
+    // Execute functionality
+    // Check Result
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset(1, 3)));
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   *
+   * All sets in the graph are supersets of the empty set.
+   */
+  @Test
+  public void testContainsSupersetOnEmptySubset() {
+    // Setup
+    SubSetGraph actualGraph = superSetFixture.getSubSetGraph();
+
+    // Execute functionality
+    assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
   }
 
   /**
@@ -203,8 +435,7 @@ public class SubSetGraphTest {
   @Test
   public void testGetMinimalSubsets() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph graph = fixture.getGraph();
+    SubSetGraph graph = subSetFixture.getGraph();
 
     // Execute functionality
     Set<ColumnCombinationBitset> actualMinimalSubsets = graph.getMinimalSubsets();
@@ -212,7 +443,7 @@ public class SubSetGraphTest {
     // Check result
     assertThat(actualMinimalSubsets,
       IsIterableContainingInAnyOrder
-        .containsInAnyOrder(fixture.getExpectedMinimalSubsets()));
+          .containsInAnyOrder(subSetFixture.getExpectedMinimalSubsets()));
   }
 
   /**
@@ -221,14 +452,13 @@ public class SubSetGraphTest {
   @Test
   public void testToString() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph graph = fixture.getGraph();
+    SubSetGraph graph = subSetFixture.getGraph();
 
     // Execute functionality
     String actualStringRepresentation = graph.toString();
 
     // Check result
-    assertEquals(fixture.getExpectedStringRepresentation(), actualStringRepresentation);
+    assertEquals(subSetFixture.getExpectedStringRepresentation(), actualStringRepresentation);
   }
 
   /**
@@ -237,14 +467,13 @@ public class SubSetGraphTest {
   @Test
   public void testRemove() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    SubSetGraph actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
-    assertTrue(actualGraph.remove(fixture.columnCombinationToRemove()));
+    assertTrue(actualGraph.remove(subSetFixture.columnCombinationToRemove()));
 
-    assertEquals(fixture.expectedGraphAfterRemoval(), actualGraph);
+    assertEquals(subSetFixture.expectedGraphAfterRemoval(), actualGraph);
   }
 
   /**
@@ -255,14 +484,13 @@ public class SubSetGraphTest {
   @Test
   public void testRemoveEmptyColumnCombination() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    SubSetGraph actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
     assertTrue(actualGraph.remove(new ColumnCombinationBitset()));
 
-    assertEquals(fixture.getGraph(), actualGraph);
+    assertEquals(subSetFixture.getGraph(), actualGraph);
   }
 
   /**
@@ -274,13 +502,12 @@ public class SubSetGraphTest {
   @Test
   public void testRemoveNotInTheGraph() {
     // Setup
-    SubSetGraphFixture fixture = new SubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    SubSetGraph actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
     assertFalse(actualGraph.remove(new ColumnCombinationBitset(2, 3, 5, 8)));
 
-    assertEquals(fixture.getGraph(), actualGraph);
+    assertEquals(subSetFixture.getGraph(), actualGraph);
   }
 }
