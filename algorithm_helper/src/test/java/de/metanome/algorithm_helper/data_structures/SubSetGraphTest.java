@@ -77,6 +77,26 @@ public class SubSetGraphTest {
   }
 
   /**
+   * Test method for {@link SubSetGraph#add(ColumnCombinationBitset)}
+   *
+   * The empty set is never returned as superset or subset.
+   */
+  @Test
+  public void testAddEmptyColumnCombination() {
+    // Setup
+    SubSetGraph actualGraph = new SubSetGraph();
+
+    // Check precondition
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+
+    // Execute functionality
+    actualGraph.add(new ColumnCombinationBitset());
+
+    // Check result
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+  }
+
+  /**
    * Test method for {@link SubSetGraph#addAll(java.util.Collection)} <p/> After inserting all
    * column combinations the graph should be equal to the expected graph from the superSetFixture. AddAll
    * should return the graph after addition.
