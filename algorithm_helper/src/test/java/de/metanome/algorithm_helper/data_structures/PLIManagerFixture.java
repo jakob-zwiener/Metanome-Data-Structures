@@ -49,6 +49,10 @@ public class PLIManagerFixture {
     return 12;
   }
 
+  public int numberOfColumns() {
+    return 3;
+  }
+
   protected PositionListIndex buildPliFromClusters(int[][] clusters) {
     List<IntArrayList> clusterList = new ArrayList<>();
     for (int[] cluster : clusters) {

@@ -24,8 +24,11 @@ import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 /**
  * Tests for {@link PLIManager}
@@ -37,10 +40,31 @@ public class PLIManagerTest {
   protected PLIManager pliManager;
 
   @Before
-  public void setUp() {
+  public void setUp() throws ColumnIndexOutOfBoundsException {
     fixture = new PLIManagerFixture();
-    pliManager = new PLIManager(fixture.getPlis());
+    pliManager = new PLIManager(fixture.getPlis(), fixture.numberOfColumns());
   }
+
+  @Test
+  public void testConstructorAllColumnCombination() throws ColumnIndexOutOfBoundsException {
+    // Setup
+    final int numberOfColumns = 42;
+    // Expected values
+    ColumnCombinationBitset expectedAllColumnsCombination = new ColumnCombinationBitset();
+    for (int columnIndex = 0; columnIndex < 42; columnIndex++) {
+      expectedAllColumnsCombination.addColumn(columnIndex);
+    }
+
+    // Execute functionality
+    PLIManager
+        actualPliManager =
+        new PLIManager(new HashMap<ColumnCombinationBitset, PositionListIndex>(), numberOfColumns);
+
+    // Check result
+    assertEquals(expectedAllColumnsCombination, actualPliManager.allColumnCombination);
+  }
+
+  // TODO(zwiener): Check that given plis are added to the cache and the trie.
 
   /**
    * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
@@ -126,6 +150,47 @@ public class PLIManagerTest {
 
     // Check result
     assertEquals(expectedPlis, actualPlis);
+  }
+
+  /**
+   * Test method for {@link PLIManager#addPliToCache(ColumnCombinationBitset, PositionListIndex)}
+   */
+  @Test
+  public void testAddPliToCache() throws ColumnIndexOutOfBoundsException, PLIBuildingException {
+    // Setup
+    PLIManager
+        pliManager =
+        new PLIManager(new HashMap<ColumnCombinationBitset, PositionListIndex>(), 10);
+    // Expected values
+    final ColumnCombinationBitset columnCombinationForLookup = new ColumnCombinationBitset(2, 5, 8);
+    final PositionListIndex expectedPli = mock(PositionListIndex.class);
+
+    // Execute functionality
+    pliManager.addPliToCache(columnCombinationForLookup, expectedPli);
+
+    // Check result
+    assertEquals(expectedPli, pliManager.getPli(columnCombinationForLookup));
+    assertTrue(pliManager.pliSetTrie.getContainedSets().contains(columnCombinationForLookup));
+  }
+
+  /**
+   * Test method for {@link PLIManager#removePliFromCache(ColumnCombinationBitset)}
+   */
+  @Test
+  public void testRemovePliFromCache() {
+    // Setup
+    final ColumnCombinationBitset columnCombinationToRemove = new ColumnCombinationBitset(2);
+
+    // Check preconditions
+    assertNotNull(pliManager.plis.get(columnCombinationToRemove));
+    assertTrue(pliManager.pliSetTrie.getContainedSets().contains(columnCombinationToRemove));
+
+    // Execute functionality
+    pliManager.removePliFromCache(columnCombinationToRemove);
+
+    // Check result
+    assertNull(pliManager.plis.get(columnCombinationToRemove));
+    assertFalse(pliManager.pliSetTrie.getContainedSets().contains(columnCombinationToRemove));
   }
 
   /**

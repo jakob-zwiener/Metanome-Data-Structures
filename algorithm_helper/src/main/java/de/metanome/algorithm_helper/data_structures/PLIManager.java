@@ -44,20 +44,21 @@ public class PLIManager implements AutoCloseable {
   protected transient ExecutorService exec;
   protected Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
-  protected SubSetGraph pliSubSetGraph;
-  protected SuperSetGraph pliSuperSetGraph;
+  protected SetTrie pliSetTrie;
 
   /**
    * TODO docs
+   *
+   * FIXME(zwiener): It should be checked, that the one column plis are added to the manager.
    */
-  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis,
+                    final int numberOfColumns)
+      throws ColumnIndexOutOfBoundsException {
     this.plis = plis;
-    pliSubSetGraph = new SubSetGraph();
-    pliSubSetGraph.addAll(plis.keySet());
-    pliSuperSetGraph = new SuperSetGraph(plis.size());
-    pliSuperSetGraph.addAll(plis.keySet());
-    int[] allColumnIndices = new int[plis.size()];
-    for (int i = 0; i < plis.size(); i++) {
+    pliSetTrie = new SetTrie(numberOfColumns);
+    pliSetTrie.addAll(plis.keySet());
+    int[] allColumnIndices = new int[numberOfColumns];
+    for (int i = 0; i < numberOfColumns; i++) {
       allColumnIndices[i] = i;
     }
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
@@ -116,7 +117,7 @@ public class PLIManager implements AutoCloseable {
       return exactPli;
     }
 
-    List<ColumnCombinationBitset> subsets = pliSubSetGraph.getExistingSubsets(columnCombination);
+    List<ColumnCombinationBitset> subsets = pliSetTrie.getExistingSubsets(columnCombination);
 
     // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
@@ -167,7 +168,11 @@ public class PLIManager implements AutoCloseable {
 
       unionCombination = unionCombination.union(currentSubset);
       intersect = intersect.intersect(plis.get(currentSubset));
-      addPliToCache(unionCombination, intersect);
+      try {
+        addPliToCache(unionCombination, intersect);
+      } catch (ColumnIndexOutOfBoundsException e) {
+        throw new PLIBuildingException("The pli could not be added to the pli cache.", e);
+      }
     }
     
     return intersect;
@@ -185,7 +190,7 @@ public class PLIManager implements AutoCloseable {
 
       tasks.add(exec.submit(new Callable<Void>() {
         @Override
-        public Void call() throws PLIBuildingException {
+        public Void call() throws PLIBuildingException, ColumnIndexOutOfBoundsException {
           PositionListIndex pli;
           pli = getPli(columnCombination);
 
@@ -211,13 +216,11 @@ public class PLIManager implements AutoCloseable {
 
   protected void addPliToCache(final ColumnCombinationBitset columnCombination,
                                final PositionListIndex intersect)
-  {
-    // FIXME(zwiener): Use the new SetTrie.
+      throws ColumnIndexOutOfBoundsException {
     plis.put(columnCombination, intersect);
-    pliSubSetGraph.add(columnCombination);
-    pliSuperSetGraph.add(columnCombination);
+    pliSetTrie.add(columnCombination);
 
-    List<ColumnCombinationBitset> supersets = pliSuperSetGraph.getExistingSupersets(columnCombination);
+    List<ColumnCombinationBitset> supersets = pliSetTrie.getExistingSupersets(columnCombination);
 
     for (ColumnCombinationBitset superset : supersets) {
       if (!superset.equals(columnCombination)) {
@@ -228,8 +231,7 @@ public class PLIManager implements AutoCloseable {
 
   protected void removePliFromCache(final ColumnCombinationBitset columnCombination) {
     plis.remove(columnCombination);
-    pliSubSetGraph.remove(columnCombination);
-    pliSuperSetGraph.remove(columnCombination);
+    pliSetTrie.remove(columnCombination);
   }
 
   @Override
