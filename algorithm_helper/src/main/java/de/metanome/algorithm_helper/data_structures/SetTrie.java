@@ -38,18 +38,18 @@ import java.util.TreeSet;
  *
  * TODO(zwiener): This class should be renamed as it also allows superset lookups.
  */
-public class SubSetGraph {
+public class SetTrie {
 
-  protected SubSetGraph[] subGraphs;
+  protected SetTrie[] subGraphs;
   protected boolean subSetEnds = false;
 
   /**
-   * Creates a new {@link SubSetGraph} that is able to store sets with the given alphabet size.
+   * Creates a new {@link SetTrie} that is able to store sets with the given alphabet size.
    *
    * @param dimension the size of the alphabet of this graph
    */
-  public SubSetGraph(int dimension) {
-    subGraphs = new SubSetGraph[dimension];
+  public SetTrie(int dimension) {
+    subGraphs = new SetTrie[dimension];
   }
 
   /**
@@ -58,9 +58,9 @@ public class SubSetGraph {
    * @return the graph
    * @throws ColumnIndexOutOfBoundsException when the columnCombination contains at least one column index that is larger or equal to the size of the alphabet
    */
-  public SubSetGraph add(ColumnCombinationBitset columnCombination)
+  public SetTrie add(ColumnCombinationBitset columnCombination)
       throws ColumnIndexOutOfBoundsException {
-    SubSetGraph subGraph = this;
+    SetTrie subGraph = this;
 
     for (int setColumnIndex : columnCombination.getSetBits()) {
       if (setColumnIndex >= subGraphs.length) {
@@ -80,7 +80,7 @@ public class SubSetGraph {
    * to add to the graph
    * @return the graph
    */
-  public SubSetGraph addAll(Collection<ColumnCombinationBitset> columnCombinations)
+  public SetTrie addAll(Collection<ColumnCombinationBitset> columnCombinations)
       throws ColumnIndexOutOfBoundsException {
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       add(columnCombination);
@@ -91,7 +91,7 @@ public class SubSetGraph {
 
   /**
    * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
-   * contained in the {@link SubSetGraph}
+   * contained in the {@link SetTrie}
    */
   public ArrayList<ColumnCombinationBitset> getContainedSets() {
     return getContainedSets(new ColumnCombinationBitset());
@@ -99,12 +99,12 @@ public class SubSetGraph {
 
   /**
    * Returns an {@link ArrayList} of all {@link ColumnCombinationBitset}s
-   * contained in the {@link SubSetGraph}. All results are prefixed with the result prefix (for sub
+   * contained in the {@link SetTrie}. All results are prefixed with the result prefix (for sub
    * graph queries).
    *
    * @param resultPrefix the prefix to add to all result sets
    * @return an {@link ArrayList} of all {@link ColumnCombinationBitset}s
-   * contained in the {@link SubSetGraph}
+   * contained in the {@link SetTrie}
    */
   public ArrayList<ColumnCombinationBitset> getContainedSets(ColumnCombinationBitset resultPrefix) {
     ArrayList<ColumnCombinationBitset> containedSets = new ArrayList<>();
@@ -121,7 +121,7 @@ public class SubSetGraph {
 
       for (int columnIndex = 0; columnIndex < currentTask.subGraph.subGraphs.length;
            columnIndex++) {
-        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        SetTrie subGraph = currentTask.subGraph.subGraphs[columnIndex];
         if (subGraph == null) {
           continue;
         }
@@ -143,11 +143,11 @@ public class SubSetGraph {
    * @return whether the column combination was removed
    */
   public boolean remove(ColumnCombinationBitset columnCombination) {
-    Stack<SubSetGraph> previousSubGraphs = new Stack<>();
+    Stack<SetTrie> previousSubGraphs = new Stack<>();
     Stack<Integer> previousSubGraphIndices = new Stack<>();
 
     // Find correct graph.
-    SubSetGraph subGraph = this;
+    SetTrie subGraph = this;
     previousSubGraphs.push(this);
     for (int columnIndex : columnCombination.getSetBits()) {
       subGraph = subGraph.subGraphs[columnIndex];
@@ -174,11 +174,11 @@ public class SubSetGraph {
    * @param setColumnIndex the column index to perform the lookup on
    * @return the subgraph behind the column index
    */
-  protected SubSetGraph lazySubGraphGeneration(int setColumnIndex) {
-    SubSetGraph subGraph = subGraphs[setColumnIndex];
+  protected SetTrie lazySubGraphGeneration(int setColumnIndex) {
+    SetTrie subGraph = subGraphs[setColumnIndex];
 
     if (subGraph == null) {
-      subGraph = new SubSetGraph(subGraphs.length);
+      subGraph = new SetTrie(subGraphs.length);
       subGraphs[setColumnIndex] = subGraph;
     }
 
@@ -218,7 +218,7 @@ public class SubSetGraph {
       for (int i = currentTask.numberOfCheckedColumns; i < superset.size(); i++) {
         int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
-        SubSetGraph subGraph =
+        SetTrie subGraph =
             currentTask.subGraph.subGraphs[currentColumnIndex];
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
@@ -238,7 +238,7 @@ public class SubSetGraph {
   /**
    * Returns whether at least one subset is contained in the graph. The method returns when the
    * first subset is found in the graph. This is possibly faster than
-   * {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}, because a smaller part of the
+   * {@link SetTrie#getExistingSubsets(ColumnCombinationBitset)}, because a smaller part of the
    * graph needs be traversed.
    * @param superset the set for which the graph should be checked for subsets
    * @return whether at least one subset is contained in the graph
@@ -265,7 +265,7 @@ public class SubSetGraph {
       for (int i = currentTask.numberOfCheckedColumns; i < superset.size(); i++) {
         int currentColumnIndex = superset.getSetBits().get(i);
         // Get the subgraph behind the current index
-        SubSetGraph subGraph =
+        SetTrie subGraph =
             currentTask.subGraph.subGraphs[currentColumnIndex];
         // column index is not set on any set --> check next column index
         if (subGraph != null) {
@@ -292,7 +292,7 @@ public class SubSetGraph {
       return new TreeSet<>();
     }
 
-    SubSetGraph graph = new SubSetGraph(this.subGraphs.length);
+    SetTrie graph = new SetTrie(this.subGraphs.length);
     TreeSet<ColumnCombinationBitset> result = new TreeSet<>();
     TreeSet<SearchTask> openTasks = new TreeSet<>();
     openTasks.add(new SearchTask(this, 0, new ColumnCombinationBitset()));
@@ -310,7 +310,7 @@ public class SubSetGraph {
         for (int columnIndex = 0; columnIndex < currentTask.subGraph.subGraphs.length;
              columnIndex++) {
           // Get the subgraph behind the current index
-          SubSetGraph subGraph =
+          SetTrie subGraph =
               currentTask.subGraph.subGraphs[columnIndex];
           // column index is not set on any set --> check next column index
           if (subGraph != null) {
@@ -363,7 +363,7 @@ public class SubSetGraph {
       int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
 
       for (int columnIndex = from; columnIndex < upto; columnIndex++) {
-        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        SetTrie subGraph = currentTask.subGraph.subGraphs[columnIndex];
         if (subGraph == null) {
           continue;
         }
@@ -388,7 +388,7 @@ public class SubSetGraph {
   /**
    * Returns whether at least one superset is contained in the graph.The method returns when the
    * first superset is found in the graph. This is possibly faster than
-   * {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}, because a smaller part of
+   * {@link SetTrie#getExistingSupersets(ColumnCombinationBitset)}, because a smaller part of
    * the graph needs to be traversed.
    *
    * @param subset the set for which the graph should be checked for supersets
@@ -420,7 +420,7 @@ public class SubSetGraph {
       int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
 
       for (int columnIndex = from; columnIndex < upto; columnIndex++) {
-        SubSetGraph subGraph = currentTask.subGraph.subGraphs[columnIndex];
+        SetTrie subGraph = currentTask.subGraph.subGraphs[columnIndex];
         if (subGraph == null) {
           continue;
         }
@@ -446,7 +446,7 @@ public class SubSetGraph {
    * @return whether the graph is empty
    */
   public boolean isEmpty() {
-    for (SubSetGraph subGraph : subGraphs) {
+    for (SetTrie subGraph : subGraphs) {
       if (subGraph != null) {
         return false;
       }
@@ -464,7 +464,7 @@ public class SubSetGraph {
       return false;
     }
 
-    SubSetGraph that = (SubSetGraph) o;
+    SetTrie that = (SetTrie) o;
 
     if (subSetEnds != that.subSetEnds) {
       return false;
@@ -503,7 +503,7 @@ public class SubSetGraph {
     }
     StringBuilder row = new StringBuilder(rows.get(level));
     for (int columnIndex = 0; columnIndex < subGraphs.length; columnIndex++) {
-      SubSetGraph subGraph = subGraphs[columnIndex];
+      SetTrie subGraph = subGraphs[columnIndex];
       if (subGraph == null) {
         continue;
       }
@@ -532,12 +532,12 @@ public class SubSetGraph {
  */
 class SearchTask implements Comparable<SearchTask> {
 
-  public SubSetGraph subGraph;
+  public SetTrie subGraph;
   public int numberOfCheckedColumns;
   public ColumnCombinationBitset path;
 
   public SearchTask(
-      SubSetGraph subGraph,
+      SetTrie subGraph,
       int numberOfCheckedColumns,
       ColumnCombinationBitset path)
   {

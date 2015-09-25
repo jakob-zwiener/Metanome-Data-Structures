@@ -24,8 +24,8 @@ import java.util.List;
  */
 public class SuperSetGraphFixture {
 
-  public SubSetGraph getSubSetGraph() throws ColumnIndexOutOfBoundsException {
-    SubSetGraph graph = new SubSetGraph(getNumberOfColumns());
+  public SetTrie getSetTrie() throws ColumnIndexOutOfBoundsException {
+    SetTrie graph = new SetTrie(getNumberOfColumns());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }

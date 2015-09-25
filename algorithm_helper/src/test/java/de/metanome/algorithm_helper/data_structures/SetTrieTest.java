@@ -37,24 +37,24 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Tests for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph}
+ * Tests for {@link SetTrie}
  * @author Jens Ehrlich
  * @author Jakob Zwiener
  */
-public class SubSetGraphTest {
+public class SetTrieTest {
 
   protected SuperSetGraphFixture superSetFixture;
-  protected SubSetGraphFixture subSetFixture;
+  protected SetTrieFixture subSetFixture;
 
   @Before
   public void setup() {
     superSetFixture = new SuperSetGraphFixture();
-    subSetFixture = new SubSetGraphFixture();
+    subSetFixture = new SetTrieFixture();
   }
 
 
   /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#add(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#add(ColumnCombinationBitset)}
    * <p/> After inserting a column combination a subgraph for every set bit should exist. Add should
    * return the graph after addition.
    */
@@ -64,15 +64,15 @@ public class SubSetGraphTest {
     // Expected values
 
     final int expectedDimension = 8;
-    SubSetGraph graph = new SubSetGraph(expectedDimension);
+    SetTrie graph = new SetTrie(expectedDimension);
     ColumnCombinationBitset columnCombination = new ColumnCombinationBitset(2, 4, 7);
 
     // Execute functionality
-    SubSetGraph graphAfterAdd = graph.add(columnCombination);
+    SetTrie graphAfterAdd = graph.add(columnCombination);
 
     // Check result
     // Check existence of column indices in subgraphs by iterating
-    SubSetGraph actualSubGraph = graph;
+    SetTrie actualSubGraph = graph;
     for (int setColumnIndex : columnCombination.getSetBits()) {
       assertEquals(expectedDimension, actualSubGraph.subGraphs.length);
       assertNotNull(actualSubGraph.subGraphs[setColumnIndex]);
@@ -84,14 +84,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#add(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#add(ColumnCombinationBitset)}
    *
    * The empty set is never returned as superset or subset.
    */
   @Test
   public void testAddEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph(12);
+    SetTrie actualGraph = new SetTrie(12);
 
     // Check precondition
     assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
@@ -104,14 +104,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#add(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#add(ColumnCombinationBitset)}
    *
    * If the column combination contains a column index that is larger than the dimension of the prefix tree, an exception should be thrown.
    */
   @Test
   public void testAddDimensionTooSmall() {
     // Setup
-    SubSetGraph graph = new SubSetGraph(12);
+    SetTrie graph = new SetTrie(12);
 
     // Execute functionality
     // Check result
@@ -124,22 +124,22 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#addAll(java.util.Collection)} <p/> After inserting all
+   * Test method for {@link SetTrie#addAll(java.util.Collection)} <p/> After inserting all
    * column combinations the graph should be equal to the expected graph from the superSetFixture. AddAll
    * should return the graph after addition.
    */
   @Test
   public void testAddAll() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = new SubSetGraph(subSetFixture.getDimension());
+    SetTrie graph = new SetTrie(subSetFixture.getDimension());
     // Expected values
     Collection<ColumnCombinationBitset>
       expectedColumnCombinations =
         subSetFixture.getExpectedIncludedColumnCombinations();
-    SubSetGraph expectedGraph = subSetFixture.getGraph();
+    SetTrie expectedGraph = subSetFixture.getGraph();
 
     // Execute functionality
-    SubSetGraph graphAfterAddAll = graph.addAll(expectedColumnCombinations);
+    SetTrie graphAfterAddAll = graph.addAll(expectedColumnCombinations);
 
     // Check result
     assertEquals(expectedGraph, graph);
@@ -147,14 +147,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#addAll(Collection)}
+   * Test method for {@link SetTrie#addAll(Collection)}
    *
    * If one of the column combination contains a column index that is larger than the dimension of the prefix tree, an exception should be thrown. Already added column combination will remain added; column combinations after the violating set will not be added.
    */
   @Test
   public void testAddAllDimensionTooSmall() {
     // Setup
-    SubSetGraph graph = new SubSetGraph(13);
+    SetTrie graph = new SetTrie(13);
     // Expected values
     final ColumnCombinationBitset expectedContainedSet = new ColumnCombinationBitset(1, 2, 3);
     final ColumnCombinationBitset expectedNotContainedSet = new ColumnCombinationBitset(7, 8, 9);
@@ -179,13 +179,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getContainedSets()}
+   * Test method for {@link SetTrie#getContainedSets()}
    */
   @Test
   public void testGetContainedSets() throws ColumnIndexOutOfBoundsException {
     // Setup
-    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
-    SubSetGraph graph = fixture.getGraph();
+    AdditionalSetTrieFixture fixture = new AdditionalSetTrieFixture();
+    SetTrie graph = fixture.getGraph();
     // Expected values
     final List<ColumnCombinationBitset>
         expectedContainedSets =
@@ -203,7 +203,7 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getContainedSets()}
+   * Test method for {@link SetTrie#getContainedSets()}
    *
    * For sub graph queries results can be augmented by a result prefix (which represents the path in
    * the super graph).
@@ -211,8 +211,8 @@ public class SubSetGraphTest {
   @Test
   public void testGetContainedSetsSubGraph() throws ColumnIndexOutOfBoundsException {
     // Setup
-    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
-    SubSetGraph graph = fixture.getGraph();
+    AdditionalSetTrieFixture fixture = new AdditionalSetTrieFixture();
+    SetTrie graph = fixture.getGraph();
     // Expected values
     final List<ColumnCombinationBitset>
         expectedContainedSets =
@@ -231,12 +231,12 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#getExistingSubsets(ColumnCombinationBitset)}
    */
   @Test
   public void testGetExistingSubsets() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = subSetFixture.getGraph();
+    SetTrie graph = subSetFixture.getGraph();
     ColumnCombinationBitset
         columnCombinationToQuery =
         subSetFixture.getColumnCombinationForSubsetQuery();
@@ -253,14 +253,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getExistingSubsets(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#getExistingSubsets(ColumnCombinationBitset)}
    * <p>
    * Tests a special case with an empty graph. An empty list should be returned.
    */
   @Test
   public void testGetExistingSubsetsOnEmptyGraph() {
     // Setup
-    SubSetGraph graph = new SubSetGraph(6);
+    SetTrie graph = new SetTrie(6);
 
     // Execute functionality
     List<ColumnCombinationBitset>
@@ -272,12 +272,12 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test for the method {@link SubSetGraph#containsSubset(ColumnCombinationBitset)} )}
+   * Test for the method {@link SetTrie#containsSubset(ColumnCombinationBitset)} )}
    */
   @Test
   public void testContainsSubset() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = subSetFixture.getGraph();
+    SetTrie actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check Result
@@ -288,14 +288,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#containsSubset(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#containsSubset(ColumnCombinationBitset)}
    * <p>
    * Tests a special case with an empty graph. False should be returned if the graph is empty.
    */
   @Test
   public void testContainsSubsetOnEmptyGraph() {
     //Setup
-    SubSetGraph actualGraph = new SubSetGraph(4);
+    SetTrie actualGraph = new SetTrie(4);
 
     //Execute functionality
     //Check Result
@@ -304,26 +304,26 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#containsSubset(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#containsSubset(ColumnCombinationBitset)}
    *
    * The empty set cannot be added to the graph so it will not be returned as subset of the empty set.
    */
   @Test
   public void testContainsSubsetOnEmptySubset() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = subSetFixture.getGraph();
+    SetTrie actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     assertFalse(actualGraph.containsSubset(new ColumnCombinationBitset()));
   }
 
   /**
-   * Test method for {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#getExistingSupersets(ColumnCombinationBitset)}
    */
   @Test
   public void testGetExistingSupersets() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = superSetFixture.getSubSetGraph();
+    SetTrie graph = superSetFixture.getSetTrie();
     ColumnCombinationBitset
         columnCombinationToQuery =
         superSetFixture.getColumnCombinationForSupersetQuery();
@@ -340,13 +340,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)} <p> This
+   * Test method for {@link SetTrie#getExistingSupersets(ColumnCombinationBitset)} <p> This
    * tests a special case of an empty graph. An empty list should be returned
    */
   @Test
   public void testGetExistingSupersetsOnEmptyGraph() {
     // Setup
-    SubSetGraph graph = new SubSetGraph(6);
+    SetTrie graph = new SetTrie(6);
 
     // Execute functionality
     List<ColumnCombinationBitset>
@@ -358,13 +358,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#getExistingSupersets(ColumnCombinationBitset)}
    */
   @Test
   public void testGetExistingSupersetsAdditionalCase1() throws ColumnIndexOutOfBoundsException {
     // Setup
-    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    AdditionalSetTrieFixture fixture = new AdditionalSetTrieFixture();
+    SetTrie actualGraph = fixture.getGraph();
 
     // Execute functionality
     ArrayList<ColumnCombinationBitset>
@@ -377,13 +377,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#getExistingSupersets(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#getExistingSupersets(ColumnCombinationBitset)}
    */
   @Test
   public void testGetExistingSupersetsAdditionalCase2() throws ColumnIndexOutOfBoundsException {
     // Setup
-    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    AdditionalSetTrieFixture fixture = new AdditionalSetTrieFixture();
+    SetTrie actualGraph = fixture.getGraph();
 
     // Execute functionality
     ArrayList<ColumnCombinationBitset>
@@ -396,12 +396,12 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test for the method {@link de.metanome.algorithm_helper.data_structures.SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   * Test for the method {@link SetTrie#containsSuperset(ColumnCombinationBitset)}
    */
   @Test
   public void testContainsSuperset() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = superSetFixture.getSubSetGraph();
+    SetTrie actualGraph = superSetFixture.getSetTrie();
 
     // Execute functionality
     // Check Result
@@ -414,13 +414,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#containsSuperset(ColumnCombinationBitset)}
    */
   @Test
   public void testContainsSupersetAdditionalCase() throws ColumnIndexOutOfBoundsException {
     // Setup
-    AdditionalSubSetGraphFixture fixture = new AdditionalSubSetGraphFixture();
-    SubSetGraph actualGraph = fixture.getGraph();
+    AdditionalSetTrieFixture fixture = new AdditionalSetTrieFixture();
+    SetTrie actualGraph = fixture.getGraph();
 
     // Execute functionality
     // Check result
@@ -438,13 +438,13 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test for the method {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)} <p> This test
+   * Test for the method {@link SetTrie#containsSuperset(ColumnCombinationBitset)} <p> This test
    * tests a special case of a empty graph. False should be returned.
    */
   @Test
   public void testContainsSupersetOnEmptyGraph() {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph(4);
+    SetTrie actualGraph = new SetTrie(4);
 
     // Execute functionality
     // Check Result
@@ -453,27 +453,27 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#containsSuperset(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#containsSuperset(ColumnCombinationBitset)}
    *
    * All sets in the graph are supersets of the empty set.
    */
   @Test
   public void testContainsSupersetOnEmptySubset() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = superSetFixture.getSubSetGraph();
+    SetTrie actualGraph = superSetFixture.getSetTrie();
 
     // Execute functionality
     assertTrue(actualGraph.containsSuperset(new ColumnCombinationBitset()));
   }
 
   /**
-   * Test method for {@link SubSetGraph#isEmpty()}
+   * Test method for {@link SetTrie#isEmpty()}
    */
   @Test
   public void testIsEmpty() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph emptyGraph = new SubSetGraph(11);
-    SubSetGraph nonEmptyGraph = new SubSetGraph(11);
+    SetTrie emptyGraph = new SetTrie(11);
+    SetTrie nonEmptyGraph = new SetTrie(11);
     nonEmptyGraph.add(new ColumnCombinationBitset(10));
 
     // Execute functionality
@@ -483,14 +483,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method  {@link SubSetGraph#equals(Object)} and {@link SubSetGraph#hashCode()}
+   * Test method  {@link SetTrie#equals(Object)} and {@link SetTrie#hashCode()}
    */
   @Test
   public void testEqualsAndHashCode() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = new SubSetGraph(21);
-    SubSetGraph equalsGraph = new SubSetGraph(21);
-    SubSetGraph notEqualsGraph = new SubSetGraph(21);
+    SetTrie actualGraph = new SetTrie(21);
+    SetTrie equalsGraph = new SetTrie(21);
+    SetTrie notEqualsGraph = new SetTrie(21);
 
     actualGraph.add(new ColumnCombinationBitset(2, 5, 10, 20));
     actualGraph.add((new ColumnCombinationBitset(2, 5, 8, 15)));
@@ -503,17 +503,17 @@ public class SubSetGraphTest {
 
     // Execute functionality
     // Check result
-    EqualsAndHashCodeTester<SubSetGraph> tester = new EqualsAndHashCodeTester<>();
+    EqualsAndHashCodeTester<SetTrie> tester = new EqualsAndHashCodeTester<>();
     tester.performBasicEqualsAndHashCodeChecks(actualGraph, equalsGraph, notEqualsGraph);
   }
 
   /**
-   * Test method for {@link SubSetGraph#getMinimalSubsets()}
+   * Test method for {@link SetTrie#getMinimalSubsets()}
    */
   @Test
   public void testGetMinimalSubsets() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = subSetFixture.getGraph();
+    SetTrie graph = subSetFixture.getGraph();
 
     // Execute functionality
     Set<ColumnCombinationBitset> actualMinimalSubsets = graph.getMinimalSubsets();
@@ -525,12 +525,12 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#toString()}
+   * Test method for {@link SetTrie#toString()}
    */
   @Test
   public void testToString() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph graph = subSetFixture.getGraph();
+    SetTrie graph = subSetFixture.getGraph();
 
     // Execute functionality
     String actualStringRepresentation = graph.toString();
@@ -540,12 +540,12 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#remove(ColumnCombinationBitset)}
    */
   @Test
   public void testRemove() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = subSetFixture.getGraph();
+    SetTrie actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
@@ -555,14 +555,14 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#remove(ColumnCombinationBitset)}
    * <p>
    * The empty column should be successfully removed from any graph.
    */
   @Test
   public void testRemoveEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = subSetFixture.getGraph();
+    SetTrie actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
@@ -572,7 +572,7 @@ public class SubSetGraphTest {
   }
 
   /**
-   * Test method for {@link SubSetGraph#remove(ColumnCombinationBitset)}
+   * Test method for {@link SetTrie#remove(ColumnCombinationBitset)}
    * <p>
    * Trying to remove a column combination from a graph that does not contain the column combination should not alter
    * the graph and return false.
@@ -580,7 +580,7 @@ public class SubSetGraphTest {
   @Test
   public void testRemoveNotInTheGraph() throws ColumnIndexOutOfBoundsException {
     // Setup
-    SubSetGraph actualGraph = subSetFixture.getGraph();
+    SetTrie actualGraph = subSetFixture.getGraph();
 
     // Execute functionality
     // Check result
