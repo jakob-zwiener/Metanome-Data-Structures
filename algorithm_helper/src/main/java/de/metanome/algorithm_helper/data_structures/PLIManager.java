@@ -167,7 +167,7 @@ public class PLIManager implements AutoCloseable {
 
       unionCombination = unionCombination.union(currentSubset);
       intersect = intersect.intersect(plis.get(currentSubset));
-      addPli(unionCombination, intersect);
+      addPliToCache(unionCombination, intersect);
     }
     
     return intersect;
@@ -209,27 +209,24 @@ public class PLIManager implements AutoCloseable {
     return pliMap;
   }
 
-  protected void addPli(final ColumnCombinationBitset columnCombination,
-                        final PositionListIndex intersect)
+  protected void addPliToCache(final ColumnCombinationBitset columnCombination,
+                               final PositionListIndex intersect)
   {
+    // FIXME(zwiener): Use the new SetTrie.
     plis.put(columnCombination, intersect);
     pliSubSetGraph.add(columnCombination);
     pliSuperSetGraph.add(columnCombination);
-
-    // System.out.println(pliSubSetGraph);
 
     List<ColumnCombinationBitset> supersets = pliSuperSetGraph.getExistingSupersets(columnCombination);
 
     for (ColumnCombinationBitset superset : supersets) {
       if (!superset.equals(columnCombination)) {
-        removePli(superset);
+        removePliFromCache(superset);
       }
     }
-
-    // System.out.println(pliSubSetGraph);
   }
 
-  protected void removePli(final ColumnCombinationBitset columnCombination) {
+  protected void removePliFromCache(final ColumnCombinationBitset columnCombination) {
     plis.remove(columnCombination);
     pliSubSetGraph.remove(columnCombination);
     pliSuperSetGraph.remove(columnCombination);
