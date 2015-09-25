@@ -86,6 +86,26 @@ public class SubSetGraphTest {
   /**
    * Test method for {@link SubSetGraph#add(ColumnCombinationBitset)}
    *
+   * The empty set is never returned as superset or subset.
+   */
+  @Test
+  public void testAddEmptyColumnCombination() throws ColumnIndexOutOfBoundsException {
+    // Setup
+    SubSetGraph actualGraph = new SubSetGraph(12);
+
+    // Check precondition
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+
+    // Execute functionality
+    actualGraph.add(new ColumnCombinationBitset());
+
+    // Check result
+    assertFalse(actualGraph.containsSuperset(new ColumnCombinationBitset()));
+  }
+
+  /**
+   * Test method for {@link SubSetGraph#add(ColumnCombinationBitset)}
+   *
    * If the column combination contains a column index that is larger than the dimension of the prefix tree, an exception should be thrown.
    */
   @Test
