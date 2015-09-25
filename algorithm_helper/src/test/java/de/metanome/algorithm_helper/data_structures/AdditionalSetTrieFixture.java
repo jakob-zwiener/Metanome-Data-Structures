@@ -22,10 +22,10 @@ import java.util.List;
 /**
  * @author Jakob Zwiener
  */
-public class AdditionalSubSetGraphFixture {
+public class AdditionalSetTrieFixture {
 
-  public SubSetGraph getGraph() throws ColumnIndexOutOfBoundsException {
-    SubSetGraph graph = new SubSetGraph(getDimension());
+  public SetTrie getGraph() throws ColumnIndexOutOfBoundsException {
+    SetTrie graph = new SetTrie(getDimension());
     graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
