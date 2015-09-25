@@ -16,22 +16,23 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
+import com.google.common.base.Joiner;
+
+import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
+import de.metanome.algorithm_helper.data_structures.PositionListIndex;
+
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.Executors;
 
-import com.google.common.base.Joiner;
-
-import de.metanome.algorithm_helper.data_structures.PositionListIndex;
-
 /**
  * @author Jakob Zwiener
  */
 public class PLISyntheticBenchmark {
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, PLIBuildingException {
     final int iterations = 3;
     final int[] threadNumbers = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
     final int[] clusterNumbers = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
