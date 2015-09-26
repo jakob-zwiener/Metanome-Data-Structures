@@ -16,6 +16,10 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import static org.junit.Assert.*;
+
+import java.util.concurrent.ExecutionException;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,7 +88,7 @@ public class PLIManagerTest {
    * When column indices are out of bounds an exception should be thrown by the pli manager.
    */
   @Test
-  public void testGetPliIndexOutOfRange() {
+  public void testBuildPliIndexOutOfRange() {
     // Setup
     ColumnCombinationBitset invalidColumnCombination = new ColumnCombinationBitset(0, 1, 2,
       3);  // Column index 3 should not be known.

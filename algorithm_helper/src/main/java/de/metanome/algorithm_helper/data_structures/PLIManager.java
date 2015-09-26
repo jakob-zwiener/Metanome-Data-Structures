@@ -30,6 +30,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ExecutionException;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalCause;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 
 /**
  * Manages plis and performs intersect operations.
@@ -42,7 +50,8 @@ import java.util.concurrent.TimeUnit;
 public class PLIManager implements AutoCloseable {
 
   protected transient ExecutorService exec;
-  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
+  protected LoadingCache<ColumnCombinationBitset, PositionListIndex> plis;
+  protected Map<ColumnCombinationBitset, PositionListIndex> basePlis;
   protected ColumnCombinationBitset allColumnCombination;
   protected SetTrie pliSetTrie;
 
@@ -51,12 +60,35 @@ public class PLIManager implements AutoCloseable {
    *
    * FIXME(zwiener): It should be checked, that the one column plis are added to the manager.
    */
-  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis,
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> basePlis,
                     final int numberOfColumns)
       throws ColumnIndexOutOfBoundsException {
-    this.plis = plis;
+    this.plis = CacheBuilder.newBuilder()
+        .maximumSize(20)
+        .removalListener(new RemovalListener<ColumnCombinationBitset, PositionListIndex>() {
+          @Override
+          public void onRemoval(final RemovalNotification<ColumnCombinationBitset, PositionListIndex> notification) {
+            if (notification.getCause() != RemovalCause.REPLACED) {
+              System.out.println("removed: " + notification.getKey() + " " + notification.getCause());
+              // Do not remove the one column combinations.
+              if (notification.getKey().size() > 1) {
+                pliGraph.remove(notification.getKey());
+              }
+            }
+          }
+        })
+        .build(new CacheLoader<ColumnCombinationBitset, PositionListIndex>() {
+          @Override public PositionListIndex load(final ColumnCombinationBitset key) throws Exception {
+            return buildPli(key);
+          }
+        });
+
+    this.plis.putAll(basePlis);
+
+    this.basePlis = basePlis;
+    
     pliSetTrie = new SetTrie(numberOfColumns);
-    pliSetTrie.addAll(plis.keySet());
+    pliSetTrie.addAll(basePlis.keySet());
     int[] allColumnIndices = new int[numberOfColumns];
     for (int i = 0; i < numberOfColumns; i++) {
       allColumnIndices[i] = i;
@@ -64,6 +96,20 @@ public class PLIManager implements AutoCloseable {
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
 
     exec = getThreadPoolExecutor();
+  }
+
+  /**
+   * TODO(zwiener): docs
+   * 
+   * @param basePlis
+   * @param cachedPlis
+   */
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> basePlis,
+                    LoadingCache<ColumnCombinationBitset, PositionListIndex> cachedPlis)
+  {
+    this(basePlis);
+
+    this.plis = cachedPlis;
   }
 
   protected static ThreadPoolExecutor getThreadPoolExecutor() {
