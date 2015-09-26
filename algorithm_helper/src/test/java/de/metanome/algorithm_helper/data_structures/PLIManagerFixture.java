@@ -19,9 +19,7 @@ package de.metanome.algorithm_helper.data_structures;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Jakob Zwiener
@@ -34,12 +32,12 @@ public class PLIManagerFixture {
     { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 } },
   };
 
-  public Map<ColumnCombinationBitset, PositionListIndex> getPlis() {
-    Map<ColumnCombinationBitset, PositionListIndex> plis = new HashMap<>();
+  public PositionListIndex[] getPlis() {
+    PositionListIndex[] plis = new PositionListIndex[pliClusters.length];
 
     int columnIndex = 0;
     for (int[][] clusters : pliClusters) {
-      plis.put(new ColumnCombinationBitset(columnIndex++), buildPliFromClusters(clusters));
+      plis[columnIndex++] = buildPliFromClusters(clusters);
     }
 
     return plis;
@@ -50,7 +48,7 @@ public class PLIManagerFixture {
   }
 
   public int numberOfColumns() {
-    return 3;
+    return pliClusters.length;
   }
 
   protected PositionListIndex buildPliFromClusters(int[][] clusters) {

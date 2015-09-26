@@ -16,10 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import static org.junit.Assert.*;
-
-import java.util.concurrent.ExecutionException;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,6 +29,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+
+// FIXME(zwiener): Decide whether to test buildPli or getPli.
 
 /**
  * Tests for {@link PLIManager}
@@ -62,7 +60,7 @@ public class PLIManagerTest {
     // Execute functionality
     PLIManager
         actualPliManager =
-        new PLIManager(new HashMap<ColumnCombinationBitset, PositionListIndex>(), numberOfColumns);
+        new PLIManager(new PositionListIndex[0], numberOfColumns);
 
     // Check result
     assertEquals(expectedAllColumnsCombination, actualPliManager.allColumnCombination);
@@ -164,7 +162,7 @@ public class PLIManagerTest {
     // Setup
     PLIManager
         pliManager =
-        new PLIManager(new HashMap<ColumnCombinationBitset, PositionListIndex>(), 10);
+        new PLIManager(new PositionListIndex[0], 10);
     // Expected values
     final ColumnCombinationBitset columnCombinationForLookup = new ColumnCombinationBitset(2, 5, 8);
     final PositionListIndex expectedPli = mock(PositionListIndex.class);
@@ -184,16 +182,18 @@ public class PLIManagerTest {
   public void testRemovePliFromCache() {
     // Setup
     final ColumnCombinationBitset columnCombinationToRemove = new ColumnCombinationBitset(2);
+    pliManager.plis.put(columnCombinationToRemove, mock(PositionListIndex.class));
 
     // Check preconditions
-    assertNotNull(pliManager.plis.get(columnCombinationToRemove));
+    assertNotNull(pliManager.plis.getIfPresent(columnCombinationToRemove));
     assertTrue(pliManager.pliSetTrie.getContainedSets().contains(columnCombinationToRemove));
 
     // Execute functionality
     pliManager.removePliFromCache(columnCombinationToRemove);
+    pliManager.plis.cleanUp();
 
     // Check result
-    assertNull(pliManager.plis.get(columnCombinationToRemove));
+    assertNull(pliManager.plis.getIfPresent(columnCombinationToRemove));
     assertFalse(pliManager.pliSetTrie.getContainedSets().contains(columnCombinationToRemove));
   }
 
