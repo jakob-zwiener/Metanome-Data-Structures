@@ -35,6 +35,7 @@ import com.google.common.cache.RemovalNotification;
  */
 public class PLIManager {
 
+  public static int CACHE_SIZE = 20;
   public LoadingCache<ColumnCombinationBitset, PositionListIndex> plis;
   protected Map<ColumnCombinationBitset, PositionListIndex> basePlis;
   protected ColumnCombinationBitset allColumnCombination;
@@ -43,12 +44,12 @@ public class PLIManager {
   public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> basePlis) {
 
     this.plis = CacheBuilder.newBuilder()
-      .maximumSize(20)
+      .maximumSize(CACHE_SIZE)
       .removalListener(new RemovalListener<ColumnCombinationBitset, PositionListIndex>() {
         @Override
         public void onRemoval(final RemovalNotification<ColumnCombinationBitset, PositionListIndex> notification) {
           if (notification.getCause() != RemovalCause.REPLACED) {
-            System.out.println("removed: " + notification.getKey() + " " + notification.getCause());
+            // System.out.println("removed: " + notification.getKey() + " " + notification.getCause());
             // Do not remove the one column combinations.
             if (notification.getKey().size() > 1) {
               pliGraph.remove(notification.getKey());
