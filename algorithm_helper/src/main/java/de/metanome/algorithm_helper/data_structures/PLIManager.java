@@ -88,7 +88,7 @@ public class PLIManager {
 
         final PositionListIndex rightPli;
         if (minPli.getRawKeyError() < leftPli.getRawKeyError()) {
-          System.out.println(String.format("exchange %d %d", minPli.getRawKeyError(), leftPli.getRawKeyError()));
+          // System.out.println(String.format("exchange %d %d", minPli.getRawKeyError(), leftPli.getRawKeyError()));
           rightPli = minPli;
         }
         else {
@@ -99,8 +99,8 @@ public class PLIManager {
 
           @Override public PositionListIndex call() throws Exception {
             PositionListIndex intersect = leftPli.intersect(rightPli);
-            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
-              intersect.calculateRawKeyError()));
+            System.out.println(
+                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
             return intersect;
           }
         }));
@@ -125,12 +125,12 @@ public class PLIManager {
         }
       }
       final long syncElapsed = System.nanoTime() - beforeSync;
-      System.out.println(String.format("Sync took: %f", syncElapsed / 1000000000d));
+      // System.out.println(String.format("Sync took: %f", syncElapsed / 1000000000d));
       sumSync += syncElapsed;
       tasks.clear();
     }
 
-    System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));
+    // System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));
 
     /*final Object lock1 = new Object();
 
