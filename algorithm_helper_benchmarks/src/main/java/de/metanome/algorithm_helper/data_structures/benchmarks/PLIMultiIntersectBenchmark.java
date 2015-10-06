@@ -16,16 +16,17 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PLIManager;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Benchmark to evaluate multi pli intersects.
@@ -34,8 +35,8 @@ import de.metanome.algorithm_integration.AlgorithmConfigurationException;
 public class PLIMultiIntersectBenchmark {
 
   public static void main(String[] args)
-    throws AlgorithmConfigurationException, PLIBuildingException, ClassNotFoundException, IOException
-  {
+      throws AlgorithmConfigurationException, PLIBuildingException, ClassNotFoundException,
+             IOException, InputGenerationException {
     List<PositionListIndex> plis = PLIBenchmarkRunner.getPlis("ncvoter.plis", "ncvoter.csv");
 
     PLIManager pliManager = new PLIManager(plis);

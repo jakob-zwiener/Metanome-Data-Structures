@@ -16,6 +16,11 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import com.google.common.collect.MinMaxPriorityQueue;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -23,11 +28,6 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
-
-import com.google.common.collect.MinMaxPriorityQueue;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Manages plis and performs intersect operations.
@@ -113,6 +113,8 @@ public class PLIManager {
               right = priorityQueue[0].poll();
             }
             PositionListIndex intersect = left.intersect(right);
+            System.out
+                .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
             synchronized (prioLock) {
               priorityQueue[0].add(intersect);
               if (intersect.getRawKeyError() < minError[0]) {
@@ -140,6 +142,8 @@ public class PLIManager {
                 // right = preparationQueue[0].poll();
               }
               PositionListIndex intersect = left.intersect(minPli[0]);
+              System.out
+                  .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
               synchronized (prioLock) {
                 priorityQueue[0].add(intersect);
                 prioSemaphore.release();
