@@ -21,6 +21,7 @@ import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PLIManager;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.input.InputGenerationException;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -36,7 +37,7 @@ public class PLIMultiIntersectBenchmark {
 
   public static void main(String[] args)
       throws AlgorithmConfigurationException, PLIBuildingException, ClassNotFoundException,
-             IOException {
+             IOException, InputGenerationException {
     List<PositionListIndex> plis = PLIBenchmarkRunner.getPlis("ncvoter.plis", "ncvoter.csv");
 
     PLIManager pliManager = new PLIManager(plis);

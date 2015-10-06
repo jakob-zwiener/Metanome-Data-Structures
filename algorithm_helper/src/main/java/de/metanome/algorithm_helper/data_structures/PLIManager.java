@@ -16,18 +16,18 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 /**
  * Manages plis and performs intersect operations.
@@ -37,8 +37,9 @@ import com.google.common.util.concurrent.MoreExecutors;
 public class PLIManager {
 
   // TODO(zwiener): Make thread pool size accessible from the outside.
-  public static transient ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
-    4));
+  public static transient ListeningExecutorService
+      exec =
+      MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4));
   protected List<PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
 
@@ -68,7 +69,15 @@ public class PLIManager {
 
       futures.add(exec.submit(new Callable<PositionListIndex>() {
         @Override public PositionListIndex call() throws Exception {
-          return plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
+          final PositionListIndex
+              intersect =
+              plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
+          System.out.println(String.format("Raw key error is %d for column combination %s.",
+                                           intersect.calculateRawKeyError(),
+                                           new ColumnCombinationBitset(leftColumnIndex,
+                                                                       rightColumnIndex)
+                                               .toString()));
+          return intersect;
         }
       }));
     }
@@ -89,7 +98,11 @@ public class PLIManager {
       // TODO(zwiener): maybe use asyncfunction
       futures.add(Futures.transform(joinedFuture, new Function<List<PositionListIndex>, PositionListIndex>() {
         @Override public PositionListIndex apply(final List<PositionListIndex> input) {
-          return input.get(0).intersect(input.get(1));
+          final PositionListIndex intersect = input.get(0).intersect(input.get(1));
+          System.out
+              .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
+
+          return intersect;
         }
       }, exec));
     }
@@ -97,7 +110,8 @@ public class PLIManager {
     System.out.println((System.nanoTime() - start) / 1000000000d);
 
     try {
-      return futures.remove().get();
+      final PositionListIndex result = futures.remove().get();
+      return result;
     }
     catch (InterruptedException | ExecutionException e) {
       e.printStackTrace();

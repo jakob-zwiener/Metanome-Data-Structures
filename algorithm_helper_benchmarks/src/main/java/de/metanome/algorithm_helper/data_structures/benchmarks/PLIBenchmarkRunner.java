@@ -18,7 +18,7 @@ package de.metanome.algorithm_helper.data_structures.benchmarks;
 
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.GenericPLIBuilder;
-import de.metanome.algorithm_helper.data_structures.PLIBuilderSequential;
+import de.metanome.algorithm_helper.data_structures.PLIBuilder;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
@@ -96,7 +96,7 @@ public class PLIBenchmarkRunner {
 
   public static List<PositionListIndex> getPlis(String plisFileName, String inputFileName)
       throws IOException, AlgorithmConfigurationException, PLIBuildingException,
-             ClassNotFoundException {
+             ClassNotFoundException, InputGenerationException {
     long beforePLIBuild = System.nanoTime();
 
     List<PositionListIndex> plis;
@@ -107,9 +107,9 @@ public class PLIBenchmarkRunner {
     } else {
       GenericPLIBuilder
           pliBuilder =
-          new PLIBuilderSequential(new DefaultFileInputGenerator(
+          new PLIBuilder(new DefaultFileInputGenerator(
               new ConfigurationSettingFileInput(inputFileName).setSkipDifferingLines(true)
-                  .setHeader(false)));
+                  .setHeader(false)).generateNewCopy());
 
       plis = pliBuilder.getPLIList();
 

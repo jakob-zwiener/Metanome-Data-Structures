@@ -16,14 +16,16 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.List;
-
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.input.InputGenerationException;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.List;
 
 /**
  * @author Jakob Zwiener
@@ -32,7 +34,7 @@ public class PliStatisticsGenerator {
 
   public static void main(String[] args)
       throws PLIBuildingException, IOException, AlgorithmConfigurationException,
-             ClassNotFoundException {
+             ClassNotFoundException, InputGenerationException {
 
     List<PositionListIndex> plis = PLIBenchmarkRunner.getPlis("ncvoter.plis", "ncvoter.csv");
 

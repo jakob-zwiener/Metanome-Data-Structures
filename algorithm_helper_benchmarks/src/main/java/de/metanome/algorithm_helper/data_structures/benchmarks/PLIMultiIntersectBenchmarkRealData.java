@@ -16,16 +16,20 @@
 
 package de.metanome.algorithm_helper.data_structures.benchmarks;
 
+import com.google.common.util.concurrent.MoreExecutors;
+
 import de.metanome.algorithm_helper.data_structures.ColumnCombinationBitset;
 import de.metanome.algorithm_helper.data_structures.PLIBuildingException;
 import de.metanome.algorithm_helper.data_structures.PLIManager;
 import de.metanome.algorithm_helper.data_structures.PositionListIndex;
 import de.metanome.algorithm_integration.AlgorithmConfigurationException;
+import de.metanome.algorithm_integration.input.InputGenerationException;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.Executors;
 
 /**
  * TODO(zwiener): docs
@@ -33,17 +37,19 @@ import java.util.List;
  */
 public class PLIMultiIntersectBenchmarkRealData {
 
+  protected static int[] threads = {1, 2, 4, 8, 16};
+
   public static void main(String[] args)
-    throws AlgorithmConfigurationException, PLIBuildingException, ClassNotFoundException, IOException
-  {
+      throws AlgorithmConfigurationException, PLIBuildingException, ClassNotFoundException,
+             IOException, InputGenerationException {
     List<PositionListIndex> plis = PLIBenchmarkRunner.getPlis("ncvoter.plis", "ncvoter.csv");
 
     PLIManager pliManager = new PLIManager(plis);
 
     int j = 0;
     for (PositionListIndex pli : plis) {
-      System.out.println(j++);
-      System.out.println(pli.getRawKeyError());
+      // System.out.println(j++);
+      // System.out.println(pli.getRawKeyError());
       for (IntArrayList cluster : pli.getClusters()) {
         int i = 0;
         for (int rowIndex : cluster) {
@@ -71,11 +77,15 @@ public class PLIMultiIntersectBenchmarkRealData {
 
     allColumnCombination.removeColumn(91);
 
-    long start = System.nanoTime();
-    pliManager.buildPli(allColumnCombination);
-    System.out.println((System.nanoTime() - start) / 1000000000d);
+    for (int numberOfThreads : threads) {
+      long start = System.nanoTime();
+      PLIManager.exec =
+          MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numberOfThreads));
+      pliManager.buildPli(allColumnCombination);
+      System.out.println((System.nanoTime() - start) / 1000000000d);
+    }
 
-    // PLIManager.exec.shutdown();
+    PLIManager.exec.shutdown();
   }
 
 }
