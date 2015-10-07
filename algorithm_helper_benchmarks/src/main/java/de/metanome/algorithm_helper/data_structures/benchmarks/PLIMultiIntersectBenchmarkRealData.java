@@ -81,6 +81,7 @@ public class PLIMultiIntersectBenchmarkRealData {
       long start = System.nanoTime();
       PLIManager.exec =
           MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(numberOfThreads));
+      PLIManager.N_THREADS = numberOfThreads;
       pliManager.buildPli(allColumnCombination);
       System.out.println((System.nanoTime() - start) / 1000000000d);
     }
