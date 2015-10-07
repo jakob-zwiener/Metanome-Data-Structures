@@ -27,7 +27,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 
 /**
  * Manages plis and performs intersect operations.
@@ -59,193 +58,19 @@ public class PLIManager {
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
 
-    System.out.println("Start intersect");
-
-    final MinMaxPriorityQueue<PositionListIndex>[] priorityQueue = new MinMaxPriorityQueue[] {
-      MinMaxPriorityQueue.orderedBy(
+    final MinMaxPriorityQueue<PositionListIndex> priorityQueue = MinMaxPriorityQueue.orderedBy(
         new Comparator<PositionListIndex>() {
-          @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
+          @Override
+          public int compare(final PositionListIndex o1, final PositionListIndex o2) {
             return o1.getRawKeyError() - o2.getRawKeyError();
           }
-        }).create()
-    };
-    final MinMaxPriorityQueue<PositionListIndex>[] preparationQueue = new MinMaxPriorityQueue[] {
-      MinMaxPriorityQueue.orderedBy(
-        new Comparator<PositionListIndex>() {
-          @Override public int compare(final PositionListIndex o1, final PositionListIndex o2) {
-            return o1.getRawKeyError() - o2.getRawKeyError();
-          }
-        }).create()
-    };
+        }).create();
 
     for (int columnIndex : columnCombination.getSetBits()) {
-      preparationQueue[0].add(plis.get(columnIndex));
+      priorityQueue.add(plis.get(columnIndex));
     }
 
-    priorityQueue[0].add(preparationQueue[0].poll());
-    priorityQueue[0].add(preparationQueue[0].poll());
-
-    final Object prioLock = new Object();
-    final Object prepLock = new Object();
-    final Semaphore prioSemaphore = new Semaphore(2);
-
-    final PositionListIndex[] minPli = { priorityQueue[0].peek() };
-    final int[] minError = { minPli[0].getRawKeyError() };
-
-    List<ListenableFuture<?>> tasks = new LinkedList<>();
-    while (true) {
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
-          while (true) {
-            if (priorityQueue[0].size() < 2) {
-              break;
-            }
-            PositionListIndex left;
-            PositionListIndex right;
-            synchronized (prioLock) {
-              try {
-                prioSemaphore.acquire(2);
-              }
-              catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-              left = priorityQueue[0].poll();
-              right = priorityQueue[0].poll();
-            }
-            PositionListIndex intersect = left.intersect(right);
-            System.out
-                .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
-            synchronized (prioLock) {
-              priorityQueue[0].add(intersect);
-              if (intersect.getRawKeyError() < minError[0]) {
-                minError[0] = intersect.getRawKeyError();
-                minPli[0] = intersect;
-              }
-              prioSemaphore.release();
-            }
-          }
-        }
-      }));
-      for (int i = 0; i < N_THREADS; i++) {
-        tasks.add(exec.submit(new Runnable() {
-          @Override public void run() {
-            while (true) {
-              PositionListIndex left;
-              PositionListIndex right;
-
-              synchronized (prepLock) {
-                if (preparationQueue[0].size() < 2) {
-                  break;
-                }
-
-                left = preparationQueue[0].poll();
-                // right = preparationQueue[0].poll();
-              }
-              PositionListIndex intersect = left.intersect(minPli[0]);
-              System.out
-                  .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
-              synchronized (prioLock) {
-                priorityQueue[0].add(intersect);
-                prioSemaphore.release();
-              }
-            }
-          }
-        }));
-      }
-      try {
-        for (ListenableFuture<?> task : tasks) {
-          task.get();
-        }
-      }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-      tasks.clear();
-
-      if (preparationQueue[0].size() == 1) {
-        priorityQueue[0].add(preparationQueue[0].poll());
-      }
-      if (priorityQueue[0].size() < 2) {
-        break;
-      }
-      if (preparationQueue[0].size() < 1) {
-        MinMaxPriorityQueue<PositionListIndex> aux = priorityQueue[0];
-        priorityQueue[0] = preparationQueue[0];
-        preparationQueue[0] = aux;
-        priorityQueue[0].add(preparationQueue[0].poll());
-        priorityQueue[0].add(preparationQueue[0].poll());
-        prioSemaphore.release(2);
-      }
-    }
-
-
-
-    /*long sumSync = 0;
-
-    List<ListenableFuture<PositionListIndex>> tasks = new LinkedList<>();
-    while (true) {
-      if (priorityQueue.size() < 2) {
-        break;
-      }
-      // printQueue(priorityQueue);
-      PositionListIndex minPli = priorityQueue.peek();
-      for (int i = 0; i < N_THREADS; i++) {
-        if (priorityQueue.size() < 2) {
-          break;
-        }
-
-        final PositionListIndex leftPli = priorityQueue.poll();
-
-        final PositionListIndex rightPli;
-        if (minPli.getRawKeyError() < leftPli.getRawKeyError()) {
-          System.out.println(String.format("exchange %d %d", minPli.getRawKeyError(), leftPli.getRawKeyError()));
-          rightPli = minPli;
-        }
-        else {
-          rightPli = priorityQueue.poll();
-        }
-
-        tasks.add(exec.submit(new Callable<PositionListIndex>() {
-
-          @Override public PositionListIndex call() throws Exception {
-            PositionListIndex intersect = leftPli.intersect(rightPli);
-            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
-              intersect.calculateRawKeyError()));
-            return intersect;
-          }
-        }));
-      }
-      long beforeSync = -1;
-      for (ListenableFuture<PositionListIndex> task : tasks) {
-        try {
-          PositionListIndex result = task.get();
-          if (beforeSync == -1) {
-            beforeSync = System.nanoTime();
-          }
-          if (result.getRawKeyError() == 0) {
-            System.out.println("Hello");
-          }
-          priorityQueue.add(result);
-        }
-        catch (InterruptedException e) {
-          e.printStackTrace();
-        }
-        catch (ExecutionException e) {
-          e.printStackTrace();
-        }
-      }
-      final long syncElapsed = System.nanoTime() - beforeSync;
-      System.out.println(String.format("Sync took: %f", syncElapsed / 1000000000d));
-      sumSync += syncElapsed;
-      tasks.clear();
-    }
-
-    System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));*/
-
-    /*final Object lock1 = new Object();
+    final Object lock1 = new Object();
     final PositionListIndex[] minPli = { priorityQueue.peek() };
     final int[] minKeyError = { minPli[0].getRawKeyError() };
 
@@ -264,19 +89,21 @@ public class PLIManager {
               leftPli = priorityQueue.poll();
               if (minKeyError[0] < leftPli.getRawKeyError()) {
                 rightPli = minPli[0];
-                System.out.println(String.format("exchange %d %d", rightPli.getRawKeyError(),
-                  leftPli.getRawKeyError()));
+                /*System.out.println(String.format("exchange %d %d", rightPli.getRawKeyError(),
+                  leftPli.getRawKeyError()));*/
               }
               else {
                 rightPli = priorityQueue.poll();
               }
             }
             PositionListIndex intersect = leftPli.intersect(rightPli);
-            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
+            System.out.println(
+                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
+            /*System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
               intersect.calculateRawKeyError()));
             if (intersect.getRawKeyError() < 100) {
               System.out.println("Stop");
-            }
+            }*/
             synchronized (lock1) {
               priorityQueue.add(intersect);
               if (intersect.getRawKeyError() < minKeyError[0]) {
@@ -299,11 +126,11 @@ public class PLIManager {
       catch (ExecutionException e) {
         e.printStackTrace();
       }
-    }*/
+    }
 
-    System.out.println(String.format("End intersect %d", priorityQueue[0].peek().getRawKeyError()));
+    System.out.println(String.format("End intersect %d", priorityQueue.peek().getRawKeyError()));
 
-    return priorityQueue[0].poll();
+    return priorityQueue.poll();
   }
 
   private void printQueue(final MinMaxPriorityQueue<PositionListIndex> priorityQueue) {
