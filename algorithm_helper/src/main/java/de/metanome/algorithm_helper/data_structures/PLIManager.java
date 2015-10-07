@@ -35,7 +35,7 @@ import java.util.concurrent.Executors;
  */
 public class PLIManager {
 
-  public static final int N_THREADS = 10;
+  public static int N_THREADS = 10;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ListeningExecutorService exec = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(
     N_THREADS));
