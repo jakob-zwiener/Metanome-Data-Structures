@@ -78,7 +78,6 @@ public class PLIManager {
         break;
       }
       // printQueue(priorityQueue);
-      PositionListIndex minPli = priorityQueue.peek();
       for (int i = 0; i < N_THREADS; i++) {
         if (priorityQueue.size() < 2) {
           break;
@@ -87,13 +86,8 @@ public class PLIManager {
         final PositionListIndex leftPli = priorityQueue.poll();
 
         final PositionListIndex rightPli;
-        if (minPli.getRawKeyError() < leftPli.getRawKeyError()) {
-          // System.out.println(String.format("exchange %d %d", minPli.getRawKeyError(), leftPli.getRawKeyError()));
-          rightPli = minPli;
-        }
-        else {
-          rightPli = priorityQueue.poll();
-        }
+
+        rightPli = priorityQueue.poll();
 
         tasks.add(exec.submit(new Callable<PositionListIndex>() {
 
@@ -129,52 +123,6 @@ public class PLIManager {
       sumSync += syncElapsed;
       tasks.clear();
     }
-
-    // System.out.println(String.format("All syncs took: %f", sumSync / 1000000000d));
-
-    /*final Object lock1 = new Object();
-
-    List<ListenableFuture<?>> tasks = new LinkedList<>();
-    for (int i = 0; i < N_THREADS; i++) {
-      tasks.add(exec.submit(new Runnable() {
-        @Override public void run() {
-          while (priorityQueue.size() > 1) {
-            System.out.println(priorityQueue.peek().getRawKeyError());
-            System.out.println(priorityQueue.peekLast().getRawKeyError());
-            PositionListIndex leftPli;
-            PositionListIndex rightPli;
-            synchronized (lock1) {
-              leftPli = priorityQueue.poll();
-              rightPli = priorityQueue.pollLast();
-            }
-            PositionListIndex intersect = leftPli.intersect(rightPli);
-            if (intersect.isUnique()) {
-              break;
-            }
-            System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
-              intersect.calculateRawKeyError()));
-            if (intersect.getRawKeyError() < 100) {
-              System.out.println("Stop");
-            }
-            synchronized (lock1) {
-              priorityQueue.add(intersect);
-            }
-          }
-        }
-      }));
-    }
-
-    for (ListenableFuture<?> task : tasks) {
-      try {
-        task.get();
-      }
-      catch (InterruptedException e) {
-        e.printStackTrace();
-      }
-      catch (ExecutionException e) {
-        e.printStackTrace();
-      }
-    }*/
 
     return priorityQueue.poll();
   }
