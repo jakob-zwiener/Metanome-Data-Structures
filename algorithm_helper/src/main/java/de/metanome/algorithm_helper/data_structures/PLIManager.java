@@ -97,8 +97,8 @@ public class PLIManager {
               }
             }
             PositionListIndex intersect = leftPli.intersect(rightPli);
-            System.out.println(
-                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
+            /*System.out.println(
+                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));*/
             /*System.out.println(String.format("%d, %d: %d", leftPli.getRawKeyError(), rightPli.getRawKeyError(),
               intersect.calculateRawKeyError()));
             if (intersect.getRawKeyError() < 100) {
@@ -128,7 +128,7 @@ public class PLIManager {
       }
     }
 
-    System.out.println(String.format("End intersect %d", priorityQueue.peek().getRawKeyError()));
+    // System.out.println(String.format("End intersect %d", priorityQueue.peek().getRawKeyError()));
 
     return priorityQueue.poll();
   }
