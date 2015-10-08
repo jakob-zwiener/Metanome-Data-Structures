@@ -99,8 +99,8 @@ public class PLIManager {
 
           @Override public PositionListIndex call() throws Exception {
             PositionListIndex intersect = leftPli.intersect(rightPli);
-            System.out.println(
-                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
+            /*System.out.println(
+                String.format("Raw key error is %d.", intersect.calculateRawKeyError()));*/
             return intersect;
           }
         }));
@@ -113,7 +113,7 @@ public class PLIManager {
             beforeSync = System.nanoTime();
           }
           if (result.getRawKeyError() == 0) {
-            System.out.println("Hello");
+            // System.out.println("Hello");
           }
           priorityQueue.add(result);
         }
