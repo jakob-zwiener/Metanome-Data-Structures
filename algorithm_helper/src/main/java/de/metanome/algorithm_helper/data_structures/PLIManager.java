@@ -26,6 +26,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -40,6 +42,7 @@ public class PLIManager {
   public static transient ListeningExecutorService
       exec =
       MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(4));
+  public ConcurrentMap<ColumnCombinationBitset, PositionListIndex> newPlis;
   protected List<PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
 
@@ -59,58 +62,83 @@ public class PLIManager {
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
 
+    newPlis = new ConcurrentHashMap<>();
+
     long start = System.nanoTime();
 
-    final Queue<ListenableFuture<PositionListIndex>> futures = new LinkedList<>();
+    final Queue<ListenableFuture<ColumnCombinationBitset>> futures = new LinkedList<>();
     List<Integer> setBits = columnCombination.getSetBits();
     for (int i = 0; i < columnCombination.size() - 1; i += 2) {
       final int leftColumnIndex = setBits.get(i);
       final int rightColumnIndex = setBits.get(i + 1);
 
-      futures.add(exec.submit(new Callable<PositionListIndex>() {
-        @Override public PositionListIndex call() throws Exception {
+      futures.add(exec.submit(new Callable<ColumnCombinationBitset>() {
+        @Override
+        public ColumnCombinationBitset call() throws Exception {
           final PositionListIndex
               intersect =
               plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
-          System.out.println(String.format("Raw key error is %d for column combination %s.",
+          /*System.out.println(String.format("Raw key error is %d for column combination %s.",
                                            intersect.calculateRawKeyError(),
                                            new ColumnCombinationBitset(leftColumnIndex,
                                                                        rightColumnIndex)
-                                               .toString()));
-          return intersect;
+                                               .toString()));*/
+          ColumnCombinationBitset
+              union =
+              new ColumnCombinationBitset(leftColumnIndex, rightColumnIndex);
+          newPlis.put(union, intersect);
+          return union;
         }
       }));
     }
     //
     if (columnCombination.size() % 2 != 0) {
-      futures.add(exec.submit(new Callable<PositionListIndex>() {
-        @Override public PositionListIndex call() throws Exception {
-          return plis.get(columnCombination.size() - 1);
+      futures.add(exec.submit(new Callable<ColumnCombinationBitset>() {
+        @Override
+        public ColumnCombinationBitset call() throws Exception {
+          final int lastIndex = columnCombination.getSetBits().get(columnCombination.size() - 1);
+          final ColumnCombinationBitset
+              lastIndexColumnCombination =
+              new ColumnCombinationBitset(lastIndex);
+          newPlis.put(lastIndexColumnCombination, plis.get(
+              lastIndex));
+          return lastIndexColumnCombination;
         }
       }));
     }
 
     while (futures.size() > 1) {
-      ListenableFuture<PositionListIndex> leftPliFuture = futures.remove();
-      ListenableFuture<PositionListIndex> rightPliFuture = futures.remove();
-      ListenableFuture<List<PositionListIndex>> joinedFuture = Futures.allAsList(leftPliFuture, rightPliFuture);
+      ListenableFuture<ColumnCombinationBitset> leftPliFuture = futures.remove();
+      ListenableFuture<ColumnCombinationBitset> rightPliFuture = futures.remove();
+      ListenableFuture<List<ColumnCombinationBitset>>
+          joinedFuture =
+          Futures.allAsList(leftPliFuture, rightPliFuture);
 
       // TODO(zwiener): maybe use asyncfunction
-      futures.add(Futures.transform(joinedFuture, new Function<List<PositionListIndex>, PositionListIndex>() {
-        @Override public PositionListIndex apply(final List<PositionListIndex> input) {
-          final PositionListIndex intersect = input.get(0).intersect(input.get(1));
-          System.out
-              .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
-
-          return intersect;
+      futures.add(Futures.transform(joinedFuture,
+                                    new Function<List<ColumnCombinationBitset>, ColumnCombinationBitset>() {
+                                      @Override
+                                      public ColumnCombinationBitset apply(
+                                          final List<ColumnCombinationBitset> input) {
+                                        final PositionListIndex
+                                            intersect =
+                                            newPlis.get(input.get(0))
+                                                .intersect(newPlis.get(input.get(1)));
+          /*System.out
+              .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));*/
+                                        final ColumnCombinationBitset
+                                            union =
+                                            input.get(0).union(input.get(1));
+                                        newPlis.put(union, intersect);
+                                        return union;
         }
       }, exec));
     }
 
-    System.out.println((System.nanoTime() - start) / 1000000000d);
+    // System.out.println((System.nanoTime() - start) / 1000000000d);
 
     try {
-      final PositionListIndex result = futures.remove().get();
+      final PositionListIndex result = newPlis.get(futures.remove().get());
       return result;
     }
     catch (InterruptedException | ExecutionException e) {
