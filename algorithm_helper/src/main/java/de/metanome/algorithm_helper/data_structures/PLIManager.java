@@ -85,7 +85,7 @@ public class PLIManager {
     if (columnCombination.size() % 2 != 0) {
       futures.add(exec.submit(new Callable<PositionListIndex>() {
         @Override public PositionListIndex call() throws Exception {
-          return plis.get(columnCombination.size() - 1);
+          return plis.get(columnCombination.getSetBits().get(columnCombination.size() - 1));
         }
       }));
     }
