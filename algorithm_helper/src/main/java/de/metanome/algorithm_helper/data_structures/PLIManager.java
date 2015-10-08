@@ -72,11 +72,11 @@ public class PLIManager {
           final PositionListIndex
               intersect =
               plis.get(leftColumnIndex).intersect(plis.get(rightColumnIndex));
-          System.out.println(String.format("Raw key error is %d for column combination %s.",
+          /*System.out.println(String.format("Raw key error is %d for column combination %s.",
                                            intersect.calculateRawKeyError(),
                                            new ColumnCombinationBitset(leftColumnIndex,
                                                                        rightColumnIndex)
-                                               .toString()));
+                                               .toString()));*/
           return intersect;
         }
       }));
@@ -99,15 +99,15 @@ public class PLIManager {
       futures.add(Futures.transform(joinedFuture, new Function<List<PositionListIndex>, PositionListIndex>() {
         @Override public PositionListIndex apply(final List<PositionListIndex> input) {
           final PositionListIndex intersect = input.get(0).intersect(input.get(1));
-          System.out
-              .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));
+          /*System.out
+              .println(String.format("Raw key error is %d.", intersect.calculateRawKeyError()));*/
 
           return intersect;
         }
       }, exec));
     }
 
-    System.out.println((System.nanoTime() - start) / 1000000000d);
+    // System.out.println((System.nanoTime() - start) / 1000000000d);
 
     try {
       final PositionListIndex result = futures.remove().get();
