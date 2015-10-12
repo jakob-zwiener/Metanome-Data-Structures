@@ -35,8 +35,6 @@ import java.util.TreeSet;
  *
  * @author Jens Ehrlich
  * @author Jakob Zwiener
- *
- * TODO(zwiener): This class should be renamed as it also allows superset lookups.
  */
 public class SetTrie {
 
