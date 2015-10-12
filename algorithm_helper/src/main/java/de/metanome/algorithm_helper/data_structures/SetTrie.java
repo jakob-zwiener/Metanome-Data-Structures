@@ -333,10 +333,10 @@ public class SetTrie {
    * @return a list containing all found supersets
    */
   public ArrayList<ColumnCombinationBitset> getExistingSupersets(ColumnCombinationBitset subset) {
-    ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
+    ArrayList<ColumnCombinationBitset> supersets = new ArrayList<>();
 
     if (this.isEmpty()) {
-      return subsets;
+      return supersets;
     }
 
     Queue<SearchTask> openTasks = new LinkedList<>();
@@ -347,7 +347,7 @@ public class SetTrie {
 
       List<Integer> setBits = subset.getSetBits();
       if (setBits.size() <= currentTask.numberOfCheckedColumns) {
-        subsets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
+        supersets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
         continue;
       }
       int from;
@@ -380,7 +380,7 @@ public class SetTrie {
       }
     }
 
-    return subsets;
+    return supersets;
   }
 
   /**
