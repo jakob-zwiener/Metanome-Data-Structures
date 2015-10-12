@@ -357,10 +357,9 @@ public class SetTrie {
         from = setBits.get(currentTask.numberOfCheckedColumns - 1);
       }
 
-      // Only column identifiers coming after the current identifier are relevant, or all remaining.
-      int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
+      int upto = setBits.get(currentTask.numberOfCheckedColumns);
 
-      for (int columnIndex = from; columnIndex < upto; columnIndex++) {
+      for (int columnIndex = from; columnIndex <= upto; columnIndex++) {
         SetTrie subGraph = currentTask.subGraph.subGraphs[columnIndex];
         if (subGraph == null) {
           continue;
