@@ -35,8 +35,6 @@ import java.util.TreeSet;
  *
  * @author Jens Ehrlich
  * @author Jakob Zwiener
- *
- * TODO(zwiener): This class should be renamed as it also allows superset lookups.
  */
 public class SetTrie {
 
@@ -335,10 +333,10 @@ public class SetTrie {
    * @return a list containing all found supersets
    */
   public ArrayList<ColumnCombinationBitset> getExistingSupersets(ColumnCombinationBitset subset) {
-    ArrayList<ColumnCombinationBitset> subsets = new ArrayList<>();
+    ArrayList<ColumnCombinationBitset> supersets = new ArrayList<>();
 
     if (this.isEmpty()) {
-      return subsets;
+      return supersets;
     }
 
     Queue<SearchTask> openTasks = new LinkedList<>();
@@ -349,7 +347,7 @@ public class SetTrie {
 
       List<Integer> setBits = subset.getSetBits();
       if (setBits.size() <= currentTask.numberOfCheckedColumns) {
-        subsets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
+        supersets.addAll(currentTask.subGraph.getContainedSets(currentTask.path));
         continue;
       }
       int from;
@@ -359,10 +357,9 @@ public class SetTrie {
         from = setBits.get(currentTask.numberOfCheckedColumns - 1);
       }
 
-      // Only column identifiers coming after the current identifier are relevant, or all remaining.
-      int upto = Math.min(setBits.get(currentTask.numberOfCheckedColumns) + 1, subGraphs.length);
+      int upto = setBits.get(currentTask.numberOfCheckedColumns);
 
-      for (int columnIndex = from; columnIndex < upto; columnIndex++) {
+      for (int columnIndex = from; columnIndex <= upto; columnIndex++) {
         SetTrie subGraph = currentTask.subGraph.subGraphs[columnIndex];
         if (subGraph == null) {
           continue;
@@ -382,7 +379,7 @@ public class SetTrie {
       }
     }
 
-    return subsets;
+    return supersets;
   }
 
   /**
