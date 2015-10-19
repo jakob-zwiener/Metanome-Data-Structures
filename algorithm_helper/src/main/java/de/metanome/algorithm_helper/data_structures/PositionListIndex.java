@@ -16,6 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,12 +30,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -41,6 +41,7 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  public static long intersectNanos = 0;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
@@ -66,8 +67,12 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   public PositionListIndex intersect(PositionListIndex otherPLI) {
+    long begin = System.nanoTime();
     //TODO Optimize Smaller PLI as Hashmap?
-    return calculateIntersection(otherPLI);
+    final PositionListIndex intersect = calculateIntersection(otherPLI);
+
+    intersectNanos += System.nanoTime() - begin;
+    return intersect;
   }
 
   public List<IntArrayList> getClusters() {
