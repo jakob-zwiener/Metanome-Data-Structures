@@ -19,15 +19,11 @@ package de.metanome.algorithm_helper.data_structures;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubSetGraphFixture {
+public class SetTrieFixture {
 
-  public SubSetGraph getGraph() {
-    SubSetGraph graph = new SubSetGraph();
-
-    for (ColumnCombinationBitset columnCombination : getExpectedIncludedColumnCombinations()) {
-      graph.add(columnCombination);
-    }
-
+  public SetTrie getGraph() throws ColumnIndexOutOfBoundsException {
+    SetTrie graph = new SetTrie(getDimension());
+    graph.addAll(getExpectedIncludedColumnCombinations());
     return graph;
   }
 
@@ -42,6 +38,10 @@ public class SubSetGraphFixture {
     includedColumnCombinations.add(columnCombinationToRemove());
 
     return includedColumnCombinations;
+  }
+
+  public int getDimension() {
+    return 12;
   }
 
   public ColumnCombinationBitset getColumnCombinationForSubsetQuery() {
@@ -79,8 +79,8 @@ public class SubSetGraphFixture {
     return new ColumnCombinationBitset(2, 3, 4, 7, 11);
   }
 
-  public SubSetGraph expectedGraphAfterRemoval() {
-    SubSetGraph graph = new SubSetGraph();
+  public SetTrie expectedGraphAfterRemoval() throws ColumnIndexOutOfBoundsException {
+    SetTrie graph = new SetTrie(getDimension());
 
     List<ColumnCombinationBitset> columnCombinations = getExpectedIncludedColumnCombinations();
 

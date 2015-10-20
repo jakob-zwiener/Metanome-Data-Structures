@@ -19,6 +19,11 @@ package de.metanome.algorithm_helper.data_structures;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -1016,5 +1021,33 @@ public class ColumnCombinationBitsetTest {
     testerSet2.performCompareToTestGreater(set3, set4);
 
     testerSet3.performCompareToTestEqual(set5);
+  }
+
+  /**
+   * Tests whether the plis can be serialized and deserialized correctly.
+   */
+  @Test
+  public void testSerialization() throws IOException, ClassNotFoundException {
+    // Setup
+    ColumnCombinationBitsetFixture fixture = new ColumnCombinationBitsetFixture();
+    // Expected values
+    ColumnCombinationBitset expectedFirstColumnCombination = fixture.getColumnCombination1();
+    ColumnCombinationBitset expectedSecondColumnCombination = fixture.getColumnCombination2();
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ObjectOutputStream oos = new ObjectOutputStream(out);
+
+    // Execute functionality
+    oos.writeObject(expectedFirstColumnCombination);
+    oos.writeObject(expectedSecondColumnCombination);
+    byte[] written = out.toByteArray();
+    ByteArrayInputStream in = new ByteArrayInputStream(written);
+    ObjectInputStream ois = new ObjectInputStream(in);
+    ColumnCombinationBitset actualFirstColumnCombination = (ColumnCombinationBitset) ois.readObject();
+    ColumnCombinationBitset actualSecondColumnCombination = (ColumnCombinationBitset) ois.readObject();
+
+    // Check result
+    assertEquals(expectedFirstColumnCombination, actualFirstColumnCombination);
+    assertEquals(expectedSecondColumnCombination, actualSecondColumnCombination);
   }
 }
