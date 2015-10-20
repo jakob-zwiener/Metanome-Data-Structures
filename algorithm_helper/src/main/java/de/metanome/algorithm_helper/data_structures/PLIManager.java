@@ -59,6 +59,9 @@ public class PLIManager implements AutoCloseable {
   protected ColumnCombinationBitset allColumnCombination;
   protected SetTrie pliSetTrie;
 
+  protected ColumnCombinationBitset lastIntersect = new ColumnCombinationBitset();
+  protected boolean downwardsTraversal;
+  
   /**
    * TODO docs
    *
@@ -176,6 +179,9 @@ public class PLIManager implements AutoCloseable {
       throw new PLIBuildingException(
           "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
+
+    downwardsTraversal = lastIntersect.containsSubset(columnCombination);
+    lastIntersect = new ColumnCombinationBitset(columnCombination);
 
     PositionListIndex exactPli = lookupPli(columnCombination);
     if (exactPli != null) {
@@ -300,7 +306,9 @@ public class PLIManager implements AutoCloseable {
 
     List<ColumnCombinationBitset> supersets = pliSetTrie.getExistingSupersets(columnCombination);
 
-    // TODO(zwiener): Maybe implement direction aware superset eviction.
+    if (!downwardsTraversal) {
+      return;
+    }
     for (ColumnCombinationBitset superset : supersets) {
       if (!superset.equals(columnCombination)) {
         removePliFromCache(superset);
