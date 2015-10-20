@@ -30,15 +30,16 @@ public class PLIManager {
   // FIXME(zwiener): Make this protected.
   public Map<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
-  protected SubSetGraph pliSubSetGraph;
-  protected SuperSetGraph pliSuperSetGraph;
+  protected SetTrie setTrie;
 
-  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
+  protected ColumnCombinationBitset lastIntersect = new ColumnCombinationBitset();
+  protected boolean downwardsTraversal;
+
+  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis)
+      throws ColumnIndexOutOfBoundsException {
     this.plis = plis;
-    pliSubSetGraph = new SubSetGraph();
-    pliSubSetGraph.addAll(plis.keySet());
-    pliSuperSetGraph = new SuperSetGraph(plis.size());
-    pliSuperSetGraph.addAll(plis.keySet());
+    setTrie = new SetTrie(plis.size());
+    setTrie.addAll(plis.keySet());
     int[] allColumnIndices = new int[plis.size()];
     for (int i = 0; i < plis.size(); i++) {
       allColumnIndices[i] = i;
@@ -46,18 +47,23 @@ public class PLIManager {
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
   }
 
-  public PositionListIndex buildPli(final ColumnCombinationBitset columnCombination) throws PLIBuildingException {
+  public PositionListIndex buildPli(final ColumnCombinationBitset columnCombination)
+      throws PLIBuildingException, ColumnIndexOutOfBoundsException {
     if (!columnCombination.isSubsetOf(allColumnCombination)) {
       throw new PLIBuildingException(
         "The column combination should only contain column indices of plis that are known to the pli manager.");
     }
+
+    downwardsTraversal = lastIntersect.containsSubset(columnCombination);
+    lastIntersect = new ColumnCombinationBitset(columnCombination);
+
 
     PositionListIndex exactPli = plis.get(columnCombination);
     if (exactPli != null) {
       return exactPli;
     }
 
-    List<ColumnCombinationBitset> subsets = pliSubSetGraph.getExistingSubsets(columnCombination);
+    List<ColumnCombinationBitset> subsets = setTrie.getExistingSubsets(columnCombination);
 
     // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
@@ -104,15 +110,16 @@ public class PLIManager {
   }
 
   protected void addPli(final ColumnCombinationBitset columnCombination,
-                        final PositionListIndex intersect)
-  {
+                        final PositionListIndex intersect) throws ColumnIndexOutOfBoundsException {
     plis.put(columnCombination, intersect);
-    pliSubSetGraph.add(columnCombination);
-    pliSuperSetGraph.add(columnCombination);
+    setTrie.add(columnCombination);
 
-    // System.out.println(pliSubSetGraph);
+    // System.out.println(setTrie);
 
-    List<ColumnCombinationBitset> supersets = pliSuperSetGraph.getExistingSupersets(columnCombination);
+    if (!downwardsTraversal) {
+      return;
+    }
+    List<ColumnCombinationBitset> supersets = setTrie.getExistingSupersets(columnCombination);
 
     for (ColumnCombinationBitset superset : supersets) {
       if (!superset.equals(columnCombination)) {
@@ -120,13 +127,12 @@ public class PLIManager {
       }
     }
 
-    // System.out.println(pliSubSetGraph);
+    // System.out.println(setTrie);
   }
 
   protected void removePli(final ColumnCombinationBitset columnCombination) {
     plis.remove(columnCombination);
-    pliSubSetGraph.remove(columnCombination);
-    pliSuperSetGraph.remove(columnCombination);
+    setTrie.remove(columnCombination);
   }
 
 
