@@ -103,6 +103,29 @@ public class PLIManagerTest {
   }
 
   /**
+   * Test method for {@link PLIManager#buildPli(ColumnCombinationBitset)}
+   *
+   * The method should add the requested PLI to the cache.
+   */
+  @Test
+  public void testBuildPliAddsRequestedPliToCache() throws PLIBuildingException {
+    // Setup
+    // Expected values
+    ColumnCombinationBitset columnCombination = new ColumnCombinationBitset(0, 1, 2);
+    PositionListIndex expectedPli = fixture.getExpectedIntersect012();
+
+    // Check precondition
+    assertNull(pliManager.plis.getIfPresent(columnCombination));
+
+    // Execute functionality
+    PositionListIndex actualPli = pliManager.buildPli(columnCombination);
+
+    // Check result
+    assertNotNull(actualPli);
+    assertEquals(expectedPli, actualPli);
+  }
+
+  /**
    * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
    */
   @Test

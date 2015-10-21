@@ -174,8 +174,6 @@ public class PLIManager implements AutoCloseable {
   /**
    * TODO docs
    *
-   * FIXME(zwiener): Check that the requested and intermediate plis are added to the cache and the
-   * trie.
    */
   protected PositionListIndex buildPli(ColumnCombinationBitset columnCombination)
       throws PLIBuildingException {
