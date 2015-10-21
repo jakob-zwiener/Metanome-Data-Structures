@@ -77,7 +77,6 @@ public class PLIManager implements AutoCloseable {
     allColumnCombination = new ColumnCombinationBitset(allColumnIndices);
 
     this.plis = CacheBuilder.newBuilder()
-        // TODO(zwiener): Expose the cache size paramemter.
         .maximumSize(cacheSize)
         .removalListener(new RemovalListener<ColumnCombinationBitset, PositionListIndex>() {
           @Override
