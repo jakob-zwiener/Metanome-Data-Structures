@@ -42,10 +42,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Manages plis and performs intersect operations.
  *
- * TODO(zwiener): Extend docs
+ * The PLIManager implements efficient PLI intersects, multi intersects, and multi output
+ * intersects. The PLIManager performs multi intersects with optimised intersect orders, and
+ * facilitates {@link SetTrie}s for subset PLI lookups. Furthermore the PLIManager manages the PLI
+ * cache, supporting both superset eviction and least recently used cache eviction combined.
  *
  * @author Jakob Zwiener
  * @see PositionListIndex
+ * @see SetTrie
  */
 public class PLIManager implements AutoCloseable {
 
