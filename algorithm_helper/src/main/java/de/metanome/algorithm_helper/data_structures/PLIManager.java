@@ -146,11 +146,6 @@ public class PLIManager implements AutoCloseable {
       throw new PLIBuildingException("No ColumnCombinationBitset given to query for pli.");
     }
 
-    // TODO(zwiener): The following 3 lines can be removed.
-    if (columnCombinations.length == 1) {
-      return getPli(columnCombinations[0]);
-    }
-
     PositionListIndex intersect = null;
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       if (intersect == null) {
