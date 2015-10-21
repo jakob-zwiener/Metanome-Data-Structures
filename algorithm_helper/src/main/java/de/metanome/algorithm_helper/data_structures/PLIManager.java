@@ -62,7 +62,8 @@ public class PLIManager implements AutoCloseable {
    */
   public PLIManager(final PositionListIndex[] basePlis,
                     final int numberOfColumns,
-                    final Map<ColumnCombinationBitset, PositionListIndex> cachedPlis)
+                    final Map<ColumnCombinationBitset, PositionListIndex> cachedPlis,
+                    final int cacheSize)
       throws ColumnIndexOutOfBoundsException {
 
     int[] allColumnIndices = new int[numberOfColumns];
@@ -73,7 +74,7 @@ public class PLIManager implements AutoCloseable {
 
     this.plis = CacheBuilder.newBuilder()
         // TODO(zwiener): Expose the cache size paramemter.
-        .maximumSize(20)
+        .maximumSize(cacheSize)
         .removalListener(new RemovalListener<ColumnCombinationBitset, PositionListIndex>() {
           @Override
           public void onRemoval(
@@ -112,8 +113,10 @@ public class PLIManager implements AutoCloseable {
    * @throws ColumnIndexOutOfBoundsException
    */
   public PLIManager(final PositionListIndex[] basePlis,
-                    final int numberOfColumns) throws ColumnIndexOutOfBoundsException {
-    this(basePlis, numberOfColumns, new HashMap<ColumnCombinationBitset, PositionListIndex>());
+                    final int numberOfColumns,
+                    final int cacheSize) throws ColumnIndexOutOfBoundsException {
+    this(basePlis, numberOfColumns, new HashMap<ColumnCombinationBitset, PositionListIndex>(),
+         cacheSize);
   }
 
   protected static ThreadPoolExecutor getThreadPoolExecutor() {
@@ -301,6 +304,7 @@ public class PLIManager implements AutoCloseable {
 
     List<ColumnCombinationBitset> supersets = pliSetTrie.getExistingSupersets(columnCombination);
 
+    // TODO(zwiener): Maybe implement direction aware superset eviction.
     for (ColumnCombinationBitset superset : supersets) {
       if (!superset.equals(columnCombination)) {
         removePliFromCache(superset);

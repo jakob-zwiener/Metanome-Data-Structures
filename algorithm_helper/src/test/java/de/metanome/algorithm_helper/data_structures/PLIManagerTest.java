@@ -44,7 +44,7 @@ public class PLIManagerTest {
   @Before
   public void setUp() throws ColumnIndexOutOfBoundsException {
     fixture = new PLIManagerFixture();
-    pliManager = new PLIManager(fixture.getPlis(), fixture.numberOfColumns());
+    pliManager = new PLIManager(fixture.getPlis(), fixture.numberOfColumns(), Integer.MAX_VALUE);
   }
 
   @Test
@@ -60,7 +60,7 @@ public class PLIManagerTest {
     // Execute functionality
     PLIManager
         actualPliManager =
-        new PLIManager(new PositionListIndex[0], numberOfColumns);
+        new PLIManager(new PositionListIndex[0], numberOfColumns, 23);
 
     // Check result
     assertEquals(expectedAllColumnsCombination, actualPliManager.allColumnCombination);
@@ -162,7 +162,7 @@ public class PLIManagerTest {
     // Setup
     PLIManager
         pliManager =
-        new PLIManager(new PositionListIndex[0], 10);
+        new PLIManager(new PositionListIndex[0], 10, 42);
     // Expected values
     final ColumnCombinationBitset columnCombinationForLookup = new ColumnCombinationBitset(2, 5, 8);
     final PositionListIndex expectedPli = mock(PositionListIndex.class);
