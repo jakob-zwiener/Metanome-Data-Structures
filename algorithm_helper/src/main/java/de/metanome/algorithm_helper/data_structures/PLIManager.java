@@ -64,8 +64,6 @@ public class PLIManager implements AutoCloseable {
   
   /**
    * TODO docs
-   *
-   * FIXME(zwiener): It should be checked, that the one column plis are added to the manager.
    */
   public PLIManager(final PositionListIndex[] basePlis,
                     final int numberOfColumns,

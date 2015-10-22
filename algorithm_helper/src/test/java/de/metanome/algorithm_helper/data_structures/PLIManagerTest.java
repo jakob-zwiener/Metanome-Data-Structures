@@ -22,6 +22,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -47,6 +48,11 @@ public class PLIManagerTest {
     pliManager = new PLIManager(fixture.getPlis(), fixture.numberOfColumns(), Integer.MAX_VALUE);
   }
 
+  /**
+   * Test method for {@link PLIManager#PLIManager(PositionListIndex[], int, int)}
+   *
+   * The columnc combination representing all columns should be correctly constructed.
+   */
   @Test
   public void testConstructorAllColumnCombination() throws ColumnIndexOutOfBoundsException {
     // Setup
@@ -66,7 +72,54 @@ public class PLIManagerTest {
     assertEquals(expectedAllColumnsCombination, actualPliManager.allColumnCombination);
   }
 
-  // TODO(zwiener): Check that given plis are added to the cache and the trie.
+  /**
+   * Test method for {@link PLIManager#PLIManager(PositionListIndex[], int, int)}
+   *
+   * The base PLIs should be added to the manager.
+   */
+  @Test
+  public void testConstructorOneColumnCombinationPlisAdded()
+      throws ColumnIndexOutOfBoundsException {
+    // Setup
+    // Expected values
+    PositionListIndex[]
+        expectedPlis =
+        {mock(PositionListIndex.class), mock(PositionListIndex.class)};
+
+    // Execute functionality
+    PLIManager pliManager = new PLIManager(expectedPlis, 2, 42);
+
+    // Check result
+    assertArrayEquals(expectedPlis, pliManager.basePlis);
+  }
+
+  /**
+   * Test method for {@link PLIManager#PLIManager(PositionListIndex[], int, Map, int)}
+   *
+   * The cached PLIs should be added to the manager.
+   */
+  @Test
+  public void testConstructorCachedPlisAdded() throws ColumnIndexOutOfBoundsException {
+    // Setup
+    PositionListIndex[] basePlis = {mock(PositionListIndex.class), mock(PositionListIndex.class)};
+    // Expected values
+    Map<ColumnCombinationBitset, PositionListIndex> cachedPlis = new HashMap<>();
+    ColumnCombinationBitset columnCombination1 = new ColumnCombinationBitset(0);
+    PositionListIndex expectedPli1 = mock(PositionListIndex.class);
+    cachedPlis.put(columnCombination1, expectedPli1);
+    ColumnCombinationBitset columnCombination2 = new ColumnCombinationBitset(1);
+    PositionListIndex expectedPli2 = mock(PositionListIndex.class);
+    cachedPlis.put(columnCombination2, expectedPli2);
+
+    // Execute functionality
+    PLIManager pliManager = new PLIManager(basePlis, 2, cachedPlis, 42);
+
+    // Check result
+    assertEquals(expectedPli1, pliManager.plis.getIfPresent(columnCombination1));
+    assertTrue(pliManager.pliSetTrie.getContainedSets().contains(columnCombination1));
+    assertEquals(expectedPli2, pliManager.plis.getIfPresent(columnCombination2));
+    assertTrue(pliManager.pliSetTrie.getContainedSets().contains(columnCombination2));
+  }
 
   /**
    * Test method for {@link PLIManager#getPli(ColumnCombinationBitset...)}
