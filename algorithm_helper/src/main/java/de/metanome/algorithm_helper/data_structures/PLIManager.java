@@ -53,8 +53,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class PLIManager implements AutoCloseable {
 
-  protected transient ExecutorService exec;
-  protected LoadingCache<ColumnCombinationBitset, PositionListIndex> plis;
+  public transient ExecutorService exec;
+  public LoadingCache<ColumnCombinationBitset, PositionListIndex> plis;
   protected PositionListIndex[] basePlis;
   protected ColumnCombinationBitset allColumnCombination;
   protected SetTrie pliSetTrie;
