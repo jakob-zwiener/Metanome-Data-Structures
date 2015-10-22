@@ -31,8 +31,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 
-// FIXME(zwiener): Decide whether to test buildPli or getPli.
-
 /**
  * Tests for {@link PLIManager}
  * @author Jakob Zwiener
