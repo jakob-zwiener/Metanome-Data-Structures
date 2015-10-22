@@ -61,9 +61,15 @@ public class PLIManager implements AutoCloseable {
 
   protected ColumnCombinationBitset lastIntersect = new ColumnCombinationBitset();
   protected boolean downwardsTraversal;
-  
+
   /**
-   * TODO docs
+   * Constructs a PLIManager.
+   *
+   * @param basePlis the PLIs of the single column combinations
+   * @param numberOfColumns the number of columns of the dataset to analyze
+   * @param cachedPlis existing cached PLIs
+   * @param cacheSize the size of the internal cache
+   * @throws ColumnIndexOutOfBoundsException is thrown if the cachedPLIs contain entries for column combinations that contain columns beyond the current dataset width
    */
   public PLIManager(final PositionListIndex[] basePlis,
                     final int numberOfColumns,
@@ -110,11 +116,12 @@ public class PLIManager implements AutoCloseable {
   }
 
   /**
-   * TODO: docs
+   * Constructs a PLIManager.
    *
-   * @param basePlis
-   * @param numberOfColumns
-   * @throws ColumnIndexOutOfBoundsException
+   * @param basePlis the PLIs of the single column combinations
+   * @param numberOfColumns the number of columns of the dataset to analyze
+   * @param cacheSize the size of the internal cache
+   * @throws ColumnIndexOutOfBoundsException is thrown if the cachedPLIs contain entries for column combinations that contain columns beyond the current dataset width
    */
   public PLIManager(final PositionListIndex[] basePlis,
                     final int numberOfColumns,
@@ -168,8 +175,12 @@ public class PLIManager implements AutoCloseable {
   }
 
   /**
-   * TODO docs
+   * Constructs a PLI through a multi intersect. This method uses the cached PLIs to perform a subset lookup, calculates the set cover and performs the intersects in order of ascending key error.
    *
+   * @param columnCombination the column combination for which a PLI should be constructed
+   * @return the constructed PLI
+   *
+   * @throws PLIBuildingException if the requested PLI cannot be constructed
    */
   protected PositionListIndex buildPli(ColumnCombinationBitset columnCombination)
       throws PLIBuildingException {
@@ -286,7 +297,10 @@ public class PLIManager implements AutoCloseable {
   }
 
   /**
-   * TODO(zwiener): docs
+   * Looks for the PLI among the base PLIs and cached PLIs.
+   *
+   * @param columnCombination the column combination associated to the PLI to retrieve
+   * @return the PLI associated to the column combination
    */
   protected PositionListIndex lookupPli(ColumnCombinationBitset columnCombination) {
     if (columnCombination.size() == 1) {
