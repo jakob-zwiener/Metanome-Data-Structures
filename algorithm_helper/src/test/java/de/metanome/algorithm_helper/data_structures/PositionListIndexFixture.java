@@ -18,7 +18,6 @@ package de.metanome.algorithm_helper.data_structures;
 
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +36,15 @@ public class PositionListIndexFixture {
   }
 
   public String getExpectedFirstPliToString() {
-    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], numberOfRows=9, rawKeyError=4}";
+    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], numberOfRows=9, sumClusterSize=4}";
   }
 
   public int getExpectedFirstPLIRawKeyError() {
     return 4;
+  }
+
+  public int getExpectedFirstPliSumClusterSize() {
+    return 6;
   }
 
   public int getFirstPLISize() {
@@ -112,11 +115,15 @@ public class PositionListIndexFixture {
   }
 
   public String getExpectedSecondPliToString() {
-    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], numberOfRows=9, rawKeyError=5}";
+    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], numberOfRows=9, sumClusterSize=5}";
   }
 
   public int getExpectedSecondPLIRawKeyError() {
     return 5;
+  }
+
+  public int getExpectedSecondPliSumClusterSize() {
+    return 7;
   }
 
   protected PositionListIndex getExpectedIntersectedPLI() {

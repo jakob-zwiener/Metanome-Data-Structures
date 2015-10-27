@@ -53,7 +53,7 @@ public class PositionListIndex implements Serializable {
       getThreadPoolExecutor();
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
-  protected int rawKeyError = -1;
+  protected int sumClusterSize = -1;
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
     this.numberOfRows = numberOfRows;
@@ -127,7 +127,7 @@ public class PositionListIndex implements Serializable {
     }
 
     PositionListIndex clone = new PositionListIndex(newClusters, this.numberOfRows);
-    clone.rawKeyError = this.rawKeyError;
+    clone.sumClusterSize = this.sumClusterSize;
     return clone;
   }
 
@@ -365,21 +365,23 @@ public class PositionListIndex implements Serializable {
    * @return raw key error
    */
   public int getRawKeyError() {
-    if (rawKeyError == -1) {
-      rawKeyError = calculateRawKeyError();
-    }
-
-    return rawKeyError;
+    return getSumClusterSize() - clusters.size();
   }
 
-  protected int calculateRawKeyError() {
-    int sumClusterSize = 0;
+  public int getSumClusterSize() {
+    if (sumClusterSize == -1) {
+      sumClusterSize = sumClusterSize();
+    }
 
+    return sumClusterSize;
+  }
+
+  protected int sumClusterSize() {
+    int sumClusterSize = 0;
     for (IntArrayList cluster : clusters) {
       sumClusterSize += cluster.size();
     }
-
-    return sumClusterSize - clusters.size();
+    return sumClusterSize;
   }
 
   @Override

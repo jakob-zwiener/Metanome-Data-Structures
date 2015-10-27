@@ -243,6 +243,53 @@ public class PositionListIndexTest {
   }
 
   /**
+   * Test method for {@link PositionListIndex#getSumClusterSize()}
+   */
+  @Test
+  public void testSumClusterSize() {
+    // Setup
+    PositionListIndex firstPli = fixture.getFirstPLI();
+    PositionListIndex secondPli = fixture.getSecondPLI();
+    // Expected values
+    final int expectedFirstSumClusterSize = fixture.getExpectedFirstPliSumClusterSize();
+    final int expectedSecondSumCLusterSize = fixture.getExpectedSecondPliSumClusterSize();
+
+    // Execute functionality
+    final int actualFirstSumClusterSize = firstPli.getSumClusterSize();
+    final int actualSecondSumClusterSize = secondPli.getSumClusterSize();
+
+    // Check result
+    assertEquals(expectedFirstSumClusterSize, actualFirstSumClusterSize);
+    assertEquals(expectedSecondSumCLusterSize, actualSecondSumClusterSize);
+  }
+
+  /**
+   * Test method for {@link PositionListIndex#getSumClusterSize()}
+   *
+   * Under normal circumstances the sum of cluster sizes should not be recalculated.
+   */
+  @Test
+  public void testGetSumClusterSize() {
+    // Setup
+    PositionListIndex firstPli = fixture.getFirstPLI();
+    // Expected values
+    final int expectedSumClusterSize = firstPli.getSumClusterSize();
+    // Update clusters with empty lists.
+    firstPli.clusters = new LinkedList<>();
+
+    // Execute functionality
+    // Sum of cluster sizes should not be recalculated.
+    final int actualSumClusterSize = firstPli.getSumClusterSize();
+    // Force recalculation
+    firstPli.sumClusterSize = -1;
+    final int actualRecalculatedSumClusterSize = firstPli.getSumClusterSize();
+
+    // Check result
+    assertEquals(expectedSumClusterSize, actualSumClusterSize);
+    assertEquals(0, actualRecalculatedSumClusterSize);
+  }
+
+  /**
    * Test method for {@link PositionListIndex#getNumberOfRows()}
    */
   @Test
