@@ -177,6 +177,8 @@ public class PositionListIndexTest {
     assertEquals(expectedHashMap, firstPLI.asHashMap());
   }
 
+  // FIXME(zwiener): test both methods (parallel and sequential).
+
   /**
    * Test method for {@link PositionListIndex#asArray()}
    */

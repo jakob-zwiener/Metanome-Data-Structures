@@ -48,6 +48,7 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  public static int parallelisationCutoff = 1000 * 1000;
   public static transient ExecutorService
       exec =
       getThreadPoolExecutor();
@@ -222,18 +223,27 @@ public class PositionListIndex implements Serializable {
                           final Map<IntPair, IntArrayList> map)
       throws PLIBuildingException
   {
+    if (getSumClusterSize() < Integer.MIN_VALUE) {
+      buildMapSequential(otherPLI, materializedPLI, map);
+    } else {
+      // System.out.println(getSumClusterSize());
+      buildMapParallel(otherPLI, materializedPLI, map);
+    }
+  }
+
+  protected void buildMapParallel(final PositionListIndex otherPLI, final int[] materializedPLI,
+                                  final Map<IntPair, IntArrayList> map)
+      throws PLIBuildingException {
     int uniqueValueCount = 0;
 
     List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
 
-    // System.out.println(otherPLI.clusters.size());
     for (final IntArrayList sameValues : otherPLI.clusters) {
       final int finalUniqueValueCount = uniqueValueCount;
       tasks.add(exec.submit(new Callable<Map<IntPair, IntArrayList>>() {
         @Override
         public Map<IntPair, IntArrayList> call() {
           final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
-          // System.out.println(sameValues.size());
           for (int rowCount : sameValues) {
             if ((materializedPLI.length > rowCount) &&
                 (materializedPLI[rowCount] != SINGLETON_VALUE)) {
@@ -256,6 +266,21 @@ public class PositionListIndex implements Serializable {
       } catch (ExecutionException e) {
         throw (PLIBuildingException) e.getCause();
       }
+    }
+  }
+
+  protected void buildMapSequential(final PositionListIndex otherPLI, final int[] materializedPLI,
+                                    final Map<IntPair, IntArrayList> map) {
+    int uniqueValueCount = 0;
+    for (IntArrayList sameValues : otherPLI.clusters) {
+      for (int rowCount : sameValues) {
+        if ((materializedPLI.length > rowCount) &&
+            (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
+          updateMap(map, rowCount, pair);
+        }
+      }
+      uniqueValueCount++;
     }
   }
 
@@ -298,6 +323,14 @@ public class PositionListIndex implements Serializable {
    * @return the pli as list
    */
   public int[] asArray() throws PLIBuildingException {
+    if (getSumClusterSize() < Integer.MAX_VALUE) {
+      return asArraySequential();
+    }
+    System.out.println(getSumClusterSize());
+    return asArrayParallel();
+  }
+
+  protected int[] asArrayParallel() throws PLIBuildingException {
     final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
 
@@ -325,6 +358,19 @@ public class PositionListIndex implements Serializable {
       } catch (ExecutionException e) {
         throw (PLIBuildingException) e.getCause();
       }
+    }
+
+    return materializedPli;
+  }
+
+  protected int[] asArraySequential() {
+    int[] materializedPli = new int[getNumberOfRows()];
+    int uniqueValueCount = SINGLETON_VALUE + 1;
+    for (IntArrayList sameValues : clusters) {
+      for (int rowIndex : sameValues) {
+        materializedPli[rowIndex] = uniqueValueCount;
+      }
+      uniqueValueCount++;
     }
 
     return materializedPli;
