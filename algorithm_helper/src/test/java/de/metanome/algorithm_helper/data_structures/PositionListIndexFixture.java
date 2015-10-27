@@ -36,7 +36,7 @@ public class PositionListIndexFixture {
   }
 
   public String getExpectedFirstPliToString() {
-    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], numberOfRows=9, sumClusterSize=4}";
+    return "PositionListIndex{clusters=[[2, 4, 8], [5, 6, 7]], numberOfRows=9, rawKeyError=4}";
   }
 
   public int getExpectedFirstPLIRawKeyError() {
@@ -115,7 +115,7 @@ public class PositionListIndexFixture {
   }
 
   public String getExpectedSecondPliToString() {
-    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], numberOfRows=9, sumClusterSize=5}";
+    return "PositionListIndex{clusters=[[1, 2, 5, 8], [4, 6, 7]], numberOfRows=9, rawKeyError=5}";
   }
 
   public int getExpectedSecondPLIRawKeyError() {
