@@ -297,34 +297,14 @@ public class PositionListIndex implements Serializable {
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public int[] asArray() throws PLIBuildingException {
-    final int[] materializedPli = new int[getNumberOfRows()];
+  public int[] asArray() {
+    int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
-
-    List<Future<?>> tasks = new LinkedList<>();
-
-    for (final IntArrayList sameValues : clusters) {
-      final int finalUniqueValueCount = uniqueValueCount;
-      tasks.add(exec.submit(new Callable<Void>() {
-        @Override
-        public Void call() throws Exception {
-          for (int rowIndex : sameValues) {
-            materializedPli[rowIndex] = finalUniqueValueCount;
-          }
-
-          return null;
-        }
-      }));
-      uniqueValueCount++;
-    }
-    for (Future<?> task : tasks) {
-      try {
-        task.get();
-      } catch (InterruptedException e) {
-        throw new PLIBuildingException("PLI materialization was interrupted.", e);
-      } catch (ExecutionException e) {
-        throw (PLIBuildingException) e.getCause();
+    for (IntArrayList sameValues : clusters) {
+      for (int rowIndex : sameValues) {
+        materializedPli[rowIndex] = uniqueValueCount;
       }
+      uniqueValueCount++;
     }
 
     return materializedPli;
