@@ -30,8 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,6 +48,7 @@ public class PositionListIndex implements Serializable {
   private static final long serialVersionUID = 2;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
+  public static int NUMBER_OF_THREADS = 1;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
@@ -175,7 +175,7 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     int[] materializedPLI = this.asArray();
-    ConcurrentMap<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
+    Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
@@ -188,43 +188,40 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, final int[] materializedPLI,
-                          final ConcurrentMap<IntPair, IntArrayList> map)
+  protected void buildMap(final PositionListIndex otherPLI, final int[] materializedPLI,
+                          final Map<IntPair, IntArrayList> map)
   {
-    int uniqueValueCount = 0;
-
-    List<Future<?>> tasks = new LinkedList<>();
-
+    List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
     try {
       // System.out.println(otherPLI.clusters.size());
-      for (final IntArrayList sameValues : otherPLI.clusters) {
-        final int finalUniqueValueCount = uniqueValueCount;
-        tasks.add(exec.submit(new Runnable() {
+      for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+        final int finalI = i;
+        tasks.add(exec.submit(new Callable<Map<IntPair, IntArrayList>>() {
           @Override
-          public void run() {
+          public Map<IntPair, IntArrayList> call() throws Exception {
             final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
-            long start = System.nanoTime();
-            // System.out.println(sameValues.size());
-            for (int rowCount : sameValues) {
-              // TODO(zwiener): Get is called twice.
-              if ((materializedPLI.length > rowCount) &&
-                  (materializedPLI[rowCount] != SINGLETON_VALUE)) {
-                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
+            for (int index = finalI; index < otherPLI.clusters.size(); index += NUMBER_OF_THREADS) {
+              IntArrayList sameValues = otherPLI.clusters.get(index);
+              for (int rowCount : sameValues) {
+                // TODO(zwiener): Get is called twice.
+                if ((materializedPLI.length > rowCount) &&
+                    (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+                  IntPair pair = new IntPair(index, materializedPLI[rowCount]);
 
-                updateMap(internalMap, rowCount, pair);
+                  updateMap(internalMap, rowCount, pair);
+                }
               }
             }
-            map.putAll(internalMap);
+            return internalMap;
             // System.out.println((System.nanoTime() - start) / 1000000000d);
           }
         }));
-        uniqueValueCount++;
       }
     }
     finally {
-      for (Future<?> task : tasks) {
+      for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
-          task.get();
+          map.putAll(task.get());
         }
         catch (InterruptedException | ExecutionException e) {
           // FIXME(zwiener): Rethrow exception.
