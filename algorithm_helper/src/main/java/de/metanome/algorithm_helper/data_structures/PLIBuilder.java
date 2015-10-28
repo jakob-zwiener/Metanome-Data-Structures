@@ -64,7 +64,13 @@ public class PLIBuilder implements GenericPLIBuilder {
     }
     List<PositionListIndex> result = new ArrayList<>();
     for (List<IntArrayList> rawPLI : rawPLIs) {
-      result.add(new PositionListIndex(rawPLI));
+      try {
+        result.add(new PositionListIndex(rawPLI, getNumberOfTuples()));
+      }
+      catch (InputIterationException e) {
+        throw new PLIBuildingException(
+          "The pli could not be built, because there was an error iterating over the input.", e);
+      }
     }
     return result;
   }

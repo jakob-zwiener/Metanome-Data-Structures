@@ -30,6 +30,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
@@ -50,10 +54,12 @@ public class PositionListIndex implements Serializable {
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   protected List<IntArrayList> clusters;
+  protected int numberOfRows;
   protected int rawKeyError = -1;
 
-  public PositionListIndex(List<IntArrayList> clusters) {
+  public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
+    this.numberOfRows = numberOfRows;
   }
 
   /**
@@ -61,6 +67,7 @@ public class PositionListIndex implements Serializable {
    */
   public PositionListIndex() {
     this.clusters = new ArrayList<>();
+    this.numberOfRows = 0;
   }
 
   /**
@@ -79,6 +86,10 @@ public class PositionListIndex implements Serializable {
     return clusters;
   }
 
+  public int getNumberOfRows() {
+    return numberOfRows;
+  }
+
   /**
    * Creates a complete (deep) copy of the {@link de.metanome.algorithm_helper.data_structures.PositionListIndex}.
    * @return cloned PositionListIndex
@@ -90,7 +101,7 @@ public class PositionListIndex implements Serializable {
       newClusters.add(cluster.clone());
     }
 
-    PositionListIndex clone = new PositionListIndex(newClusters);
+    PositionListIndex clone = new PositionListIndex(newClusters, this.numberOfRows);
     clone.rawKeyError = this.rawKeyError;
     return clone;
   }
@@ -98,9 +109,8 @@ public class PositionListIndex implements Serializable {
   @Override
   public int hashCode() {
     final int prime = 31;
-    int result = 1;
 
-    List<IntOpenHashSet> setCluster = convertClustersToSets(clusters);
+    List<IntOpenHashSet> setCluster = convertClustersToSets(getClusters());
 
     Collections.sort(setCluster, new Comparator<IntSet>() {
 
@@ -109,8 +119,7 @@ public class PositionListIndex implements Serializable {
         return o1.hashCode() - o2.hashCode();
       }
     });
-    result = prime * result + (setCluster.hashCode());
-    return result;
+    return prime * setCluster.hashCode() + getNumberOfRows();
   }
 
   @Override
@@ -126,6 +135,9 @@ public class PositionListIndex implements Serializable {
       return false;
     }
     PositionListIndex other = (PositionListIndex) obj;
+    if (getNumberOfRows() != other.getNumberOfRows()) {
+      return false;
+    }
     if (clusters == null) {
       if (other.clusters != null) {
         return false;
@@ -166,8 +178,8 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
-    IntList materializedPLI = this.asList();
-    ConcurrentMap<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
+    int[] materializedPLI = this.asArray();
+    Map<IntPair, IntArrayList> map = new HashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
@@ -177,11 +189,11 @@ public class PositionListIndex implements Serializable {
       }
       clusters.add(cluster);
     }
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap2(final PositionListIndex otherPLI, final IntList materializedPLI,
-                          final ConcurrentMap<IntPair, IntArrayList> map)
+  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
+                          Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
 
@@ -232,7 +244,7 @@ public class PositionListIndex implements Serializable {
     for (IntArrayList sameValues : otherPLI.clusters) {
       for (int rowCount : sameValues) {
         if ((materializedPLI.length > rowCount) &&
-            (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
           IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
           updateMap(map, rowCount, pair);
         }
@@ -275,22 +287,55 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
-   * Materializes the PLI to a list of row value representatives. The position list index ((0, 1),
+   * Materializes the PLI to an int array of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public IntList asList() {
-    // TODO(zwiener): Initialize with approximate size.
-    IntList listPli = new IntArrayList(100000000);
+  public int[] asArray2() {
+    final int[] materializedPli = new int[getNumberOfRows()];
+    int uniqueValueCount = SINGLETON_VALUE + 1;
+
+    List<Future<?>> tasks = new LinkedList<>();
+
+    try {
+      for (final IntArrayList sameValues : clusters) {
+
+        final int finalUniqueValueCount = uniqueValueCount;
+        tasks.add(exec.submit(new Runnable() {
+          @Override
+          public void run() {
+            for (int rowIndex : sameValues) {
+              materializedPli[rowIndex] = finalUniqueValueCount;
+            }
+          }
+        }));
+        uniqueValueCount++;
+      }
+    } finally {
+      for (Future<?> task : tasks) {
+        try {
+          task.get();
+        } catch (InterruptedException | ExecutionException e) {
+          // FIXME(zwiener): Rethrow exception.
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return materializedPli;
+  }
+
+  public int[] asArray() {
+    int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
     for (IntArrayList sameValues : clusters) {
       for (int rowIndex : sameValues) {
-        addOrExtendList(listPli, uniqueValueCount, rowIndex);
+        materializedPli[rowIndex] = uniqueValueCount;
       }
       uniqueValueCount++;
     }
 
-    return listPli;
+    return materializedPli;
   }
 
   protected void addOrExtendList(IntList list, int value, int index) {
@@ -349,6 +394,7 @@ public class PositionListIndex implements Serializable {
   public String toString() {
     return "PositionListIndex{" +
       "clusters=" + clusters +
+      ", numberOfRows=" + getNumberOfRows() +
       ", rawKeyError=" + getRawKeyError() +
       '}';
   }

@@ -63,8 +63,8 @@ public class PLISyntheticBenchmark {
               final double timeElapsedS = (afterIntersect - beforeIntersect) / 1000000000d;
               System.out.println(
                 String.format("Intersect iteration %d with %d clusters of size %d computed with %d threads in %fs.",
-                  iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
-              writer.write(Joiner.on(',').join(iteration, numberOfClusters, clusterSize, 1, timeElapsedS));
+                  iteration, numberOfClusters, clusterSize, threads, timeElapsedS));
+              writer.write(Joiner.on(',').join(iteration, numberOfClusters, clusterSize, threads, timeElapsedS));
               writer.newLine();
               writer.flush();
               System.gc();

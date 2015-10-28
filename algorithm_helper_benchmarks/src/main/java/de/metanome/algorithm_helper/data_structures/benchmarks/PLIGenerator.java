@@ -47,18 +47,18 @@ public class PLIGenerator {
   public static PositionListIndex generatePli(int clusterSize, int numberOfClusters) {
     List<IntArrayList> clusters = new LinkedList<>();
 
-    int range = clusterSize * numberOfClusters;
+    int numberOfRows = clusterSize * numberOfClusters;
 
     for (int i = 0; i < numberOfClusters; i++) {
       IntArrayList cluster = new IntArrayList(clusterSize);
       for (int j = 0; j < clusterSize; j++) {
 
-        cluster.add(rand.nextInt(range));
+        cluster.add(rand.nextInt(numberOfRows));
       }
       clusters.add(cluster);
     }
 
-    return new PositionListIndex(clusters);
+    return new PositionListIndex(clusters, numberOfRows);
   }
 
 }

@@ -108,7 +108,7 @@ public class PLIBuilderFixture {
   public List<PositionListIndex> getExpectedPLIList(boolean nullEqualsNull) {
     List<PositionListIndex> expectedPLIList = new LinkedList<>();
     List<IntArrayList> list1 = new LinkedList<>();
-    PositionListIndex PLI1 = new PositionListIndex(list1);
+    PositionListIndex PLI1 = new PositionListIndex(list1, 5);
     expectedPLIList.add(PLI1);
 
     List<IntArrayList> list2 = new LinkedList<>();
@@ -119,7 +119,7 @@ public class PLIBuilderFixture {
     arrayList21.add(3);
     arrayList21.add(4);
     list2.add(arrayList21);
-    PositionListIndex PLI2 = new PositionListIndex(list2);
+    PositionListIndex PLI2 = new PositionListIndex(list2, 5);
     expectedPLIList.add(PLI2);
 
     List<IntArrayList> list3 = new LinkedList<>();
@@ -135,7 +135,7 @@ public class PLIBuilderFixture {
 
     list3.add(arrayList31);
     list3.add(arrayList32);
-    PositionListIndex PLI3 = new PositionListIndex(list3);
+    PositionListIndex PLI3 = new PositionListIndex(list3, 5);
     expectedPLIList.add(PLI3);
 
     List<IntArrayList> list4 = new LinkedList<>();
@@ -148,7 +148,7 @@ public class PLIBuilderFixture {
       list4.add(arrayList41);
     }
 
-    PositionListIndex PLI4 = new PositionListIndex(list4);
+    PositionListIndex PLI4 = new PositionListIndex(list4, 5);
     expectedPLIList.add(PLI4);
     return expectedPLIList;
   }
