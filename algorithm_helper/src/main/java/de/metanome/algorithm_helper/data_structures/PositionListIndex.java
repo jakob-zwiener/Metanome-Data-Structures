@@ -16,6 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,12 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -180,7 +180,7 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters);
   }
 
-  protected void buildMap(final PositionListIndex otherPLI, final IntList materializedPLI,
+  protected void buildMap2(final PositionListIndex otherPLI, final IntList materializedPLI,
                           final ConcurrentMap<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
@@ -223,6 +223,21 @@ public class PositionListIndex implements Serializable {
           e.printStackTrace();
         }
       }
+    }
+  }
+
+  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
+                          Map<IntPair, IntArrayList> map) {
+    int uniqueValueCount = 0;
+    for (IntArrayList sameValues : otherPLI.clusters) {
+      for (int rowCount : sameValues) {
+        if ((materializedPLI.length > rowCount) &&
+            (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+          IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
+          updateMap(map, rowCount, pair);
+        }
+      }
+      uniqueValueCount++;
     }
   }
 
