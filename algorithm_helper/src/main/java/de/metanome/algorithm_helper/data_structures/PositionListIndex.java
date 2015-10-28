@@ -30,6 +30,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -173,7 +175,7 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     int[] materializedPLI = this.asArray();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
+    ConcurrentMap<IntPair, IntArrayList> map = new ConcurrentHashMap<>();
     buildMap(otherPLI, materializedPLI, map);
 
     List<IntArrayList> clusters = new ArrayList<>();
@@ -186,8 +188,8 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap2(PositionListIndex otherPLI, final int[] materializedPLI,
-                           final Map<IntPair, IntArrayList> map)
+  protected void buildMap(PositionListIndex otherPLI, final int[] materializedPLI,
+                          final ConcurrentMap<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
 
@@ -232,7 +234,7 @@ public class PositionListIndex implements Serializable {
     }
   }
 
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
+  protected void buildMap2(PositionListIndex otherPLI, int[] materializedPLI,
                           Map<IntPair, IntArrayList> map) {
     int uniqueValueCount = 0;
     for (IntArrayList sameValues : otherPLI.clusters) {
