@@ -34,12 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -192,8 +186,8 @@ public class PositionListIndex implements Serializable {
     return new PositionListIndex(clusters, numberOfRows);
   }
 
-  protected void buildMap(PositionListIndex otherPLI, int[] materializedPLI,
-                          Map<IntPair, IntArrayList> map)
+  protected void buildMap2(PositionListIndex otherPLI, final int[] materializedPLI,
+                           final Map<IntPair, IntArrayList> map)
   {
     int uniqueValueCount = 0;
 
@@ -211,9 +205,9 @@ public class PositionListIndex implements Serializable {
             // System.out.println(sameValues.size());
             for (int rowCount : sameValues) {
               // TODO(zwiener): Get is called twice.
-              if ((materializedPLI.size() > rowCount) &&
-                (materializedPLI.get(rowCount) != SINGLETON_VALUE)) {
-                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI.get(rowCount));
+              if ((materializedPLI.length > rowCount) &&
+                  (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+                IntPair pair = new IntPair(finalUniqueValueCount, materializedPLI[rowCount]);
 
                 updateMap(internalMap, rowCount, pair);
               }
