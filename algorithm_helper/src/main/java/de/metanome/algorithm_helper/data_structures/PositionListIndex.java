@@ -16,6 +16,12 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,12 +35,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
  * of equal values in a nested list. A column with the values a, a, b, c, b, c transfers to the
@@ -47,6 +47,7 @@ public class PositionListIndex implements Serializable {
   private static final long serialVersionUID = 2;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(10);
+  public static int NUMBER_OF_THREADS = 1;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int rawKeyError = -1;
@@ -245,18 +246,20 @@ public class PositionListIndex implements Serializable {
     List<Future<?>> tasks = new LinkedList<>();
 
     try {
-      for (final IntArrayList sameValues : clusters) {
+      for (int i = 0; i < NUMBER_OF_THREADS; i++) {
 
-        final int finalUniqueValueCount = uniqueValueCount;
+        final int finalI = i;
         tasks.add(exec.submit(new Runnable() {
           @Override
           public void run() {
-            for (int rowIndex : sameValues) {
-              materializedPli[rowIndex] = finalUniqueValueCount;
+            for (int index = finalI; index < clusters.size(); index += NUMBER_OF_THREADS) {
+              IntArrayList sameValues = clusters.get(index);
+              for (int rowIndex : sameValues) {
+                materializedPli[rowIndex] = index + 1;
+              }
             }
           }
         }));
-        uniqueValueCount++;
       }
     } finally {
       for (Future<?> task : tasks) {
@@ -267,6 +270,19 @@ public class PositionListIndex implements Serializable {
           e.printStackTrace();
         }
       }
+    }
+
+    return materializedPli;
+  }
+
+  public int[] asArray2() {
+    int[] materializedPli = new int[getNumberOfRows()];
+    int uniqueValueCount = SINGLETON_VALUE + 1;
+    for (IntArrayList sameValues : clusters) {
+      for (int rowIndex : sameValues) {
+        materializedPli[rowIndex] = uniqueValueCount;
+      }
+      uniqueValueCount++;
     }
 
     return materializedPli;
