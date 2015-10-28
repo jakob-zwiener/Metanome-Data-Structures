@@ -46,12 +46,13 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
+  public static int parallelisationCutoff = 1000 * 1000;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   public static int NUMBER_OF_THREADS = 1;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
-  protected int rawKeyError = -1;
+  protected int sumClusterSize = -1;
 
   public PositionListIndex(List<IntArrayList> clusters, int numberOfRows) {
     this.clusters = clusters;
@@ -98,7 +99,7 @@ public class PositionListIndex implements Serializable {
     }
 
     PositionListIndex clone = new PositionListIndex(newClusters, this.numberOfRows);
-    clone.rawKeyError = this.rawKeyError;
+    clone.sumClusterSize = this.sumClusterSize;
     return clone;
   }
 
@@ -175,22 +176,24 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     int[] materializedPLI = this.asArray();
-    Map<IntPair, IntArrayList> map = new HashMap<>();
-    buildMap(otherPLI, materializedPLI, map);
-
-    List<IntArrayList> clusters = new ArrayList<>();
-    for (IntArrayList cluster : map.values()) {
-      if (cluster.size() < 2) {
-        continue;
-      }
-      clusters.add(cluster);
-    }
-    return new PositionListIndex(clusters, numberOfRows);
+    return new PositionListIndex(buildMap(otherPLI, materializedPLI), numberOfRows);
   }
 
-  protected void buildMap(final PositionListIndex otherPLI, final int[] materializedPLI,
-                          final Map<IntPair, IntArrayList> map)
+  protected List<IntArrayList> buildMap(final PositionListIndex otherPLI,
+                                        final int[] materializedPLI)
   {
+    if (getSumClusterSize() < parallelisationCutoff) {
+      return buildMapSequential(otherPLI, materializedPLI);
+    } else {
+      // System.out.println(getSumClusterSize());
+      return buildMapParallel(otherPLI, materializedPLI);
+    }
+  }
+
+  protected List<IntArrayList> buildMapParallel(final PositionListIndex otherPLI,
+                                                final int[] materializedPLI) {
+    List<IntArrayList> intersectPli = new ArrayList<>();
+
     List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
     try {
       // System.out.println(otherPLI.clusters.size());
@@ -221,7 +224,12 @@ public class PositionListIndex implements Serializable {
     finally {
       for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
-          map.putAll(task.get());
+          for (IntArrayList cluster : task.get().values()) {
+            if (cluster.size() < 2) {
+              continue;
+            }
+            intersectPli.add(cluster);
+          }
         }
         catch (InterruptedException | ExecutionException e) {
           // FIXME(zwiener): Rethrow exception.
@@ -229,21 +237,34 @@ public class PositionListIndex implements Serializable {
         }
       }
     }
+    return intersectPli;
   }
 
-  protected void buildMap2(PositionListIndex otherPLI, int[] materializedPLI,
-                          Map<IntPair, IntArrayList> map) {
+  protected List<IntArrayList> buildMapSequential(final PositionListIndex otherPLI,
+                                                  final int[] materializedPLI) {
+    List<IntArrayList> intersectPli = new ArrayList<>();
+
+    Map<IntPair, IntArrayList> map = new HashMap<>();
     int uniqueValueCount = 0;
     for (IntArrayList sameValues : otherPLI.clusters) {
       for (int rowCount : sameValues) {
         if ((materializedPLI.length > rowCount) &&
-          (materializedPLI[rowCount] != SINGLETON_VALUE)) {
+            (materializedPLI[rowCount] != SINGLETON_VALUE)) {
           IntPair pair = new IntPair(uniqueValueCount, materializedPLI[rowCount]);
           updateMap(map, rowCount, pair);
         }
       }
       uniqueValueCount++;
     }
+
+    for (IntArrayList cluster : map.values()) {
+      if (cluster.size() < 2) {
+        continue;
+      }
+      intersectPli.add(cluster);
+    }
+
+    return intersectPli;
   }
 
   protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount,
@@ -366,21 +387,23 @@ public class PositionListIndex implements Serializable {
    * @return raw key error
    */
   public int getRawKeyError() {
-    if (rawKeyError == -1) {
-      rawKeyError = calculateRawKeyError();
-    }
-
-    return rawKeyError;
+    return getSumClusterSize() - clusters.size();
   }
 
-  protected int calculateRawKeyError() {
-    int sumClusterSize = 0;
+  public int getSumClusterSize() {
+    if (sumClusterSize == -1) {
+      sumClusterSize = sumClusterSize();
+    }
 
+    return sumClusterSize;
+  }
+
+  protected int sumClusterSize() {
+    int sumClusterSize = 0;
     for (IntArrayList cluster : clusters) {
       sumClusterSize += cluster.size();
     }
-
-    return sumClusterSize - clusters.size();
+    return sumClusterSize;
   }
 
   @Override
