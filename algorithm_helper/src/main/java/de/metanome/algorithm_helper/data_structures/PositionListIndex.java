@@ -46,7 +46,7 @@ public class PositionListIndex implements Serializable {
 
   public static final transient int SINGLETON_VALUE = 0;
   private static final long serialVersionUID = 2;
-  public static int parallelisationCutoff = 1000 * 1000;
+  public static int parallelisationCutoff = Integer.MIN_VALUE;
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   public static int NUMBER_OF_THREADS = 1;
@@ -176,10 +176,10 @@ public class PositionListIndex implements Serializable {
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
     int[] materializedPLI = this.asArray();
-    return new PositionListIndex(buildMap(otherPLI, materializedPLI), numberOfRows);
+    return buildMap(otherPLI, materializedPLI);
   }
 
-  protected List<IntArrayList> buildMap(final PositionListIndex otherPLI,
+  /*protected PositionListIndex buildMapCutoff(final PositionListIndex otherPLI,
                                         final int[] materializedPLI)
   {
     if (getSumClusterSize() < parallelisationCutoff) {
@@ -188,12 +188,13 @@ public class PositionListIndex implements Serializable {
       // System.out.println(getSumClusterSize());
       return buildMapParallel(otherPLI, materializedPLI);
     }
-  }
+  }*/
 
-  protected List<IntArrayList> buildMapParallel(final PositionListIndex otherPLI,
+  protected PositionListIndex buildMap(final PositionListIndex otherPLI,
                                                 final int[] materializedPLI) {
     List<IntArrayList> intersectPli = new ArrayList<>();
 
+    int intersectSumClusterSize = 0;
     List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
     try {
       // System.out.println(otherPLI.clusters.size());
@@ -224,13 +225,12 @@ public class PositionListIndex implements Serializable {
     finally {
       for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
-          sumClusterSize = 0;
           for (IntArrayList cluster : task.get().values()) {
             if (cluster.size() < 2) {
               continue;
             }
             intersectPli.add(cluster);
-            sumClusterSize += cluster.size();
+            intersectSumClusterSize += cluster.size();
           }
         }
         catch (InterruptedException | ExecutionException e) {
@@ -239,10 +239,12 @@ public class PositionListIndex implements Serializable {
         }
       }
     }
-    return intersectPli;
+    PositionListIndex intersect = new PositionListIndex(intersectPli, numberOfRows);
+    intersect.sumClusterSize = intersectSumClusterSize;
+    return intersect;
   }
 
-  protected List<IntArrayList> buildMapSequential(final PositionListIndex otherPLI,
+  protected PositionListIndex buildMapSequential(final PositionListIndex otherPLI,
                                                   final int[] materializedPLI) {
     List<IntArrayList> intersectPli = new ArrayList<>();
 
@@ -259,16 +261,18 @@ public class PositionListIndex implements Serializable {
       uniqueValueCount++;
     }
 
-    sumClusterSize = 0;
+    int intersectSumClusterSize = 0;
     for (IntArrayList cluster : map.values()) {
       if (cluster.size() < 2) {
         continue;
       }
       intersectPli.add(cluster);
-      sumClusterSize += cluster.size();
+      intersectSumClusterSize += cluster.size();
     }
 
-    return intersectPli;
+    PositionListIndex intersect = new PositionListIndex(intersectPli, numberOfRows);
+    intersect.sumClusterSize = intersectSumClusterSize;
+    return intersect;
   }
 
   protected void updateMap(Map<IntPair, IntArrayList> map, int rowCount,
@@ -310,14 +314,14 @@ public class PositionListIndex implements Serializable {
    *
    * @return the pli as list
    */
-  public int[] asArray() {
+  /*public int[] asArray() {
     if (getSumClusterSize() < parallelisationCutoff) {
       return asArraySequential();
     } else {
       // System.out.println(getSumClusterSize());
       return asArrayParallel();
     }
-  }
+  }*/
 
 
   /**
@@ -325,7 +329,7 @@ public class PositionListIndex implements Serializable {
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public int[] asArrayParallel() {
+  public int[] asArray() {
     final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
 
