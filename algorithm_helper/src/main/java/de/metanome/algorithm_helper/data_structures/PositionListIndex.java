@@ -224,11 +224,13 @@ public class PositionListIndex implements Serializable {
     finally {
       for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
+          sumClusterSize = 0;
           for (IntArrayList cluster : task.get().values()) {
             if (cluster.size() < 2) {
               continue;
             }
             intersectPli.add(cluster);
+            sumClusterSize += cluster.size();
           }
         }
         catch (InterruptedException | ExecutionException e) {
@@ -257,11 +259,13 @@ public class PositionListIndex implements Serializable {
       uniqueValueCount++;
     }
 
+    sumClusterSize = 0;
     for (IntArrayList cluster : map.values()) {
       if (cluster.size() < 2) {
         continue;
       }
       intersectPli.add(cluster);
+      sumClusterSize += cluster.size();
     }
 
     return intersectPli;
@@ -301,11 +305,27 @@ public class PositionListIndex implements Serializable {
   }
 
   /**
+   * Materializes the PLI to an int array of row value representatives. The position list index ((0,
+   * 1), (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
+   *
+   * @return the pli as list
+   */
+  public int[] asArray() {
+    if (getSumClusterSize() < parallelisationCutoff) {
+      return asArraySequential();
+    } else {
+      // System.out.println(getSumClusterSize());
+      return asArrayParallel();
+    }
+  }
+
+
+  /**
    * Materializes the PLI to an int array of row value representatives. The position list index ((0, 1),
    * (2, 4), (3, 5)) would be represented by [1, 1, 2, 3, 2, 3].
    * @return the pli as list
    */
-  public int[] asArray2() {
+  public int[] asArrayParallel() {
     final int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
 
@@ -339,7 +359,7 @@ public class PositionListIndex implements Serializable {
     return materializedPli;
   }
 
-  public int[] asArray() {
+  public int[] asArraySequential() {
     int[] materializedPli = new int[getNumberOfRows()];
     int uniqueValueCount = SINGLETON_VALUE + 1;
     for (IntArrayList sameValues : clusters) {
