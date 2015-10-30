@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -194,17 +195,15 @@ public class PositionListIndex implements Serializable {
     List<IntArrayList> intersectPli = new ArrayList<>();
 
     int intersectSumClusterSize = 0;
-    List<Future<?>> tasks = new LinkedList<>();
-    List<Map<IntPair, IntArrayList>> results = new LinkedList<>();
+    List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
     try {
       // System.out.println(otherPLI.clusters.size());
       for (int i = 0; i < NUMBER_OF_THREADS; i++) {
         final int finalI = i;
-        final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
-        results.add(internalMap);
-        tasks.add(exec.submit(new Runnable() {
+        tasks.add(exec.submit(new Callable<Map<IntPair, IntArrayList>>() {
           @Override
-          public void run() {
+          public Map<IntPair, IntArrayList> call() {
+            final Map<IntPair, IntArrayList> internalMap = new HashMap<>();
             for (int index = finalI; index < otherPLI.clusters.size(); index += NUMBER_OF_THREADS) {
               IntArrayList sameValues = otherPLI.clusters.get(index);
               for (int rowCount : sameValues) {
@@ -218,28 +217,25 @@ public class PositionListIndex implements Serializable {
               }
             }
             // System.out.println((System.nanoTime() - start) / 1000000000d);
+            return internalMap;
           }
         }));
       }
     }
     finally {
-      for (Future<?> task : tasks) {
+      for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
-          task.get();
-
+          for (IntArrayList cluster : task.get().values()) {
+            if (cluster.size() < 2) {
+              continue;
+            }
+            intersectPli.add(cluster);
+            intersectSumClusterSize += cluster.size();
+          }
         }
         catch (InterruptedException | ExecutionException e) {
           // FIXME(zwiener): Rethrow exception.
           e.printStackTrace();
-        }
-      }
-      for (Map<IntPair, IntArrayList> result : results) {
-        for (IntArrayList cluster : result.values()) {
-          if (cluster.size() < 2) {
-            continue;
-          }
-          intersectPli.add(cluster);
-          intersectSumClusterSize += cluster.size();
         }
       }
     }
@@ -335,14 +331,12 @@ public class PositionListIndex implements Serializable {
    */
   public int[] asArrayParallel() {
     final int[] materializedPli = new int[getNumberOfRows()];
-    int uniqueValueCount = SINGLETON_VALUE + 1;
 
     List<Future<?>> tasks = new LinkedList<>();
 
     try {
       for (int threadIndex = 0; threadIndex < NUMBER_OF_THREADS; threadIndex++) {
 
-        final int finalUniqueValueCount = uniqueValueCount;
         final int finalThreadIndex = threadIndex;
         tasks.add(exec.submit(new Runnable() {
           @Override
@@ -351,7 +345,7 @@ public class PositionListIndex implements Serializable {
                  clusterIndex += NUMBER_OF_THREADS) {
               IntArrayList sameValues = clusters.get(clusterIndex);
               for (int rowIndex : sameValues) {
-                materializedPli[rowIndex] = clusterIndex;
+                materializedPli[rowIndex] = clusterIndex + 1;
               }
             }
             }
