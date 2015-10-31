@@ -16,18 +16,7 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -37,14 +26,6 @@ import java.io.ObjectOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
-import org.junit.Before;
-import org.junit.Test;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -81,7 +62,7 @@ public class PositionListIndexTest {
 
   /**
    * Test method for {@link de.metanome.algorithm_helper.data_structures.PositionListIndex#intersect(PositionListIndex)}
-   * <p>
+   * <p/>
    * Two {@link PositionListIndex} should be correctly intersected.
    */
   @Test
@@ -101,9 +82,9 @@ public class PositionListIndexTest {
 
   /**
    * Test method for {@link PositionListIndex#intersect(PositionListIndex)}
-   * <p>
+   * <p/>
    * The intersection with a unique PLI should be unique.
-   * <p>
+   * <p/>
    * This is a regression test for the materialization and check of unique PLIs. There used to be an
    * array out of bounds access in buildMap.
    */
@@ -122,7 +103,7 @@ public class PositionListIndexTest {
 
   /**
    * Test method for {{@link PositionListIndex#addOrExtendList(IntList, int, int)}}
-   * <p>
+   * <p/>
    * When adding a value beyond the size of the list, the list should be extended and padded with the SINGLETON_VALUE constant.
    */
   @Test
@@ -177,7 +158,7 @@ public class PositionListIndexTest {
 
   /**
    * Test method for {@link PositionListIndex#asHashMap()}
-   * <p>
+   * <p/>
    * A {@link PositionListIndex} should return a valid and correct HashMap.
    */
   @Test

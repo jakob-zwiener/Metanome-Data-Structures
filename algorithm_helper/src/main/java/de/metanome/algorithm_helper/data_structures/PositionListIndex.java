@@ -16,12 +16,6 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +31,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * Position list indices (or stripped partitions) are an index structure that stores the positions
@@ -210,29 +210,28 @@ public class PositionListIndex implements Serializable {
    * @param otherPLI the other {@link PositionListIndex} to intersect
    * @return the intersected {@link PositionListIndex}
    */
-  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
+  protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) throws PLIBuildingException {
     int[] materializedPLI = this.asArray();
-    buildMap(otherPLI, materializedPLI, map);
+    return buildMap(otherPLI, materializedPLI);
   }
 
   protected PositionListIndex buildMap(final PositionListIndex otherPLI,
-                                        final int[] materializedPLI)
+                                       final int[] materializedPLI) throws PLIBuildingException
   {
     if (otherPLI.getSumClusterSize() < parallelisationCutoff) {
       return buildMapSequential(otherPLI, materializedPLI);
     } else {
-      // System.out.println(getSumClusterSize());
       return buildMapParallel(otherPLI, materializedPLI);
     }
   }
 
   protected PositionListIndex buildMapParallel(final PositionListIndex otherPLI,
-                                                final int[] materializedPLI) {
+                                               final int[] materializedPLI) throws PLIBuildingException
+  {
     List<IntArrayList> intersectPli = new ArrayList<>();
 
     int intersectSumClusterSize = 0;
     List<Future<Map<IntPair, IntArrayList>>> tasks = new LinkedList<>();
-    try {
       for (int i = 0; i < NUMBER_OF_THREADS; i++) {
         final int finalI = i;
         tasks.add(exec.submit(new Callable<Map<IntPair, IntArrayList>>() {
@@ -255,8 +254,6 @@ public class PositionListIndex implements Serializable {
           }
         }));
       }
-    }
-    finally {
       for (Future<Map<IntPair, IntArrayList>> task : tasks) {
         try {
           for (IntArrayList cluster : task.get().values()) {
@@ -272,7 +269,6 @@ public class PositionListIndex implements Serializable {
           throw (PLIBuildingException) e.getCause();
         }
       }
-    }
     PositionListIndex intersect = new PositionListIndex(intersectPli, numberOfRows);
     intersect.sumClusterSize = intersectSumClusterSize;
     return intersect;
@@ -348,7 +344,7 @@ public class PositionListIndex implements Serializable {
    *
    * @return the pli as list
    */
-  public int[] asArray() {
+  public int[] asArray() throws PLIBuildingException {
     if (getSumClusterSize() < parallelisationCutoff) {
       return asArraySequential();
     } else {
@@ -356,13 +352,12 @@ public class PositionListIndex implements Serializable {
       return asArrayParallel();
     }
   }
-  
-  protected int[] asArrayParallel() {
+
+  protected int[] asArrayParallel() throws PLIBuildingException {
     final int[] materializedPli = new int[getNumberOfRows()];
 
     List<Future<?>> tasks = new LinkedList<>();
 
-    try {
       for (int threadIndex = 0; threadIndex < NUMBER_OF_THREADS; threadIndex++) {
 
         final int finalThreadIndex = threadIndex;
@@ -379,7 +374,17 @@ public class PositionListIndex implements Serializable {
             }
         }));
       }
-      uniqueValueCount++;
+
+    for (Future<?> task : tasks) {
+      try {
+        task.get();
+      }
+      catch (InterruptedException e) {
+        throw new PLIBuildingException("PLI generation was interrupted.", e);
+      }
+      catch (ExecutionException e) {
+        throw (PLIBuildingException) e.getCause();
+      }
     }
 
     return materializedPli;
