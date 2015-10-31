@@ -50,6 +50,9 @@ public class PositionListIndex implements Serializable {
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(1);
   public static int NUMBER_OF_THREADS = 1;
+  public static long expansionNanos = 0;
+  public static long probingNanos = 0;
+  public static long intersectNanos = 0;
   protected List<IntArrayList> clusters;
   protected int numberOfRows;
   protected int sumClusterSize = -1;
@@ -175,11 +178,15 @@ public class PositionListIndex implements Serializable {
    * @return the intersected {@link PositionListIndex}
    */
   protected PositionListIndex calculateIntersection(PositionListIndex otherPLI) {
+    long beginIntersect = System.nanoTime();
     int[] materializedPLI = this.asArray();
-    return buildMap(otherPLI, materializedPLI);
+    PositionListIndex positionListIndex = buildMap(otherPLI, materializedPLI);
+    long endIntersect = System.nanoTime();
+    intersectNanos += (endIntersect - beginIntersect);
+    return positionListIndex;
   }
 
-  protected PositionListIndex buildMap(final PositionListIndex otherPLI,
+  /*protected PositionListIndex buildMap(final PositionListIndex otherPLI,
                                         final int[] materializedPLI)
   {
     if (otherPLI.getSumClusterSize() < parallelisationCutoff) {
@@ -188,7 +195,7 @@ public class PositionListIndex implements Serializable {
       // System.out.println(getSumClusterSize());
       return buildMapParallel(otherPLI, materializedPLI);
     }
-  }
+  }*/
 
   protected PositionListIndex buildMapParallel(final PositionListIndex otherPLI,
                                                 final int[] materializedPLI) {
@@ -244,8 +251,9 @@ public class PositionListIndex implements Serializable {
     return intersect;
   }
 
-  protected PositionListIndex buildMapSequential(final PositionListIndex otherPLI,
+  protected PositionListIndex buildMap(final PositionListIndex otherPLI,
                                                   final int[] materializedPLI) {
+    long beginProbing = System.nanoTime();
     List<IntArrayList> intersectPli = new ArrayList<>();
 
     Map<IntPair, IntArrayList> map = new HashMap<>();
@@ -260,6 +268,9 @@ public class PositionListIndex implements Serializable {
       }
       uniqueValueCount++;
     }
+
+    long endProbing = System.nanoTime();
+    probingNanos += (endProbing - beginProbing);
 
     int intersectSumClusterSize = 0;
     for (IntArrayList cluster : map.values()) {
@@ -314,14 +325,14 @@ public class PositionListIndex implements Serializable {
    *
    * @return the pli as list
    */
-  public int[] asArray() {
+  /*public int[] asArray() {
     if (getSumClusterSize() < parallelisationCutoff) {
       return asArraySequential();
     } else {
       // System.out.println(getSumClusterSize());
       return asArrayParallel();
     }
-  }
+  }*/
 
 
   /**
@@ -365,8 +376,11 @@ public class PositionListIndex implements Serializable {
     return materializedPli;
   }
 
-  public int[] asArraySequential() {
+  public int[] asArray() {
     int[] materializedPli = new int[getNumberOfRows()];
+
+    long beginExpansion = System.nanoTime();
+
     int uniqueValueCount = SINGLETON_VALUE + 1;
     for (IntArrayList sameValues : clusters) {
       for (int rowIndex : sameValues) {
@@ -374,6 +388,9 @@ public class PositionListIndex implements Serializable {
       }
       uniqueValueCount++;
     }
+
+    long endExpansion = System.nanoTime();
+    expansionNanos += (endExpansion - beginExpansion);
 
     return materializedPli;
   }
