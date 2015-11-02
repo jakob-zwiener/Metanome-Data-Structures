@@ -17,9 +17,9 @@
 package de.metanome.algorithm_helper.data_structures;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
@@ -34,8 +34,8 @@ public class PLIManagerFixture {
     { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 } },
   };
 
-  public Map<ColumnCombinationBitset, PositionListIndex> getPliList() {
-    Map<ColumnCombinationBitset, PositionListIndex> plis = new HashMap<>();
+  public ConcurrentMap<ColumnCombinationBitset, PositionListIndex> getPliList() {
+    ConcurrentMap<ColumnCombinationBitset, PositionListIndex> plis = new ConcurrentHashMap<>();
 
     int columnIndex = 0;
     for (int[][] clusters : pliClusters) {

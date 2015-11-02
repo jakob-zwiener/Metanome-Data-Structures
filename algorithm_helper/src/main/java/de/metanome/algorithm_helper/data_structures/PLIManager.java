@@ -36,11 +36,11 @@ public class PLIManager {
   // TODO(zwiener): Make thread pool size accessible from the outside.
   public static transient ExecutorService exec = Executors.newFixedThreadPool(3);
 
-  protected Map<ColumnCombinationBitset, PositionListIndex> plis;
+  protected ConcurrentMap<ColumnCombinationBitset, PositionListIndex> plis;
   protected ColumnCombinationBitset allColumnCombination;
   protected SubSetGraph pliGraph;
 
-  public PLIManager(final Map<ColumnCombinationBitset, PositionListIndex> plis) {
+  public PLIManager(final ConcurrentMap<ColumnCombinationBitset, PositionListIndex> plis) {
     this.plis = plis;
     pliGraph = new SubSetGraph();
     pliGraph.addAll(plis.keySet());
@@ -62,7 +62,10 @@ public class PLIManager {
       return exactPli;
     }
 
-    List<ColumnCombinationBitset> subsets = pliGraph.getExistingSubsets(columnCombination);
+    List<ColumnCombinationBitset> subsets;
+    synchronized (this) {
+      subsets = pliGraph.getExistingSubsets(columnCombination);
+    }
 
     // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
@@ -102,8 +105,8 @@ public class PLIManager {
 
       intersect = intersect.intersect(plis.get(subsetCombination));
       unionCombination = unionCombination.union(subsetCombination);
+      plis.put(unionCombination, intersect);
       synchronized (this) {
-        plis.put(unionCombination, intersect);
         pliGraph.add(unionCombination);
       }
     }
