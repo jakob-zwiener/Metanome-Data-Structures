@@ -102,8 +102,10 @@ public class PLIManager {
 
       intersect = intersect.intersect(plis.get(subsetCombination));
       unionCombination = unionCombination.union(subsetCombination);
-      plis.put(unionCombination, intersect);
-      pliGraph.add(unionCombination);
+      synchronized (this) {
+        plis.put(unionCombination, intersect);
+        pliGraph.add(unionCombination);
+      }
     }
 
     return intersect;
