@@ -16,20 +16,17 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
+import org.junit.Before;
+import org.junit.Test;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * Tests for {@link PLIManager}
@@ -151,6 +148,25 @@ public class PLIManagerTest {
     catch (PLIBuildingException e) {
       // Intentionally left blank.
     }
+  }
+
+  /**
+   * Test method for {@link PLIManager#buildPli(ColumnCombinationBitset)}
+   * <p/>
+   * The method should return an empty PLI with a compatible number of columns when the PLI for the empty column combination is requested.
+   * @throws PLIBuildingException
+   */
+  @Test
+  public void testBuildPliEmptyColumnCombination() throws PLIBuildingException {
+    // Setup
+    // Expected values
+    int expectedPliNumberOfColumns = pliManager.allColumnCombination.size();
+
+    // Execute functionality
+    PositionListIndex actualPli = pliManager.buildPli(new ColumnCombinationBitset());
+
+    // Check result
+    assertEquals(new PositionListIndex(new ArrayList<IntArrayList>(), expectedPliNumberOfColumns), actualPli);
   }
 
   /**

@@ -67,6 +67,7 @@ public class PositionListIndex implements Serializable {
    */
   public PositionListIndex() {
     this.clusters = new ArrayList<>();
+    // TODO(zwiener): Should this constructor set a compatible number of rows?
     this.numberOfRows = 0;
   }
 

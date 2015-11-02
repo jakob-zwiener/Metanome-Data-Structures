@@ -16,13 +16,7 @@
 
 package de.metanome.algorithm_helper.data_structures;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalCause;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -38,6 +32,15 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalCause;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 /**
  * Manages plis and performs intersect operations.
@@ -158,6 +161,7 @@ public class PLIManager implements AutoCloseable {
     for (ColumnCombinationBitset columnCombination : columnCombinations) {
       if (intersect == null) {
         intersect = getPli(columnCombination);
+        continue;
       }
       intersect = intersect.intersect(getPli(columnCombination));
     }
@@ -187,6 +191,10 @@ public class PLIManager implements AutoCloseable {
     if (!columnCombination.isSubsetOf(allColumnCombination)) {
       throw new PLIBuildingException(
           "The column combination should only contain column indices of plis that are known to the pli manager.");
+    }
+
+    if (columnCombination.isEmpty()) {
+      return new PositionListIndex(new ArrayList<IntArrayList>(), allColumnCombination.size());
     }
 
     downwardsTraversal = lastIntersect.containsSubset(columnCombination);
