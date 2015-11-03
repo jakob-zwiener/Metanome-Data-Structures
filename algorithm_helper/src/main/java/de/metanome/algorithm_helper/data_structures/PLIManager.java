@@ -197,15 +197,20 @@ public class PLIManager implements AutoCloseable {
       return new PositionListIndex(new ArrayList<IntArrayList>(), allColumnCombination.size());
     }
 
-    downwardsTraversal = lastIntersect.containsSubset(columnCombination);
-    lastIntersect = new ColumnCombinationBitset(columnCombination);
+    synchronized (this) {
+      downwardsTraversal = lastIntersect.containsSubset(columnCombination);
+      lastIntersect = new ColumnCombinationBitset(columnCombination);
+    }
 
     PositionListIndex exactPli = lookupPli(columnCombination);
     if (exactPli != null) {
       return exactPli;
     }
 
-    List<ColumnCombinationBitset> subsets = pliSetTrie.getExistingSubsets(columnCombination);
+    List<ColumnCombinationBitset> subsets;
+    synchronized (this) {
+      subsets = pliSetTrie.getExistingSubsets(columnCombination);
+    }
 
     // Calculate set cover.
     ColumnCombinationBitset unionSoFar = new ColumnCombinationBitset();
@@ -255,11 +260,15 @@ public class PLIManager implements AutoCloseable {
 
       unionCombination = unionCombination.union(currentSubset);
       intersect = intersect.intersect(lookupPli(currentSubset));
-      try {
-        // TODO(zwiener): Is it a good idea to add intermediate plis to the cache?
-        addPliToCache(unionCombination, intersect);
-      } catch (ColumnIndexOutOfBoundsException e) {
-        throw new PLIBuildingException("The pli could not be added to the pli cache.", e);
+      // TODO(zwiener): Make SetTrie thread safe.
+      synchronized (this) {
+        try {
+          // TODO(zwiener): Is it a good idea to add intermediate plis to the cache?
+          addPliToCache(unionCombination, intersect);
+        }
+        catch (ColumnIndexOutOfBoundsException e) {
+          throw new PLIBuildingException("The pli could not be added to the pli cache.", e);
+        }
       }
     }
 
